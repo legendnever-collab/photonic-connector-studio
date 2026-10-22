@@ -1,44 +1,53 @@
-# Physics Contract — P0
+# Physics Contract — P0 / P1 baseline
+
+**Version:** 1.1 (2026-10-23)
+**Milestones:** See [DEVELOPMENT_ROADMAP_V1.md](DEVELOPMENT_ROADMAP_V1.md) for authoritative P0–P6 names.
 
 ## Coordinate and reference plane
-- All internal geometry is in SI units; UI may display µm/mm/nm with explicit conversion.
-- Right-handed Cartesian world: +X forward (Fiber → Waveguide), Y horizontal transverse, Z vertical transverse.
-- Reference plane F: Fiber mode output. Reference plane M: configurable detachable mating plane. Reference plane W: Waveguide accepted-mode edge facet.
-- A local frame (origin, orientation) is required for each port/component; propagation direction must be specified, not inferred from image position.
-- Wavelength given in vacuum unless specified; refractive index and optical path are medium dependent.
+- All internal geometry stored in SI units; UI displays µm/mm/nm with explicit conversions.
+- Right-handed global Cartesian frame: +X forward from Fiber to WG; Y and Z transverse. XY and XZ are display projections, not independent geometries.
+- F = Fiber output mode plane; M = configurable detachable mating plane; W = target Waveguide accepted-mode Edge plane. All have origin, normal/propagation vector and local frame.
+- Each Port/Component records its own local coordinate frame; a transform is not inferred from screen pixel positions.
+- Vacuum wavelength lambda_0 is the input; media have refractive index n(lambda_0).
 
-## Fiber Port
-- Type: Gaussian approximation or imported mode field (future).
-- Inputs: wavelength, waist/MFDx/MFDy, waist location, power normalization, polarization, complex field (future).
-- MFD is intensity 1/e² diameter for a Gaussian approximation; w = MFD/2. Do not confuse beam radius/diameter and waist/location.
+## Fiber source
+- Gaussian approximate mode or future imported complex mode field.
+- Input: lambda_0, waist/MFDx/MFDy, waist location, polarization and normalized power.
+- MFD means intensity 1/e² diameter for Gaussian convention. w=MFD/2 for each axis.
 
-## Waveguide Port (Photonic Substrate)
-- Inputs: (x,y,z), local frame/axis, wavelength, accepted-mode representation, polarization, facet and local medium details when used.
-- Initial accepted mode: normalized elliptical Gaussian with MFDx/MFDy.
-- Future accepted mode: sampled complex vector E/H field (grid, phases, normalization, reference plane and effective index metadata).
-- No assumption of waveguide material, MFD, guided-mode symmetry, reflection, or polarization until specified.
+## Waveguide target (Photonic Substrate)
+- Position (x,y,z), local frame, accepted-mode representation at plane W, wavelength and polarization.
+- Gaussian accepted mode: MFDx/MFDy, optional waist curvature and phase reference.
+- Future sampled complex field: x/y grid and spacing, vector E and H components where applicable, phasor convention, transverse coordinate orientation, normalization, effective-index and reference-plane metadata.
+- Mode import requires validation of units, field orientation, polarization, phase convention and power normalization.
+- Do not silently assume material, actual mode, return reflection or Polarization performance.
 
-## Model tiers
-P0: typed schema, geometry and non-physical preview only.
-P1: paraxial Gaussian propagation via q-parameter and ABCD, ideal thin lenses, air gap, ideal normalized Gaussian overlap.
-P2: refracting surfaces, aperture and clipping, ray tracing and physical field propagation; import simulated Waveguide mode.
-P3: error transform and correlated misalignment distribution; optimization objective based on optical loss and robustness.
-P4: multi-port array, common rigid-body errors vs per-channel errors, measured remating calibration.
+## Model tier boundaries
+P0 — Geometry/types/schema only; no optical calculations or invented loss readouts.
+P1 — Homogeneous-medium paraxial Gaussian q, ABCD, ideal thin lenses, simple scalar normalized overlap; input limits and exclusions explicit.
+P2 — Physical Lens/Geometrical Ray interfaces, Snell, apertures, ray distribution. Rays do NOT directly determine guided-mode overlap.
+P3 — Wave propagation, pupil amplitude+phase, diffraction/clipping, imported complex target mode, scalar then vector field overlap as validated.
+P4 — Optimization. P5 — Mechanical/Monte Carlo. P6 — Arrays/measurement.
 
-## Mathematical conventions (P1 acceptance tests)
-- q: 1/q = 1/R - i lambda_0/(pi n w^2) in a uniform medium using reduced-angle ABCD conventions.
-- q_out = (A q_in+B)/(C q_in+D) for matrices using the same consistent convention.
-- z_R = pi*n*w_0²/lambda_0.
-- Perfectly matched normalized scalar Gaussian modes at the same plane must yield overlap efficiency 1.
-- At matched waist and curvature with only lateral translation Δr: eta = exp[-(Δr/w)^2] for equal circular modes.
-- Insertion loss = -10 log10(eta) dB only for loss mechanisms actually modeled.
-- Polarization, Fresnel reflection, nonparaxial effects and arbitrary 2D waveguide mode mismatch are excluded from P1 numerical claims unless explicitly implemented.
+## P1 mathematical conventions (explicitly choose and test)
+P1 starts **in homogeneous air**, using the standard ray vector [height, angle] (not reduced angle), physical q and:
+- 1/q = 1/R - i * lambda_0/(pi * n * w²).
+- q = z + i z_R for beam waist at z=0; z_R = pi*n*w_0²/lambda_0.
+- Free-space propagation in a single medium: matrix [1 d; 0 1] and q_out=q_in+d.
+- Ideal thin lens immersed in that same homogeneous medium: [1 0; -1/f 1]; q_out=(Aq+B)/(Cq+D).
+- **Do not use reduced-angle [height, n*angle] matrices with this same q without converting both convention and q appropriately.** Multiple media/refractive surfaces belong to P2 with explicit convention and tests.
+- For circular modes of equal w, matched curvature and polarization with lateral Δr: eta=exp[-(Δr/w)²].
+- Perfect normalized matched field yields eta=1; eta always in [0,1] within numerical tolerance.
+- Scalar overlap of a normalized field `E_i` and `E_t`: eta = | integral conj(E_t)*E_i dA |² / ( integral |E_t|² dA * integral |E_i|² dA ) when both share a plane and compatible scalar approximation.
+- Loss `IL=-10log10(eta)` is only the coupling contribution actually modeled, not the complete connector insertion loss.
+
+## P1 exclusions unless specifically implemented
+Vector polarization overlap, Fresnel/return loss, multimode and non-Gaussian fields, nonparaxial optics, real surface aberrations, coatings, reflective paths, clipping beyond clearly defined ideal aperture and materials dispersion.
 
 ## Numerical integrity
-- Return validity/assumption flags; never silently report NaN, impossible geometry or mode results as valid.
-- Compare implementations to hand-worked analytical cases and energy limits.
-- Keep nominal loss separate from loss distribution. Monte Carlo max is not guaranteed worst case.
-- No model is claimed to predict wear, contamination, thermal drift or lifetime without experimental calibration.
-
-## Test sources
-Internal analytical Gaussian Beam / ABCD solutions with independently checked expected outcomes. Research paper results can serve as later comparison references, not automatic acceptance targets.
+- Solver results carry model ID, version, input parameters, assumptions, warnings, validity and provenance.
+- Invalid or unspecified input returns Not Calculated/Out-of-domain, not fabricated data.
+- Separate Mode mismatch, propagation, reflection, clipping and mechanical errors when modeled.
+- Compare with analytical benchmark and independent calculation, unit tests and convergence where appropriate.
+- Monte Carlo samples estimate distributions with declared assumptions; sampled max is NOT guaranteed worst case.
+- Wear, contamination, thermal drift and lifetime require measured/calibrated models before any production claim.
