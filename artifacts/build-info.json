@@ -1,0 +1,25 @@
+{
+  "version": "0.0.1-p0",
+  "schemaVersion": 1,
+  "sourceCommit": "7ee6b9e0ec461f1cfdb83124e57f3529476262fe",
+  "sourceFingerprint": "4862f9a0f02dec714b827a2035de8719ab01c92fd0fd518d641aa7c38559b643",
+  "inputs": {
+    "index.html": "0d47b1844d1727781a6059e7f9f435dabc41f38d184f93675f7d39391a0511d2",
+    "package-lock.json": "0bcf84151a8baddd59709a498829afee5fe3d235a3ebb5a08833e1d69dee8642",
+    "package.json": "21d562f7dfa0e0589221fdabddf376c0329d7e1ff472717b1915337dfd899591",
+    "src/App.tsx": "26bd3e695e86eaf85fc3531892e061e731c0c991e1a3ed15dc78f9e8302b969e",
+    "src/Fields.tsx": "bad9d8a55bd43076a46cf590c123d757115fb24ac807b64d2bb8d7a3b775b7e7",
+    "src/Layout.tsx": "62dcb3bfbe1c8e0940f038b6206b6d86f93cc08f7ac79ec52195f613b9ec4d99",
+    "src/assets/NotoSansKR-OFL.txt": "18aabf190848725e2576eefb5c29ba06aac1029d02132252a7f312eac2e50cf3",
+    "src/assets/README.md": "4964ae3cb3ea85acf82466f9a0ac93fa4dafa93105b7c7c2714164a2b9dbc276",
+    "src/assets/noto-kr-p0.woff": "a4efcd34a69c95a7a89e540165380506faf39fa367ee07a1061cf1edc76da88f",
+    "src/domain.ts": "5f3342962fdbb0ec4cb10d91228d10004bb8019cdd38dca4dfde6726f4853ed0",
+    "src/main.tsx": "7dd0ec7c005211dc0191dbe92115cb395ec8f04c2591d2259039a5d7b42fb3c0",
+    "src/styles.css": "79434dce07b5764779f3f8b5bfd56a477b815f900c28fe40593ef4c10f765e71",
+    "tsconfig.json": "6210a6d05f22c3f5b3030645892b2cd5e568c70ea2a71abd70ace41fadf58634",
+    "vite.config.ts": "e7735db44b0a908f1501d28553beae1001f0d1227426d4bb2a695a53e9a0800d"
+  },
+  "artifact": "photonic-connector-studio-p0.html",
+  "artifactSHA256": "ed8bfd6748b6b94d20b441e7cca4d20847c18ddf450eb7ed975caa74fedc1c9d",
+  "artifactBytes": 325353
+}
