@@ -2,30 +2,33 @@
 
 **Fiber-to-Waveguide Optical Design & Simulation Platform**
 
-A planned engineering Workstation for the analysis, design and optimization of detachable fiber connectors for Photonic Substrates.
+A planned engineering workstation for designing and evaluating detachable Fiber-to-Photonic Substrate Waveguide connectors.
 
-## Basic concept
-- **Left Port:** Fiber (source), with 1310 nm SMF as an initial editable example
-- **Middle:** Editable optical train (Gap, Lens, Mirror and other elements as implemented)
-- **Right Port:** Waveguide edge optical port (target guided mode)
-- Optical port boundary data include position, orientation, MFDx/MFDy or imported complex mode profile.
-- Waveguide material, lens selection, detachable connector architecture and target performance remain design variables, not predetermined conclusions.
+## Core concept
+- **Left Port:** Fiber source; initial editable example 1310 nm SMF.
+- **Middle:** Editable Optical Train (free-space, lens, physical optical surfaces, mirror as validated stages are added).
+- **Right Port:** Photonic Substrate Waveguide Edge Port / accepted guided mode.
+- Waveguide model uses position/orientation/MFDx/MFDy and later imported complex E/H profile, not full routing.
+- Material, connector architecture, lens configuration, optical/mechanical targets remain design variables.
 
-## P0 plans
-- [Master Plan](docs/MASTER_PLAN.md)
-- [Physics Contract](docs/PHYSICS_CONTRACT.md)
-- [UI Design](docs/UI_DESIGN.md)
-- [Checkpoints](docs/CHECKPOINTS.md)
+## Development documents (read in this order)
+1. [DEVELOPMENT_ROADMAP_V1.md](docs/DEVELOPMENT_ROADMAP_V1.md) — long-term engineering product roadmap P0–P6
+2. [WORKFLOW_AND_MODEL_POLICY.md](docs/WORKFLOW_AND_MODEL_POLICY.md) — model selection, verification, checkpoint rules
+3. [MASTER_PLAN.md](docs/MASTER_PLAN.md) — concise mission and interfaces
+4. [PHYSICS_CONTRACT.md](docs/PHYSICS_CONTRACT.md) — coordinates, units, optical boundary and model validity
+5. [UI_DESIGN.md](docs/UI_DESIGN.md) — DeepO-inspired workspace design
+6. [CHECKPOINTS.md](docs/CHECKPOINTS.md) — checklists and stage gates
+7. [P0_FIRST_IMPLEMENTATION_WORK_ORDER.md](docs/P0_FIRST_IMPLEMENTATION_WORK_ORDER.md) — next development instruction, **not yet executed**
 
-This branch currently contains the **P0 documentation baseline**. The runnable UI, simulator, and build/test artifacts are not yet implemented. Do not infer validated coupling performance from concept diagrams.
+## Current status
+P0 **documentation baseline only** on `feature/p0-foundation`, Draft PR #1.
+No runnable UI, physical optical solver, validated loss, release artifact, or build/test success should be inferred from these documents.
 
-## Development policy
-Recovery-first · Source-first · Physics-first · Validation-first · Incremental checkpoints.
+## Rules
+Recovery-First · Physics-First · Source-First · Validation-First · Atomic Checkpoints.
+No merge to main or auto-start of next milestone before user Play Review and explicit approval.
+Use English for technical terminology and Korean for explanations.
 
-Develop on `feature/p0-foundation`; use a Draft PR for review. **Never merge to main or advance to P1 without explicit user approval.**
-
-## Inspiration and licensing
-[DeepO](https://ai4optics.com/deepo/) is a UX/workflow reference only; it is not a source for copying proprietary implementation or branding. Evaluate [DeepLens](https://github.com/vccimaging/DeepLens) separately, including exact code and dependency licenses, before any reuse.
-
-## Language
-Use English technical terminology and Korean descriptions.
+## Licensing and confidential data
+[DeepO](https://ai4optics.com/deepo/) is a UX/workflow reference only. Evaluate current public [DeepLens](https://github.com/vccimaging/DeepLens) revision and its dependency licenses before reusing code.
+This repository is public; do not add confidential company/customer geometries, measurement data, or restricted source code.
