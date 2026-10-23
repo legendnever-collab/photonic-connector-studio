@@ -1,12 +1,12 @@
 # Photonic Connector Studio
 
-**Fiber-to-Waveguide Optical Design Workspace · v0.2.1-p2.1**
+**Fiber-to-Waveguide Optical Design Workspace · v0.2.2-p2.2**
 
 P1.2는 Air Gaussian q/Beam Axis, Source/WG Small-angle Tilt와 Offset–Tilt–Curvature Coupling을 계산합니다. Alignment Sensitivity Curve·Joint Map·Threshold 구간·CSV Export를 제공합니다. Common X-plane Phase-ramp 근사이며 Lens Tilt/Decenter, Roll과 Clipping은 지원하지 않습니다.
 
 ## 바로 실행
 
-[photonic-connector-studio-p2.1.html](artifacts/photonic-connector-studio-p2.1.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
+[photonic-connector-studio-p2.2.html](artifacts/photonic-connector-studio-p2.2.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
 
 ## Source 실행
 
@@ -42,6 +42,12 @@ Production Preview: `npm run preview` → `http://127.0.0.1:4173`.
 7. Help에서 공통 Vacuum Wavelength를 변경할 수 있습니다.
 
 짧은 Desktop 화면에서는 Tree, Properties와 Data 내부를 스크롤합니다. 작업 내용은 Memory에 있으므로 종료 전에 JSON을 저장하세요. Browser Storage나 Cloud Account는 사용하지 않습니다.
+
+## P2.2 Report Figure
+
+Surface Workbench → **보고용 그림 · Report**에서 **B · Technical Isometric** / **C · Linked Inspector**를 선택합니다. 같은 Surface / Ray 데이터에 유리 곡면·두께·미러 질감·부품 라벨과 보고용 구도를 적용하고, SVG / PNG 2×로 저장합니다. C는 선택 Surface의 실제 Geometric Footprint를 표시합니다.
+
+표시용 Prism 외형과 Mirror backing은 Ray Trace에 들어가지 않습니다. Field Intensity / Gaussian 연동은 아직 구현하지 않았습니다. [구현 및 범위](docs/P2_2_REPORT_FIGURE.md).
 
 ## P2.1 Surface Workbench
 

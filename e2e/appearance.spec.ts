@@ -2,7 +2,10 @@ import {test,expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-async function appearance(page:Page,name:string){await page.getByRole('button',{name:'Appearance',exact:true}).click();await page.getByRole('button',{name,exact:true}).click();await page.getByRole('button',{name:'Apply & Close',exact:true}).click();}
+async function appearance(page:Page,name:string){await page.getByRole('button',{name:'Appearance',exact:true}).click();await page.getByRole('button',{name,exact:true}).click();await page.getByRole('button',{name:'Apply & Close',exact:true}).click();
+ // Measure settled theme colors, rather than a frame inside the 120 ms background transition.
+ await page.evaluate(async()=>{await Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished));});
+}
 test('appearance options preserve optical state, geometry nodes, zoom and edited parameters',async({page},info)=>{
  await page.goto('/');await page.getByLabel('Synthetic Example',{exact:true}).selectOption('pointing');await page.getByRole('button',{name:'Zoom in',exact:true}).click();
  const eta=await page.getByTestId('summary-eta').textContent();await page.evaluate(()=>{(window as any).originalSVG=document.querySelector('[data-testid="optical-canvas"]');(window as any).originalAxis=document.querySelector('[data-testid="beam-axis"]');(window as any).axisPoints=document.querySelector('[data-testid="beam-axis"]')?.getAttribute('points');});

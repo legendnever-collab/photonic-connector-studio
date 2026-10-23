@@ -34,3 +34,8 @@ User-authorized P1.1/P1.2 merges complete; main e505652b219ee97d33c0f4916fa8c8f5
 ## 2026-10-23 · P2.1 Surface-first Workbench
 
 User authorized Surface-first design with optional derived 3D. Canonical Surface/nested Assembly frames, physical sequential rays, Mirror/Prism/lenslet examples, Surface Editor and shared 2D/3D with SVG export implemented. 143 Unit/Numerical/Font + 64 Browser PASS, 2 existing intentional Mobile skips. See P2_1_SURFACE_CONTRACT.md and P2_1_IMPLEMENTATION_REPORT.md. Branch feature/p2-1-surface-workbench / Draft PR #5, stacked on unmerged PR #4. No main merge or next checkpoint auto-start.
+
+
+## 2026-10-24 · P2.2 Report Figure
+
+User requested a report button with a style closer to the earlier B/C concepts. A separate derived technical illustration now adds glass caps/rims, metal shading, illustrative envelopes and shadows, sampled ray-bundle silhouettes, labels, linked geometric footprint and offline SVG/PNG export. Design model and Gaussian/surface physics are unchanged. See P2_2_REPORT_FIGURE.md. Stacked feature/p2-2-report-figure; no main merge.
