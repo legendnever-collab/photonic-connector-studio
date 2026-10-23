@@ -88,3 +88,10 @@ test('reducing a Prism clear aperture does not resize or invalidate its mechanic
  const next=withPrescription(p,{...d,surfaces:d.surfaces.map(s=>({...s,aperture:.000001}))}),nd=prescription(next);
  const after=bodyGeometry(nd,compile(nd),next.bodies);expect(after.issues).toEqual([]);expect(after.solids[0].faces).toEqual(before);expect(projectTrace(next).status).toBe('valid');expect(projectTrace(next).reached).toBe(1);
 });
+
+test('locked ideal components and ports retain their restrictions through shared adapters',()=>{
+ const d=exampleDocument();d.components[0].locked=true;d.components[1].locked=true;const p=idealProject(d),pr=prescription(p);
+ expect(()=>withPrescription(p,{...pr,assemblies:pr.assemblies.map((a,i)=>i===0?{...a,frame:pose(.004)}:a)})).toThrow('locked');
+ expect(()=>withMode(p,'source',{...modes(p).source,mfdX:.00002})).toThrow('locked');
+ expect(withPrescription(p,pr)).toEqual(p);
+});

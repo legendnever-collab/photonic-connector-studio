@@ -208,7 +208,8 @@ export default function App() {
     )
       select("fiber");
   };
-  const computed = useMemo(() => solveGaussian(doc), [doc]);
+  const emptyGaussian = useMemo(() => solveGaussian(exampleDocument()), []);
+  const computed = "provenance" in shared.gaussian ? shared.gaussian : emptyGaussian;
   const result: GaussianResult = invalidFields.length || shared.invalid.length || failure ? {status: "invalid", reason: "미반영 입력/오류가 있습니다. 유효한 값으로 수정하거나 편집 종료로 마지막 유효 값을 복구하세요.", provenance: computed.provenance, warnings: []} : computed;
   const loadSynthetic = (id: ExampleId) => {
     change(() => syntheticExample(id), EXAMPLES[id].description); select("fiber");

@@ -10,7 +10,8 @@ A strict versioned `optical-project` schema stores exactly one authoritative mod
 Gaussian components, or a physical Surface prescription with Source/Target modes. Adapters derive
 editor views; two independently editable copies are never saved. A shared React store provides one
 bounded Undo/Redo history, selection, dirty state and transactional project import/export. View
-cameras remain separate. Numerical input failures suppress current results.
+cameras remain separate. Locked ideal components and ports retain their restrictions in the Surface
+adapter and Mode fields; undefined reference-plane sizes are display markers, not clear apertures. Numerical input failures suppress current results.
 
 ## Building blocks / geometry
 
@@ -55,7 +56,7 @@ references, bad schemas and files over 2 MB are rejected without replacing the c
 
 ## Verification
 
-163 Unit / Numerical / Font checks pass (147 existing + 16 common-project cases). TypeScript and build pass. Full Browser suite: 78 PASS / 2 existing intentional Mobile SKIP. The 10 new desktop/mobile cases cover common project integration; legacy numerical/interaction assertions remain. Delivery fingerprints are recorded with the artifact. Unit tests include
+164 Unit / Numerical / Font checks pass (147 existing + 17 common-project cases). TypeScript and build pass. Full Browser suite: 80 PASS / 2 existing intentional Mobile SKIP. The 12 new desktop/mobile cases cover common project integration; legacy numerical/interaction assertions remain. Delivery fingerprints are recorded with the artifact. Unit tests include
 model-class round trips, exact aperture diameter conversion, shared frames, modes vs mechanics,
 finite mirror/prism clipping, nested rigid transformations, invalid lens/array bodies, report patch
 clipping and repeated source bodies. Browser tests cover both workspace directions, global history,

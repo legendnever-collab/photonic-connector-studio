@@ -69,16 +69,22 @@ export function withPrescription(p: Project, next: Prescription): Project {
     if (next.surfaces.length !== old.surfaces.length || next.surfaces.some((s, i) => s.id !== old.surfaces[i].id))
         throw Error('Ideal model: add/remove/order in Gaussian Workspace. Physical surfaces require a Surface project.');
     const components = d.components.map((c, i) => {
-        if (i === 0)
+        if (i === 0) {
+            if(c.locked&&JSON.stringify(c.frame)!==JSON.stringify(next.source.frame))throw Error('Source is locked');
             return { ...c, frame: next.source.frame };
+        }
         const s = next.surfaces.find(s => s.id === c.id)!, a = next.assemblies.find(a => a.id === s.assemblyId)!;
         if (s.shape !== 'plane' || s.interaction !== 'probe' || s.nBefore !== 1 || s.nAfter !== 1 || s.array || a.parentId)
             throw Error('Ideal model: physical Surface properties are undefined.');
         // Euler composition is intentionally limited here; ideal components have a single authoritative frame.
         if (s.frame.rotation.roll || s.frame.rotation.pitch || s.frame.rotation.yaw)
             throw Error('Ideal model: edit Assembly orientation; Surface-local rotation is undefined.');
+        if(c.kind!=='lens'&&s.aperture!==old.surfaces[i-1].aperture)throw Error('Reference plane Clear Aperture is undefined');
+        if(a.kind!==old.assemblies[i-1].kind)throw Error('Ideal component type must be edited in Gaussian Workspace');
         const origin = pointToWorld(frame(a.frame), s.frame.origin), name = s.name !== old.surfaces[i - 1].name ? s.name.replace(' · Ideal Thin Lens', '') : a.name;
-        return { ...c, name, frame: { ...a.frame, origin }, ...(c.kind === 'lens' ? { aperture: s.aperture * 2 } : {}) };
+        const updated={ ...c, name, frame: { ...a.frame, origin }, ...(c.kind === 'lens' ? { aperture: s.aperture * 2 } : {}) };
+        if(c.locked&&JSON.stringify(updated)!==JSON.stringify(c))throw Error(`${c.name}: Component is locked`);
+        return updated;
     });
     return { ...p, model: { kind: 'ideal', design: DocumentSchema.parse({ ...d, name: next.name, wavelength: next.wavelength, components }) } };
 }
@@ -89,6 +95,7 @@ export function withMode(p: Project, which: 'source' | 'target', mode: Mode): Pr
     if (p.model.kind === 'surface')
         return { ...p, model: { ...p.model, [which === 'source' ? 'sourceMode' : 'targetMode']: mode } };
     const index = which === 'source' ? 0 : p.model.design.components.length - 1;
+    if(p.model.design.components[index].locked&&JSON.stringify(mode)!==JSON.stringify(modes(p)[which]))throw Error('Port is locked');
     return { ...p, model: { kind: 'ideal', design: DocumentSchema.parse({ ...p.model.design, components: p.model.design.components.map((c, i) => i === index ? { ...c, mode } : c) }) } };
 }
 export function serializeProject(p: Project) { return JSON.stringify(ProjectSchema.parse(p), null, 2); }

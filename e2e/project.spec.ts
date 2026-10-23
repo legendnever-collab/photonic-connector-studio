@@ -58,3 +58,11 @@ test('offline common project works at narrow widths and invalid drafts suppress 
  for(const width of info.project.name==='desktop'?[320,768,1440]:[412]){await page.setViewportSize({width,height:1000});await tab(page,'Layout');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Gaussian Workspace',exact:true}).click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Surface Workbench',exact:true}).click();}
  await assembly(page,'Mirror');const width=page.getByLabel('Body Diameter',{exact:true});await width.fill('');await expect(page.getByTestId('surface-reached')).toHaveText('Not calculated');await width.press('Enter');await finish(page);await expect(page.getByTestId('surface-reached')).toHaveText('45 / 45');expect(errors).toEqual([]);
 });
+
+test('locked Gaussian components remain locked in the Surface editor and shared Mode fields',async({page})=>{
+ await page.goto('/');await page.getByLabel('Synthetic Example',{exact:true}).selectOption('pointing');await page.getByRole('button',{name:'Surface Workbench',exact:true}).click();
+ const p=await save(page);p.model.design.components[0].locked=true;p.model.design.components[1].locked=true;
+ await page.getByTestId('surface-json-input').setInputFiles({name:'locked.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});
+ await assembly(page,p.model.design.components[1].id);await expect(page.getByLabel('Assembly X',{exact:true})).toBeDisabled();await finish(page);
+ await tab(page,'Surfaces');await page.getByTestId('shared-source').click();await expect(page.getByLabel('Source MFD X',{exact:true})).toBeDisabled();await expect(page.getByLabel('Source X',{exact:true})).toBeDisabled();await finish(page);expect(await save(page)).toEqual(p);
+});
