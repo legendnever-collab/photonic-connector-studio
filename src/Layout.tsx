@@ -152,7 +152,7 @@ export default function Layout({
               height="24"
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="1" cy="1" r=".7" fill="#c9d4d9" />
+              <circle cx="1" cy="1" r=".7" fill="var(--grid)" />
             </pattern>
             <marker
               id="axis-arrow"
@@ -231,11 +231,11 @@ export default function Layout({
             {view === "XY" ? "⊙" : "⊗"}
           </text>
           {result.status === "valid" && <g className="gaussian-overlay" pointerEvents="none" data-testid="beam-overlay">
-            <polyline data-testid="beam-axis" points={result.samples.map(s=>{const p=world(s.x,sourceT+(s.axis[axisKey].height-sourceT)*beamScale);return `${p.x},${p.y}`;}).join(" ")} fill="none" stroke="#c97e29" strokeWidth="2"/>
-            <polygon points={envelope} fill="#30a68d" fillOpacity=".13" stroke="#218977" strokeWidth="1.7"/>
+            <polyline data-testid="beam-axis" points={result.samples.map(s=>{const p=world(s.x,sourceT+(s.axis[axisKey].height-sourceT)*beamScale);return `${p.x},${p.y}`;}).join(" ")} fill="none" stroke="var(--axis)" strokeWidth="2"/>
+            <polygon points={envelope} fill="var(--beam)" fillOpacity=".13" stroke="var(--beam)" strokeWidth="1.7"/>
             {(() => { const targetX=doc.components.at(-1)!.frame.origin.x, d=axisKey === "y" ? result.target.offsetY : result.target.offsetZ;
               const upper=world(targetX, sourceT+(d+result.target[axisKey])*beamScale), lower=world(targetX, sourceT+(d-result.target[axisKey])*beamScale);
-              return <path d={`M${upper.x-6},${upper.y} H${upper.x+6} M${upper.x},${upper.y} V${lower.y} M${lower.x-6},${lower.y} H${lower.x+6}`} stroke="#7552ad" strokeWidth="3"/>;
+              return <path d={`M${upper.x-6},${upper.y} H${upper.x+6} M${upper.x},${upper.y} V${lower.y} M${lower.x-6},${lower.y} H${lower.x+6}`} stroke="var(--canvas-fixed)" strokeWidth="3"/>;
             })()}
           </g>}
           {doc.components.map((c, index) => {
@@ -244,10 +244,10 @@ export default function Layout({
               active = selected === c.id;
             const color =
               c.kind === "mating-plane"
-                ? "#b47b20"
+                ? "var(--canvas-boundary)"
                 : c.region === "fixed"
-                  ? "#7d6bc0"
-                  : "#268f7d";
+                  ? "var(--canvas-fixed)"
+                  : "var(--beam)";
             const isPlane =
               c.kind === "reference-plane" || c.kind === "mating-plane";
             const sizeMfd = isPort(c)

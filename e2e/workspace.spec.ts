@@ -6,6 +6,9 @@ import { exampleDocument } from "../src/domain";
 import type { Page } from "@playwright/test";
 
 async function mobileTab(page: Page, name: string) {
+  const desktop = page.getByRole("navigation", {name:"Inspector tabs"});
+  if (await desktop.isVisible() && ["Analysis", "Edit", "Train"].includes(name)) await desktop.getByRole("button", {name:name === "Analysis" ? "Analyze" : "Inspect",exact:true}).click();
+
   if (await page.getByRole("button", {name:"편집 종료 · Layout"}).isVisible() && await page.getByRole("navigation",{name:"Workspace tabs"}).isVisible()) await page.getByRole("button", {name:"편집 종료 · Layout"}).click();
   if (
     await page.getByRole("navigation", { name: "Workspace tabs" }).isVisible()

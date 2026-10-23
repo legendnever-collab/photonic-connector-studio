@@ -4,6 +4,9 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 async function tab(page:Page,name:string){
+  const desktop = page.getByRole("navigation", {name:"Inspector tabs"});
+  if (await desktop.isVisible() && ["Analysis", "Edit", "Train"].includes(name)) await desktop.getByRole("button", {name:name === "Analysis" ? "Analyze" : "Inspect",exact:true}).click();
+
   if(await page.getByRole("navigation",{name:"Workspace tabs"}).isVisible())await page.getByRole("navigation",{name:"Workspace tabs"}).getByRole("button",{name,exact:true}).click();
 }
 async function choose(page:Page,id:string){await tab(page,"Train");await page.getByTestId(`tree-${id}`).click();}

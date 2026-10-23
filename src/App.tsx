@@ -50,6 +50,7 @@ import {
   um,
   undo,
 } from "./domain";
+import Appearance from "./Appearance";
 import Layout from "./Layout";
 import Analysis, { Metrics } from "./Analysis";
 import { solveGaussian } from "./physics";
@@ -91,6 +92,8 @@ export default function App() {
   const component =
     doc.components.find((c) => c.id === selected) ?? doc.components[0];
   const [view, setView] = useState<"XY" | "XZ">("XY");
+  const [theme, setTheme] = useState<"light" | "dark" | "hybrid">("light");
+  const [inspector, setInspector] = useState<"properties" | "analysis">("properties");
   const [tab, setTab] = useState<Tab>("layout");
   const [insert, setInsert] = useState<"lens" | "gap" | "reference-plane">(
     "lens",
@@ -127,6 +130,7 @@ export default function App() {
   }
   const select = (id: string) => {
     setSelected(id);
+    setInspector("properties");
     setFailure("");
   };
   const selectInTree = (id: string) => {
@@ -223,7 +227,7 @@ export default function App() {
   };
   return (
     <FieldValidity.Provider value={fieldValidity}>
-    <div className="app-shell">
+    <div className="app-shell" data-theme={theme}>
       <header className="app-header">
         <div className="brand-mark">
           <Activity size={25} />
@@ -234,8 +238,9 @@ export default function App() {
           </strong>
           <span className="header-caption">OPTICAL DESIGN WORKSPACE</span>
         </div>
-        <span className="build-tag">P1.2 · ALIGNMENT</span>
+        <span className="build-tag">P1.3 · WORKSTATION</span>
         <div className="header-right">
+          <Appearance theme={theme} onChange={setTheme}/>
           <span className="local-status">
             <span className="live-dot" />
             Browser local
@@ -427,6 +432,7 @@ export default function App() {
               PHOTONIC SUBSTRATE
             </div>
           </div>
+          <Metrics result={result} compact/>
           <Layout
             doc={doc}
             result={result}
@@ -436,7 +442,6 @@ export default function App() {
             view={view}
             setView={setView}
           />
-          <Metrics result={result} compact/>
           <section className="data-panel panel" aria-label="Component Data">
             <div className="panel-toolbar">
               <div className="panel-title">
@@ -519,7 +524,11 @@ export default function App() {
             </div>
           </section>
         </main>
-        <aside className="properties-column">
+        <aside className={`properties-column inspector-${inspector}`}>
+          <nav className="inspector-tabs" aria-label="Inspector tabs">
+            <button aria-pressed={inspector === "properties"} onClick={() => setInspector("properties")}>Inspect</button>
+            <button aria-pressed={inspector === "analysis"} onClick={() => setInspector("analysis")}>Analyze</button>
+          </nav>
           <section
             className="properties-panel panel"
             aria-label="Properties Editor"

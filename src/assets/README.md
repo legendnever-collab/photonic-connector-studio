@@ -5,3 +5,5 @@ P1.1: noto-kr-p1.woff — 199 Korean syllables present in src/*.ts,tsx,css; gene
 Coverage is verified by tests/font.test.ts. Adding Korean UI strings requires refreshing the font subset.
 
 P1.2: noto-kr-p12.woff — 214 Korean source syllables; same fontTools subset/merge and license. P0/P1.1 assets preserved.
+
+P1.3: noto-kr-p13.woff — 229 Korean source syllables; current UI coverage checked by tests/font.test.ts. Previous assets preserved; same fontTools subset/merge and SIL OFL license.

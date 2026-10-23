@@ -24,3 +24,8 @@
 ## Release protocol
 Recovery → Scope lock → Implement → Test → Build → Playable artifact → PR checkpoint → User review → explicit merge/advance decision.
 No force push, lost work or automated advancement.
+
+
+## 2026-10-23 · P1.3 Visual Workstation
+
+User-authorized P1.1/P1.2 merges complete; main e505652b219ee97d33c0f4916fa8c8f50feb4235. New visual branch feature/p1-3-visual-workstation: three actual theme options, persistent KPI ribbon, full-height Inspect/Analyze, contrast and offline/regression evidence. See P1_3_IMPLEMENTATION_REPORT.md. P2 remains next; not started.

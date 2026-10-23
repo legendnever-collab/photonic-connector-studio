@@ -1,12 +1,12 @@
 # Photonic Connector Studio
 
-**Fiber-to-Waveguide Optical Design Workspace · v0.1.2-p1.2**
+**Fiber-to-Waveguide Optical Design Workspace · v0.1.3-p1.3**
 
 P1.2는 Air Gaussian q/Beam Axis, Source/WG Small-angle Tilt와 Offset–Tilt–Curvature Coupling을 계산합니다. Alignment Sensitivity Curve·Joint Map·Threshold 구간·CSV Export를 제공합니다. Common X-plane Phase-ramp 근사이며 Lens Tilt/Decenter, Roll과 Clipping은 지원하지 않습니다.
 
 ## 바로 실행
 
-[photonic-connector-studio-p1.2.html](artifacts/photonic-connector-studio-p1.2.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
+[photonic-connector-studio-p1.3.html](artifacts/photonic-connector-studio-p1.3.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
 
 ## Source 실행
 
@@ -43,16 +43,25 @@ Production Preview: `npm run preview` → `http://127.0.0.1:4173`.
 
 짧은 Desktop 화면에서는 Tree, Properties와 Data 내부를 스크롤합니다. 작업 내용은 Memory에 있으므로 종료 전에 JSON을 저장하세요. Browser Storage나 Cloud Account는 사용하지 않습니다.
 
-## P1.2 Play Review
+## P1.3 Visual Workstation Review
+
+- P1.1 / P1.2 are merged into main (PR #2 / #3). Physics limitations described above remain in force.
+- **Appearance**: Lab Light (default), Precision Dark, Focus Hybrid. Switch the actual workspace without resetting the Design, camera or computed results. This session preference is not included in Design JSON.
+- Persistent η / Loss / Radius ribbon; larger input and Canvas labels; stronger secondary text; full-height Desktop Inspect / Analyze tabs. Short Desktop windows scroll the center workspace rather than clipping controls. Mobile retains Layout / Train / Edit / Analysis.
+- [Visual options](artifacts/P1.3-design-options.png) · [Implementation / Validation](docs/P1_3_IMPLEMENTATION_REPORT.md).
+- Branch `feature/p1-3-visual-workstation`; design review before merging this new visual change. No P2 implementation starts automatically.
+- Next: P2 Physical Lens / Ray Tracing → P3 Physical Optics / Complex Field Overlap → P4 Optimization → P5 Connector Tolerance → P6 Multi-channel / Measurement Validation.
+
+## P1.2 Play Review (historical)
 
 - **Source Tilt / Beam Axis**: Source Yaw=5mrad → W Beam Center Y=4µm, Slope Y=−3mrad, η≈92.4465%.
 - **WG Tilt / Angular Mismatch**: η≈36.7879%; **Reset Matching**: η=100%.
 - Analysis → **Expand**: Offset/Tilt Curves, Joint Map, absolute η Threshold, finite nominal-connected pass interval, cell inspection and **Export Sweep CSV**.
 - Matching η≥80%: Offset≈±8.4279µm; Tilt≈±8.4279mrad under this Synthetic model. Scan ends and invalid domains are explicitly distinguished; these are not manufacturing tolerances.
 - Mobile: **편집 종료 · Layout**. Save JSON separately preserves Design. Scan settings are session state.
-- Branch `feature/p1-2-alignment`; [Draft PR #3](https://github.com/legendnever-collab/photonic-connector-studio/pull/3), stacked base `feature/p1-gaussian-optics` / PR #2.
+- PR #2 and [PR #3](https://github.com/legendnever-collab/photonic-connector-studio/pull/3) merged into main on 2026-10-23 (UTC).
 - [Work Order](docs/P1_2_WORK_ORDER.md) · [Implementation Report](docs/P1_2_IMPLEMENTATION_REPORT.md) · [Physics Validation](docs/P1_2_PHYSICS_VALIDATION.md) · [Recovery](docs/P1_2_RECOVERY_NOTE.md).
-- P0 / P1.1 artifacts preserved. Stop at P1.2 Play Review; no main merge or P2 auto-start.
+- P0 / P1.1 / P1.2 artifacts preserved. The user subsequently authorized the P1.1/P1.2 merge and P1.3 visual work.
 
 ## 기존 설계 문서
 

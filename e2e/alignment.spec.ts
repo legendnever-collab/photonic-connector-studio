@@ -3,7 +3,10 @@ import type { Page } from "@playwright/test";
 import {readFile} from "node:fs/promises";
 import {pathToFileURL} from "node:url";
 import {resolve} from "node:path";
-async function tab(page:Page,name:string){const nav=page.getByRole('navigation',{name:'Workspace tabs'});if(await nav.isVisible())await nav.getByRole('button',{name,exact:true}).click();}
+async function tab(page:Page,name:string){
+  const desktop = page.getByRole("navigation", {name:"Inspector tabs"});
+  if (await desktop.isVisible() && ["Analysis", "Edit", "Train"].includes(name)) await desktop.getByRole("button", {name:name === "Analysis" ? "Analyze" : "Inspect",exact:true}).click();
+const nav=page.getByRole('navigation',{name:'Workspace tabs'});if(await nav.isVisible())await nav.getByRole('button',{name,exact:true}).click();}
 async function example(page:Page,id:string){await page.getByLabel('Synthetic Example',{exact:true}).selectOption(id);}
 async function choose(page:Page,id:string){await tab(page,'Train');await page.getByTestId(`tree-${id}`).click();}
 async function save(page:Page){await tab(page,'Layout');const d=page.waitForEvent('download');await page.getByRole('button',{name:'Save JSON',exact:true}).click();return JSON.parse(await readFile((await(await d).path())!,'utf8'));}
