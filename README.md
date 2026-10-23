@@ -1,12 +1,12 @@
 # Photonic Connector Studio
 
-**Fiber-to-Waveguide Optical Design Workspace · v0.1.1-p1.1**
+**Fiber-to-Waveguide Optical Design Workspace · v0.1.2-p1.2**
 
-P1.1은 정렬된 Air Gaussian Beam의 q/ABCD Propagation, Ideal Thin Lens와 Phase Curvature를 포함한 Gaussian Mode Coupling을 계산합니다. Mobile 편집 종료도 개선했습니다. Source/Target는 각 Port Plane의 Waist로 가정합니다. Tilt/Decenter, Clipping, 실제 Connector의 전체 Insertion Loss는 계산하지 않습니다.
+P1.2는 Air Gaussian q/Beam Axis, Source/WG Small-angle Tilt와 Offset–Tilt–Curvature Coupling을 계산합니다. Alignment Sensitivity Curve·Joint Map·Threshold 구간·CSV Export를 제공합니다. Common X-plane Phase-ramp 근사이며 Lens Tilt/Decenter, Roll과 Clipping은 지원하지 않습니다.
 
 ## 바로 실행
 
-[photonic-connector-studio-p1.1.html](artifacts/photonic-connector-studio-p1.1.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
+[photonic-connector-studio-p1.2.html](artifacts/photonic-connector-studio-p1.2.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
 
 ## Source 실행
 
@@ -43,16 +43,16 @@ Production Preview: `npm run preview` → `http://127.0.0.1:4173`.
 
 짧은 Desktop 화면에서는 Tree, Properties와 Data 내부를 스크롤합니다. 작업 내용은 Memory에 있으므로 종료 전에 JSON을 저장하세요. Browser Storage나 Cloud Account는 사용하지 않습니다.
 
-## P1.1 Play Review
+## P1.2 Play Review
 
-- Synthetic Example → **Mode Matching**: η=100%, Gaussian Coupling Loss≈0 dB. **Mismatch / WG Offset**: η=36.7879%. 예제는 독립 검증 가능한 학습용 가정이며 실물 데이터가 아닙니다.
-- Free-space Example에서 Beam 확산을 확인하고 Lens X/Focal Length, Source/Target MFD, WG Y/Z Offset을 변경하세요. Beam/Target 표시 확대는 Geometry Scale과 별도입니다.
-- Mobile: **편집 종료 · Layout**으로 돌아갑니다. 유효한 입력은 자동 반영되며 파일 보존은 **Save JSON**입니다.
-- Branch: `feature/p1-gaussian-optics` / [Draft PR #2](https://github.com/legendnever-collab/photonic-connector-studio/pull/2), Base main.
-- [Implementation Report](docs/P1_1_IMPLEMENTATION_REPORT.md) · [Physics Validation](docs/P1_1_PHYSICS_VALIDATION.md) · [Recovery Note](docs/P1_1_RECOVERY_NOTE.md)
-- 90 Unit/Numerical/Font PASS; 32 Browser PASS / 2 intentional SKIP. 실제 Android Soft Keyboard는 미검증입니다.
-- P1.1 Play Review 대기. main 병합 및 P1.2/P2 자동 시작 금지.
-- P0는 [기존 Artifact](artifacts/photonic-connector-studio-p0.html)와 [Report](docs/P0_IMPLEMENTATION_REPORT.md)에 보존했습니다. 기본 1310 nm Example의 MFD TBD도 유지됩니다.
+- **Source Tilt / Beam Axis**: Source Yaw=5mrad → W Beam Center Y=4µm, Slope Y=−3mrad, η≈92.4465%.
+- **WG Tilt / Angular Mismatch**: η≈36.7879%; **Reset Matching**: η=100%.
+- Analysis → **Expand**: Offset/Tilt Curves, Joint Map, absolute η Threshold, finite nominal-connected pass interval, cell inspection and **Export Sweep CSV**.
+- Matching η≥80%: Offset≈±8.4279µm; Tilt≈±8.4279mrad under this Synthetic model. Scan ends and invalid domains are explicitly distinguished; these are not manufacturing tolerances.
+- Mobile: **편집 종료 · Layout**. Save JSON separately preserves Design. Scan settings are session state.
+- Branch `feature/p1-2-alignment`; [Draft PR #3](https://github.com/legendnever-collab/photonic-connector-studio/pull/3), stacked base `feature/p1-gaussian-optics` / PR #2.
+- [Work Order](docs/P1_2_WORK_ORDER.md) · [Implementation Report](docs/P1_2_IMPLEMENTATION_REPORT.md) · [Physics Validation](docs/P1_2_PHYSICS_VALIDATION.md) · [Recovery](docs/P1_2_RECOVERY_NOTE.md).
+- P0 / P1.1 artifacts preserved. Stop at P1.2 Play Review; no main merge or P2 auto-start.
 
 ## 기존 설계 문서
 
