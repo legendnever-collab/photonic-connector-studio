@@ -1601,3 +1601,60 @@ td input:focus {
   .finish-editing { min-height: 44px; }
   .mobile-tabs { padding-bottom: env(safe-area-inset-bottom); height: calc(65px + env(safe-area-inset-bottom)); }
 }
+
+.example-bar { display:flex; align-items:center; gap:12px; padding:0 24px 14px; flex-wrap:wrap; }
+.example-bar label { display:flex; align-items:center; gap:10px; font-size:12px; color:#577781; }
+.example-bar select { width:200px; }
+.example-bar > span { color:#6d838c; font-size:12px; }
+.example-bar button { border:1px solid #b7d5ce; background:#f4fbf8; }
+.beam-scale { display:flex; flex-wrap:wrap; align-items:center; gap:7px; padding:7px 14px; font-size:11px; border-top:1px solid #edf2f2; }
+.beam-scale select { width:64px; min-height:30px; padding:3px; }
+.beam-scale > span { color:#7b8e97; }
+.result-summary { background:white; border:1px solid #d7e7e2; border-radius:7px; padding:8px 16px; }
+.result-summary .metric { font-size:13px; }
+.result-summary .metric strong { font-size:15px; color:#177461; }
+.result-summary p { font-size:12px; padding:7px 0; color:#9c6545; }
+.result-metrics .metric { flex-wrap:wrap; }
+.result-metrics .metric strong { color:#207e6b; font-size:15px; font-weight:650; }
+.analysis-body { overflow-wrap:anywhere; }
+.analysis-body details { margin-top:14px; font-size:12px; }
+.analysis-body summary { cursor:pointer; color:#375f70; padding:7px 0; }
+.analysis-body .waist-assumption { color:#326b61; }
+.analysis-body .physics-warning, .analysis-body .calculation-error { color:#996234; background:#fff8e9; padding:9px; border-radius:4px; }
+.unavailable.valid { background:#edf8f1; color:#28775f; border-color:#bdd9ca; }
+.scientific-plot { margin:15px 0 8px; }
+.scientific-plot figcaption { font-size:11px; color:#526f7d; }
+.scientific-plot svg { display:block; width:100%; height:auto; }
+.scientific-plot text { font-size:11px; fill:#69828f; }
+.scientific-plot small { font-size:10px; color:#81919a; }
+.provenance li { margin:7px 0; }
+@media (max-width:1000px) {
+  .example-bar { padding:0 12px 12px; gap:8px; }
+  .example-bar label { flex:1; min-width:230px; }
+  .example-bar select { flex:1; }
+  .example-bar > span { font-size:11px; }
+  .result-summary .metric { flex-wrap:wrap; gap:4px; }
+  .field input, .field select { font-size:16px; }
+  .scientific-plot figcaption { font-size:13px; }
+  .properties-column { min-width:0; }
+}
+@media (min-width:1001px) {
+  .main-workspace { grid-template-rows:36px minmax(240px,1fr) auto 130px; gap:9px; }
+  .result-summary .metric { padding:5px 0; font-size:12px; }
+  .result-summary .metric strong { font-size:13px; }
+  .analysis-panel { min-height:0; flex:1; display:flex; flex-direction:column; }
+  .analysis-panel > .panel-toolbar { flex-shrink:0; }
+  .analysis-body { overflow:auto; min-height:0; }
+  .properties-panel { flex:1.2; }
+}
+@media (max-width:1000px) {
+  .mobile-layout { overflow:auto; }
+  .mobile-layout .main-workspace { height:auto; min-height:100%; }
+  .mobile-layout .layout-panel { min-height:365px; flex:none; }
+  .example-bar { flex-shrink:0; }
+}
+@media (max-width:1000px) {
+  .mobile-properties .properties-column { top:calc(var(--visible-top, 0px) + 112px); height:calc(var(--visible-height, 100dvh) - 177px); }
+  .mobile-tabs { position:fixed; top:calc(var(--visible-top, 0px) + var(--visible-height, 100dvh) - 65px - env(safe-area-inset-bottom)); left:0; right:0; bottom:auto; z-index:5; }
+  .app-shell { padding-bottom:calc(65px + env(safe-area-inset-bottom)); }
+}

@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Crosshair, Minus, Plus } from "lucide-react";
+import type { GaussianResult } from "./physics";
 import type { DesignDocument } from "./domain";
 import { isPort, project, toMM, toUM } from "./domain";
 
 type View = "XY" | "XZ";
 type Props = {
   doc: DesignDocument;
+  result: GaussianResult;
+  designRevision: number;
   selected: string;
   select: (id: string) => void;
   view: View;
@@ -13,6 +16,8 @@ type Props = {
 };
 export default function Layout({
   doc,
+  result,
+  designRevision,
   selected,
   select,
   view,
@@ -38,6 +43,8 @@ export default function Layout({
     height = Math.max(140, size.height);
   // Fix the fit bounds per loaded design; parameter edits do not change the camera.
   const [bounds, setBounds] = useState(() => fitBounds(doc));
+  const [beamScale, setBeamScale] = useState(10);
+  useEffect(() => { setBounds(fitBounds(doc)); setCamera({ zoom: 1, dx: 0, dy: 0 }); }, [designRevision]); // only explicit Load/Example resets fit
   const compact = width < 600;
   const padding = compact ? 60 : 85;
   const scale =
@@ -65,6 +72,9 @@ export default function Layout({
     { length: Math.min(60, Math.ceil(width / scale / tickStep) + 2) },
     (_, i) => Math.ceil(low / tickStep) * tickStep + i * tickStep,
   );
+  const axisKey = view === "XY" ? "y" : "z";
+  const sourceT = doc.components[0].frame.origin[axisKey];
+  const envelope = result.status === "valid" ? [...result.samples.map(s=>world(s.x, sourceT + s[axisKey].radius*beamScale)), ...[...result.samples].reverse().map(s=>world(s.x, sourceT - s[axisKey].radius*beamScale))].map(p=>`${p.x},${p.y}`).join(" ") : "";
   const mating = doc.components.find((c) => c.kind === "mating-plane")!;
   const m = world(
     mating.frame.origin.x,
@@ -104,6 +114,10 @@ export default function Layout({
           Mating Plane
         </span>
       </div>
+      <label className="beam-scale">Beam/Target transverse display ×
+        <select aria-label="Beam display scale" value={beamScale} onChange={e=>setBeamScale(Number(e.target.value))}>{[1,10,100].map(n=><option key={n} value={n}>{n}</option>)}</select>
+        <span>Geometry는 1:1 · Overlay만 확대</span>
+      </label>
       <div ref={holder} className="canvas-holder">
         <svg
           data-testid="optical-canvas"
@@ -216,6 +230,13 @@ export default function Layout({
             1:1 axis scale · +{view === "XY" ? "Z" : "Y"}{" "}
             {view === "XY" ? "⊙" : "⊗"}
           </text>
+          {result.status === "valid" && <g className="gaussian-overlay" pointerEvents="none" data-testid="beam-overlay">
+            <polygon points={envelope} fill="#30a68d" fillOpacity=".13" stroke="#218977" strokeWidth="1.7"/>
+            {(() => { const targetX=doc.components.at(-1)!.frame.origin.x, d=axisKey === "y" ? result.target.offsetY : result.target.offsetZ;
+              const upper=world(targetX, sourceT+(d+result.target[axisKey])*beamScale), lower=world(targetX, sourceT+(d-result.target[axisKey])*beamScale);
+              return <path d={`M${upper.x-6},${upper.y} H${upper.x+6} M${upper.x},${upper.y} V${lower.y} M${lower.x-6},${lower.y} H${lower.x+6}`} stroke="#7552ad" strokeWidth="3"/>;
+            })()}
+          </g>}
           {doc.components.map((c, index) => {
             const p = project(c.frame, view),
               point = world(p.x, p.transverse),
@@ -471,8 +492,8 @@ export default function Layout({
         </div>
       </div>
       <div className="layout-caption">
-        <span>Geometry only · Optical 경로 계산 없음</span>
-        <span>Symbol / Mode glyph는 도식 · 배경 Drag로 Pan</span>
+        <span>{result.status === "valid" ? `Computed Gaussian Envelope · ${view} radius ×${beamScale}` : "Beam 미계산 · Analysis에서 사유 확인"}</span>
+        <span>Geometry Symbol은 도식 · Target bracket도 동일 배율 · 배경 Drag로 Pan</span>
       </div>
     </section>
   );
