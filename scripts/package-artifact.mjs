@@ -9,6 +9,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
+execFileSync("npm", ["run", "build"], { stdio: "inherit" });
 const sha = (data) => createHash("sha256").update(data).digest("hex");
 function files(path) {
   return readdirSync(path)
@@ -25,6 +26,7 @@ const inputs = [
   "package-lock.json",
   "tsconfig.json",
   "vite.config.ts",
+  "scripts/package-artifact.mjs",
 ].sort();
 const sourceFingerprint = sha(
   inputs.map((path) => `${path}\0${sha(readFileSync(path))}`).join("\n"),
@@ -39,12 +41,12 @@ if (
     "Standalone HTML unexpectedly contains external script/style dependencies.",
   );
 mkdirSync("artifacts", { recursive: true });
-const name = "photonic-connector-studio-p0.html";
+const name = "photonic-connector-studio-p1.1.html";
 cpSync("dist/index.html", `artifacts/${name}`);
 const manifest = {
   version: JSON.parse(readFileSync("package.json", "utf8")).version,
   schemaVersion: 1,
-  sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], {
+  sourceCommit: process.env.SOURCE_COMMIT || execFileSync("git", ["rev-parse", "HEAD"], {
     encoding: "utf8",
   }).trim(),
   sourceFingerprint,
@@ -56,11 +58,11 @@ const manifest = {
   artifactBytes: html.length,
 };
 writeFileSync(
-  "artifacts/build-info.json",
+  "artifacts/build-info-p1.1.json",
   JSON.stringify(manifest, null, 2) + "\n",
 );
 writeFileSync(
-  "artifacts/SHA256SUMS.txt",
+  "artifacts/SHA256SUMS-p1.1.txt",
   `${manifest.artifactSHA256}  ${name}\n`,
 );
 console.log(

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useEffect, useRef, useState } from "react";
 import {
   Activity,
   ArrowDown,
@@ -28,7 +28,6 @@ import type { DesignDocument, History, OpticalComponent } from "./domain";
 import {
   APP_VERSION,
   DocumentSchema,
-  P0_SOLVER,
   addComponent,
   commit,
   degrees,
@@ -52,7 +51,12 @@ import {
   undo,
 } from "./domain";
 import Layout from "./Layout";
-import { NumberField, format } from "./Fields";
+import Analysis, { Metrics } from "./Analysis";
+import { solveGaussian } from "./physics";
+import type { GaussianResult } from "./physics";
+import { EXAMPLES, syntheticExample } from "./examples";
+import type { ExampleId } from "./examples";
+import { FieldValidity, NumberField, format } from "./Fields";
 
 type Tab = "layout" | "tree" | "properties" | "analysis";
 export default function App() {
@@ -62,6 +66,27 @@ export default function App() {
     future: [],
   }));
   const doc = history.present;
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
+  const fieldValidity = useCallback((label: string, invalid: boolean, recovered?: boolean) => {
+    if (recovered) setFailure("");
+    setInvalidFields(old => invalid ? (old.includes(label) ? old : [...old, label]) : (old.includes(label) ? old.filter(x => x !== label) : old));
+  }, []);
+  const [editNotice, setEditNotice] = useState("유효한 값은 자동 반영됩니다. 파일 보존은 Save JSON을 사용하세요.");
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const resize = () => {
+      document.documentElement.style.setProperty("--visible-height", `${viewport?.height ?? innerHeight}px`);
+      document.documentElement.style.setProperty("--visible-top", `${viewport?.offsetTop ?? 0}px`);
+    };
+    resize(); viewport?.addEventListener("resize", resize); viewport?.addEventListener("scroll", resize);
+    return () => { viewport?.removeEventListener("resize", resize); viewport?.removeEventListener("scroll", resize); };
+  }, []);
+  const finishEditing = () => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    setTab("layout"); setFailure("");
+    setMessage("편집을 종료했습니다. 유효한 변경은 이미 반영됐으며 미반영 입력은 마지막 유효 값으로 복구했습니다. 파일 보존: Save JSON.");
+  };
+  const [designRevision, setDesignRevision] = useState(0);
   const [selected, setSelected] = useState("fiber");
   const component =
     doc.components.find((c) => c.id === selected) ?? doc.components[0];
@@ -89,6 +114,7 @@ export default function App() {
       DocumentSchema.parse(next);
       setHistory((h) => commit(h, next));
       setFailure("");
+      setEditNotice("변경사항이 반영되었습니다. 파일 보존: Save JSON.");
       if (success) setMessage(success);
       return true;
     } catch (e) {
@@ -97,7 +123,7 @@ export default function App() {
     }
   }
   function update(next: OpticalComponent) {
-    change((d) => replaceComponent(d, next));
+    return change((d) => replaceComponent(d, next));
   }
   const select = (id: string) => {
     setSelected(id);
@@ -154,6 +180,7 @@ export default function App() {
       const next = parseDocument(await f.text());
       if (change(() => next)) {
         setSelected(next.components[0].id);
+        setDesignRevision(n => n + 1);
         setLastSaved(serialize(next));
         setMessage(
           `${f.name}을 불러왔습니다. Undo로 이전 Design을 복원할 수 있습니다.`,
@@ -188,8 +215,14 @@ export default function App() {
     )
       select("fiber");
   };
-  const result = P0_SOLVER.evaluate(doc);
+  const computed = useMemo(() => solveGaussian(doc), [doc]);
+  const result: GaussianResult = invalidFields.length || failure ? {status: "invalid", reason: "미반영 입력/오류가 있습니다. 유효한 값으로 수정하거나 편집 종료로 마지막 유효 값을 복구하세요.", provenance: computed.provenance, warnings: []} : computed;
+  const loadSynthetic = (id: ExampleId) => {
+    change(() => syntheticExample(id), EXAMPLES[id].description); select("fiber");
+    setTab("layout"); setDesignRevision(n => n + 1);
+  };
   return (
+    <FieldValidity.Provider value={fieldValidity}>
     <div className="app-shell">
       <header className="app-header">
         <div className="brand-mark">
@@ -201,7 +234,7 @@ export default function App() {
           </strong>
           <span className="header-caption">OPTICAL DESIGN WORKSPACE</span>
         </div>
-        <span className="build-tag">P0 · FOUNDATION</span>
+        <span className="build-tag">P1.1 · GAUSSIAN</span>
         <div className="header-right">
           <span className="local-status">
             <span className="live-dot" />
@@ -264,7 +297,7 @@ export default function App() {
                   "1310 nm Example을 불러왔습니다. Undo로 이전 Design을 복원할 수 있습니다.",
                 )
               )
-                select("fiber");
+                { select("fiber"); setDesignRevision(n => n + 1); }
             }}
           >
             <RotateCcw size={15} />
@@ -295,6 +328,13 @@ export default function App() {
           </span>
         </div>
       </div>
+      <section className="example-bar" aria-label="Synthetic Examples">
+        <label>Synthetic Example<select aria-label="Synthetic Example" value="" onChange={e => {if (e.target.value) loadSynthetic(e.target.value as ExampleId);}}>
+          <option value="">선택하세요</option>{Object.entries(EXAMPLES).map(([id,ex])=><option key={id} value={id}>{ex.label}</option>)}
+        </select></label>
+        <button onClick={() => loadSynthetic("matching")}>Reset Matching</button>
+        <span>학습용 가정 · 측정/실물 부품 데이터 아님</span>
+      </section>
       <div className={`workspace mobile-${tab}`}>
         <aside className="tree-panel panel" aria-label="Component Tree">
           <div className="panel-toolbar">
@@ -389,11 +429,14 @@ export default function App() {
           </div>
           <Layout
             doc={doc}
+            result={result}
+            designRevision={designRevision}
             selected={component.id}
             select={select}
             view={view}
             setView={setView}
           />
+          <Metrics result={result} compact/>
           <section className="data-panel panel" aria-label="Component Data">
             <div className="panel-toolbar">
               <div className="panel-title">
@@ -481,11 +524,12 @@ export default function App() {
             className="properties-panel panel"
             aria-label="Properties Editor"
           >
-            <div className="panel-toolbar">
+            <div className="panel-toolbar editor-toolbar">
               <div className="panel-title">
                 <SlidersHorizontal size={16} />
                 Properties
               </div>
+              <button className="finish-editing" onClick={finishEditing}>편집 종료 · Layout</button>
               <button
                 className="icon-button"
                 title={component.locked ? "Unlock Component" : "Lock Component"}
@@ -504,6 +548,7 @@ export default function App() {
               </button>
             </div>
             <div className="properties-content" key={component.id}>
+              <p className="editing-notice" aria-live="polite">{invalidFields.length ? "입력이 반영되지 않았습니다. 유효한 값을 입력하거나 Enter/Blur로 복구하세요." : editNotice}</p>
               <div className="selection-heading">
                 <span className={`component-symbol ${component.kind}`}>
                   <ComponentIcon c={component} />
@@ -589,7 +634,7 @@ export default function App() {
               {isPort(component) && "mode" in component ? (
                 <>
                   <div className="section-label">
-                    GAUSSIAN PORT <span>Input · no solver</span>
+                    GAUSSIAN PORT <span>Waist at this Plane</span>
                   </div>
                   <div className="fields-two">
                     {(["mfdX", "mfdY"] as const).map((axis) => (
@@ -649,7 +694,7 @@ export default function App() {
               ) : component.kind === "lens" ? (
                 <>
                   <div className="section-label">
-                    IDEAL THIN LENS <span>Schematic</span>
+                    IDEAL THIN LENS <span>Gaussian ABCD</span>
                   </div>
                   <div className="fields-two">
                     <NumberField
@@ -676,8 +721,7 @@ export default function App() {
                     />
                   </div>
                   <p className="field-note">
-                    Lens 형상은 Symbol입니다. Refraction / Focusing은 아직
-                    계산하지 않습니다.
+                    Ideal Lens / Aperture clipping not modeled. Beam Envelope는 Gaussian q로 계산합니다.
                   </p>
                 </>
               ) : component.kind === "gap" ? (
@@ -699,7 +743,7 @@ export default function App() {
                 <p className="field-note">
                   {component.kind === "mating-plane"
                     ? "두 결합면 사이의 Reference입니다. Optical Train에서 위치와 Orientation을 편집하세요."
-                    : "추가 Reference Plane입니다. Optical 계산은 수행하지 않습니다."}
+                    : "Power를 바꾸지 않는 관찰 Plane입니다."}
                 </p>
               )}
               <div className="section-label">ASSEMBLY / STATE</div>
@@ -813,19 +857,9 @@ export default function App() {
                 <Focus size={16} />
                 Analysis
               </div>
-              <span className="unavailable">Unavailable</span>
+              <span className={`unavailable ${result.status}`} data-testid="solver-status">{result.status === "valid" ? "Valid · Scalar" : result.status}</span>
             </div>
-            <div className="analysis-body">
-              {["Mode Overlap", "Coupling IL", "Beam Propagation"].map(
-                (label) => (
-                  <div className="metric" key={label}>
-                    <span>{label}</span>
-                    <strong>Not calculated</strong>
-                  </div>
-                ),
-              )}
-              <p>{result.reason}</p>
-            </div>
+            <div className="analysis-body"><Analysis result={result}/></div>
           </section>
         </aside>
       </div>
@@ -913,8 +947,7 @@ export default function App() {
               onChange={(v) => change((d) => ({ ...d, wavelength: nm(v!) }))}
             />
             <p className="field-note">
-              P0에서는 Optical Solver가 없습니다. Mode Overlap / IL은 Not
-              calculated입니다. 입력값은 예제 가정이며 측정값이 아닙니다.
+              P1.1은 Air의 정렬된 Gaussian과 Ideal Lens만 계산합니다. Source/Target는 각 Plane의 Waist입니다. Source/Lens Tilt·Decenter 및 Clipping은 지원하지 않습니다. 입력값은 예제 가정이며 측정값이 아닙니다.
             </p>
             <button className="primary" onClick={() => setHelp(false)}>
               Workspace로 돌아가기
@@ -923,6 +956,7 @@ export default function App() {
         </div>
       )}
     </div>
+    </FieldValidity.Provider>
   );
 }
 function ComponentIcon({ c }: { c: OpticalComponent }) {
