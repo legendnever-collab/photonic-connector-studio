@@ -24,12 +24,11 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import type { DesignDocument, History, OpticalComponent } from "./domain";
+import type { DesignDocument, OpticalComponent } from "./domain";
 import {
   APP_VERSION,
   DocumentSchema,
   addComponent,
-  commit,
   degrees,
   errorMessage,
   exampleDocument,
@@ -37,21 +36,21 @@ import {
   isTerminal,
   mm,
   nm,
-  parseDocument,
   radians,
-  redo,
   removeComponent,
   reorderComponent,
   replaceComponent,
-  serialize,
   toMM,
   toNM,
   toUM,
   um,
-  undo,
 } from "./domain";
 import Appearance from "./Appearance";
 import SurfaceWorkbench from "./surface/Workbench";
+import { useProject } from "./project/Store";
+import LinkedGaussian from "./project/LinkedGaussian";
+import ReportFigure from "./surface/ReportFigure";
+import { projectFingerprint } from "./project/model";
 import Layout from "./Layout";
 import Analysis, { Metrics } from "./Analysis";
 import { solveGaussian } from "./physics";
@@ -62,15 +61,13 @@ import { FieldValidity, NumberField, format } from "./Fields";
 
 type Tab = "layout" | "tree" | "properties" | "analysis";
 export default function App() {
-  const [history, setHistory] = useState<History>(() => ({
-    past: [],
-    present: exampleDocument(),
-    future: [],
-  }));
-  const doc = history.present;
+  const shared=useProject();
+  const {history}=shared;
+  const doc = shared.project.model.kind==='ideal'?shared.project.model.design:exampleDocument();
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const fieldValidity = useCallback((label: string, invalid: boolean, recovered?: boolean) => {
     if (recovered) setFailure("");
+    shared.setInvalid(old => invalid ? (old.includes(label)?old:[...old,label]) : old.filter(x=>x!==label));
     setInvalidFields(old => invalid ? (old.includes(label) ? old : [...old, label]) : (old.includes(label) ? old.filter(x => x !== label) : old));
   }, []);
   const [editNotice, setEditNotice] = useState("유효한 값은 자동 반영됩니다. 파일 보존은 Save JSON을 사용하세요.");
@@ -89,7 +86,7 @@ export default function App() {
     setMessage("편집을 종료했습니다. 유효한 변경은 이미 반영됐으며 미반영 입력은 마지막 유효 값으로 복구했습니다. 파일 보존: Save JSON.");
   };
   const [designRevision, setDesignRevision] = useState(0);
-  const [selected, setSelected] = useState("fiber");
+  const selected=shared.selection,setSelected=shared.setSelection;
   const component =
     doc.components.find((c) => c.id === selected) ?? doc.components[0];
   const [view, setView] = useState<"XY" | "XZ">("XY");
@@ -104,12 +101,10 @@ export default function App() {
     "1310 nm Example을 불러왔습니다. 위치와 Lens 값은 학습용 가정입니다.",
   );
   const [failure, setFailure] = useState("");
+  const [rootReport,setRootReport]=useState(false);
   const [help, setHelp] = useState(false);
-  const [lastSaved, setLastSaved] = useState(() =>
-    serialize(exampleDocument()),
-  );
   const file = useRef<HTMLInputElement>(null);
-  const dirty = serialize(doc) !== lastSaved;
+  const dirty=shared.dirty;
   function change(
     transform: (d: DesignDocument) => DesignDocument,
     success?: string,
@@ -117,7 +112,7 @@ export default function App() {
     try {
       const next = transform(doc);
       DocumentSchema.parse(next);
-      setHistory((h) => commit(h, next));
+      shared.updateIdeal(next);
       setFailure("");
       setEditNotice("변경사항이 반영되었습니다. 파일 보존: Save JSON.");
       if (success) setMessage(success);
@@ -140,26 +135,27 @@ export default function App() {
     setTab("properties");
   };
   const undoAction = () => {
-    setHistory(undo);
+    shared.undo();
     setFailure("");
   };
   const redoAction = () => {
-    setHistory(redo);
+    shared.redo();
     setFailure("");
   };
   useEffect(() => {
     const handle = (event: KeyboardEvent) => {
+      if(surfaceOpen || document.querySelector("dialog[open]"))return;
       const target = event.target as HTMLElement;
       if (target.closest("input,textarea,select")) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
         event.preventDefault();
-        setHistory(event.shiftKey ? redo : undo);
+        event.shiftKey ? shared.redo() : shared.undo();
         setFailure("");
       }
     };
     window.addEventListener("keydown", handle);
     return () => window.removeEventListener("keydown", handle);
-  }, []);
+  }, [shared.undo,shared.redo,surfaceOpen]);
   useEffect(() => {
     const guard = (e: BeforeUnloadEvent) => {
       if (dirty) e.preventDefault();
@@ -168,26 +164,17 @@ export default function App() {
     return () => window.removeEventListener("beforeunload", guard);
   }, [dirty]);
   const save = () => {
-    const json = serialize(doc),
-      blob = new Blob([json], { type: "application/json" }),
-      url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "photonic-connector-design.json";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setLastSaved(json);
-    setMessage("JSON을 저장했습니다. Open JSON으로 다시 불러올 수 있습니다.");
+    shared.save();
+    setMessage("공통 Project JSON을 저장했습니다. 세 View가 같은 설계를 사용합니다.");
   };
   const open = async (f: File | undefined) => {
     if (!f) return;
     try {
       if (f.size > 2_000_000) throw new Error("JSON은 2 MB 이하여야 합니다.");
-      const next = parseDocument(await f.text());
-      if (change(() => next)) {
-        setSelected(next.components[0].id);
+      shared.open(await f.text());
+      {
         setDesignRevision(n => n + 1);
-        setLastSaved(serialize(next));
+
         setMessage(
           `${f.name}을 불러왔습니다. Undo로 이전 Design을 복원할 수 있습니다.`,
         );
@@ -222,7 +209,7 @@ export default function App() {
       select("fiber");
   };
   const computed = useMemo(() => solveGaussian(doc), [doc]);
-  const result: GaussianResult = invalidFields.length || failure ? {status: "invalid", reason: "미반영 입력/오류가 있습니다. 유효한 값으로 수정하거나 편집 종료로 마지막 유효 값을 복구하세요.", provenance: computed.provenance, warnings: []} : computed;
+  const result: GaussianResult = invalidFields.length || shared.invalid.length || failure ? {status: "invalid", reason: "미반영 입력/오류가 있습니다. 유효한 값으로 수정하거나 편집 종료로 마지막 유효 값을 복구하세요.", provenance: computed.provenance, warnings: []} : computed;
   const loadSynthetic = (id: ExampleId) => {
     change(() => syntheticExample(id), EXAMPLES[id].description); select("fiber");
     setTab("layout"); setDesignRevision(n => n + 1);
@@ -230,7 +217,7 @@ export default function App() {
   return (
     <FieldValidity.Provider value={fieldValidity}>
     <>
-    <div className="app-shell" data-theme={theme} style={surfaceOpen ? {display:"none"} : undefined}>
+    <div className="app-shell" data-theme={theme} style={surfaceOpen || shared.project.model.kind!=="ideal" ? {display:"none"} : undefined}>
       <header className="app-header">
         <div className="brand-mark">
           <Activity size={25} />
@@ -241,7 +228,7 @@ export default function App() {
           </strong>
           <span className="header-caption">OPTICAL DESIGN WORKSPACE</span>
         </div>
-        <span className="build-tag">P1.3 · WORKSTATION</span>
+        <span className="build-tag">P2.3 · COMMON PROJECT</span>
         <div className="header-right">
           <button className="surface-launch" onClick={() => setSurfaceOpen(true)}>Surface Workbench</button>
           <Appearance theme={theme} onChange={setTheme}/>
@@ -270,6 +257,7 @@ export default function App() {
             <Save size={15} />
             <span>Save JSON</span>
           </button>
+          <button className="project-report-launch" aria-label="보고용 그림 · Report" disabled={!!invalidFields.length||!!failure} onClick={()=>setRootReport(true)}><Box size={15}/><span>보고용 그림 · Report</span></button>
           <input
             ref={file}
             data-testid="json-input"
@@ -322,14 +310,14 @@ export default function App() {
           <h1>{doc.name}</h1>
         </div>
         <div className="project-meta">
-          <span className="example-tag">ILLUSTRATIVE EXAMPLE</span>
+          <span className="example-tag" data-testid="shared-project-id">IDEAL · Project {projectFingerprint(shared.project)}</span>
           <span className={dirty ? "save-state dirty" : "save-state"}>
             {dirty ? (
               "● Unsaved changes"
             ) : (
               <>
                 <Check size={13} />{" "}
-                {lastSaved === serialize(exampleDocument())
+                {!dirty
                   ? "Example loaded"
                   : "JSON saved"}
               </>
@@ -440,7 +428,7 @@ export default function App() {
           <Layout
             doc={doc}
             result={result}
-            designRevision={designRevision}
+            designRevision={designRevision+shared.revision}
             selected={component.id}
             select={select}
             view={view}
@@ -970,6 +958,8 @@ export default function App() {
         </div>
       )}
     </div>
+    {!surfaceOpen&&shared.project.model.kind==='surface'&&<LinkedGaussian onSurface={()=>setSurfaceOpen(true)} theme={theme} setTheme={setTheme}/>}
+    {rootReport&&<ReportFigure doc={shared.doc} trace={shared.trace} initialSelection={shared.selection} onClose={()=>setRootReport(false)}/>}
     <div hidden={!surfaceOpen}><SurfaceWorkbench onReturn={() => setSurfaceOpen(false)} theme={theme} setTheme={setTheme}/></div>
     </>
     </FieldValidity.Provider>

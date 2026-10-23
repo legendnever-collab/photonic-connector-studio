@@ -3,8 +3,8 @@ import type { Compiled, Prescription, Vec } from './model';
 import type { Trace } from './trace';
 import { surfaceRing } from './trace';
 
-export type ReportFace = { points: Vec[]; material: 'glass' | 'metal' | 'probe'; surfaceId: string; illustrative: boolean };
-export type ReportEdge = { points: Vec[]; surfaceId: string; illustrative: boolean };
+export type ReportFace = { points: Vec[]; material: 'glass' | 'metal' | 'probe'; surfaceId: string; illustrative: boolean; bodyId?:string };
+export type ReportEdge = { points: Vec[]; surfaceId: string; illustrative: boolean; bodyId?:string };
 export type ReportGeometry = { faces: ReportFace[]; edges: ReportEdge[]; inferred: string[] };
 export const cross = (a: Vec, b: Vec) => V(a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x);
 
@@ -58,7 +58,7 @@ export function compatiblePair(a: Compiled,b: Compiled) {
 }
 /** Three planar side faces with a common transverse extrusion axis define an illustrative
  * triangular prism. Aperture disks are retained separately. Other configurations fall back to caps. */
-export function prismEnvelope(ss: Compiled[]): Vec[][] | null {
+export function prismEnvelope(ss: Compiled[], maxExtent?:number): Vec[][] | null {
     if(ss.length!==3 || ss.some(s=>s.shape!=='plane'||s.array))return null;
     const z=ss[0].world.axes[2];
     if(ss.some(s=>Math.abs(dot(s.world.axes[0],z))>1e-8))return null;
@@ -72,7 +72,7 @@ export function prismEnvelope(ss: Compiled[]): Vec[][] | null {
         vertices.push(add(origin,add(mul(x,u),mul(y,v))));
     }
     const span=Math.max(...ss.map(s=>s.aperture)), center=mul(vertices.reduce(add,V()),1/3);
-    if(vertices.some(v=>norm(sub(v,center))>span*20) || norm(cross(sub(vertices[1],vertices[0]),sub(vertices[2],vertices[0])))<1e-20)return null;
+    if(vertices.some(v=>norm(sub(v,center))>(maxExtent??span*20)) || norm(cross(sub(vertices[1],vertices[0]),sub(vertices[2],vertices[0])))<1e-20)return null;
     // Every optical vertex must lie on its triangular side segment; no extrapolated wedge.
     for(let i=0;i<3;i++) {
         const on=vertices.filter(v=>Math.abs(dot(ss[i].world.axes[0],sub(v,ss[i].world.origin)))<1e-9);

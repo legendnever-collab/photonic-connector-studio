@@ -11,7 +11,7 @@ async function tab(page:Page,name:string){
 }
 async function choose(page:Page,id:string){await tab(page,"Train");await page.getByTestId(`tree-${id}`).click();}
 async function example(page:Page,id:string){await page.getByLabel("Synthetic Example",{exact:true}).selectOption(id);}
-async function save(page:Page){await tab(page,"Layout");const d=page.waitForEvent("download");await page.getByRole("button",{name:"Save JSON",exact:true}).click();return JSON.parse(await readFile((await(await d).path())!,"utf8"));}
+async function save(page:Page){await tab(page,"Layout");const d=page.waitForEvent("download");await page.getByRole("button",{name:"Save JSON",exact:true}).click();const p=JSON.parse(await readFile((await(await d).path())!,"utf8"));return p.kind==='optical-project'?p.model.design:p;}
 test.beforeEach(async({page})=>{await page.goto("/");});
 test("synthetic matching, mismatch, free propagation and reset have benchmark KPIs",async({page})=>{
   await example(page,"matching");await expect(page.getByTestId("summary-eta")).toHaveText("100%");

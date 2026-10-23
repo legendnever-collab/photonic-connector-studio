@@ -39,3 +39,8 @@ User authorized Surface-first design with optional derived 3D. Canonical Surface
 ## 2026-10-24 · P2.2 Report Figure
 
 User requested a report button with a style closer to the earlier B/C concepts. A separate derived technical illustration now adds glass caps/rims, metal shading, illustrative envelopes and shadows, sampled ray-bundle silhouettes, labels, linked geometric footprint and offline SVG/PNG export. Design model and Gaussian/surface physics are unchanged. See P2_2_REPORT_FIGURE.md. Stacked feature/p2-2-report-figure; no main merge.
+
+
+## 2026-10-24 · P2.3 Common Optical Project
+
+Engineering-first shared Project / Surface Data / Assembly frames and explicit body dimensions. Gaussian, Surface and Report share selection, input document, Undo/Redo and Save/Load. Ideal vs Physical model class is preserved; physical Gaussian propagation remains gated. Mirror/Prism finite boundaries constrain both sampled ray acceptance and report patches. See P2_3_COMMON_PROJECT_CONTRACT.md and P2_3_IMPLEMENTATION_REPORT.md. Branch feature/p2-3-common-project, stacked on PR #6; no main merge.

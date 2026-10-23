@@ -7,7 +7,7 @@ async function tab(page: Page, name: string) { const nav = page.getByRole('navig
     await nav.getByRole('button', { name, exact: true }).click(); }
 async function example(page: Page, id: string) { await tab(page, 'Layout'); await page.getByLabel('Surface Example', { exact: true }).selectOption(id); }
 async function select(page: Page, id: string) { await tab(page, 'Surfaces'); await page.getByTestId(`surface-tree-${id}`).click(); }
-async function save(page: Page) { await tab(page, 'Layout'); const promise = page.waitForEvent('download'); await page.getByRole('button', { name: 'Save Surface JSON', exact: true }).click(); return JSON.parse(await readFile((await (await promise).path())!, 'utf8')); }
+async function save(page: Page) { await tab(page, 'Layout'); const promise = page.waitForEvent('download'); await page.getByRole('button', { name: 'Save Project JSON', exact: true }).click(); const project=JSON.parse(await readFile((await (await promise).path())!, 'utf8'));return project.kind==='optical-project'?project.model.prescription:project; }
 async function analysis(page: Page) { await tab(page, 'Analysis'); const nav = page.getByRole('navigation', { name: 'Surface Inspector tabs' }); if (await nav.isVisible())
     await nav.getByRole('button', { name: 'Ray Analysis', exact: true }).click(); }
 test.beforeEach(async ({ page }) => { await page.goto('/#surfaces'); });
@@ -100,7 +100,7 @@ test('3D shading, camera orbit and standalone SVG export preserve prescription',
     expect(svg).toContain('Computed geometric rays');
     expect(await save(page)).toEqual(before);
 });
-test('source tilt, Gaussian switching and session history remain independent', async ({ page }) => {
+test('source tilt and Gaussian switching retain the shared physical project', async ({ page }) => {
     await example(page, 'mirror');
     await select(page, 'M1');
     await page.getByLabel('Surface Edit Target', { exact: true }).selectOption('source');
@@ -108,8 +108,7 @@ test('source tilt, Gaussian switching and session history remain independent', a
     const d = await save(page);
     expect(d.source.frame.rotation.yaw).toBeCloseTo(Math.PI / 180, 12);
     await page.getByRole('button', { name: 'Gaussian Workspace', exact: true }).click();
-    await page.getByLabel('Synthetic Example', { exact: true }).selectOption('pointing');
-    await expect(page.getByTestId('summary-eta')).toHaveText('92.4465%');
+    await expect(page.getByTestId('gaussian-support')).toContainText('Not calculated');
     await page.getByRole('button', { name: 'Surface Workbench', exact: true }).click();
     expect(await save(page)).toEqual(d);
 });

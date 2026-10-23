@@ -1,8 +1,8 @@
-name: P2.2 validation
+name: P2.3 validation
 on:
   pull_request:
   push:
-    branches: [main, feature/p0-foundation, feature/p1-gaussian-optics, feature/p2-1-surface-workbench, feature/p2-2-report-figure]
+    branches: [main, feature/p0-foundation, feature/p1-gaussian-optics, feature/p2-1-surface-workbench, feature/p2-2-report-figure, feature/p2-3-common-project]
 permissions:
   contents: read
 jobs:
@@ -23,9 +23,9 @@ jobs:
       - run: npm run artifact
       - uses: actions/upload-artifact@v4
         with:
-          name: photonic-connector-studio-p2.2
+          name: photonic-connector-studio-p2.3
           path: |
-            artifacts/photonic-connector-studio-p2.2.html
-            artifacts/build-info-p2.2.json
-            artifacts/SHA256SUMS-p2.2.txt
+            artifacts/photonic-connector-studio-p2.3.html
+            artifacts/build-info-p2.3.json
+            artifacts/SHA256SUMS-p2.3.txt
             test-results/P2.1-*.png

@@ -95,7 +95,7 @@ export function intersect(ray: Ray, s: Compiled): Intersection | null {
     }
     return null;
 }
-export function traceRay(input: Ray, surfaces: Compiled[]): RayPath {
+export function traceRay(input: Ray, surfaces: Compiled[], accepts?: (point: Vec, surface: Compiled) => boolean): RayPath {
     let ray = { ...input, direction: unit(input.direction) }, opl = 0;
     const points = [ray.origin], hits: Hit[] = [];
     const blocked = (reason: string): RayPath => ({ channel: ray.channel, points, hits, status: "blocked", reason, opl });
@@ -107,6 +107,8 @@ export function traceRay(input: Ray, surfaces: Compiled[]): RayPath {
         points.push(hit.point);
         if (hit.clipped)
             return blocked(`${s.id}: aperture / cell clipping`);
+        if (accepts && !accepts(hit.point, s))
+            return blocked(`${s.id}: body boundary clipping`);
         if (Math.abs(ray.n - s.nBefore) > 1e-9)
             return blocked(`${s.id}: incident medium mismatch`);
         let direction = ray.direction, event = s.interaction, nextN = ray.n;
@@ -133,10 +135,10 @@ export function fingerprint(d: Prescription) { let h = 2166136261; for (const c 
     h ^= c.charCodeAt(0);
     h = Math.imul(h, 16777619);
 } return (h >>> 0).toString(16).padStart(8, "0"); }
-export function tracePrescription(input: Prescription): Trace {
+export function tracePrescription(input: Prescription, accepts?: (point: Vec, surface: Compiled) => boolean): Trace {
     const fingerprintValue = fingerprint(input);
     try {
-        const d = PrescriptionSchema.parse(input), surfaces = compile(d), paths = sourceRays(d).map(r => traceRay(r, surfaces));
+        const d = PrescriptionSchema.parse(input), surfaces = compile(d), paths = sourceRays(d).map(r => traceRay(r, surfaces, accepts));
         const reached = paths.filter(p => p.status === "reached");
         const centroid = reached.length ? mul(reached.reduce((a, p) => add(a, p.points.at(-1)!), V()), 1 / reached.length) : null;
         const meanU = reached.reduce((sum, p) => sum + p.hits.at(-1)!.local.y, 0) / reached.length, meanV = reached.reduce((sum, p) => sum + p.hits.at(-1)!.local.z, 0) / reached.length;

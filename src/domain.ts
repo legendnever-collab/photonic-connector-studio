@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const APP_VERSION = "0.2.2-p2.2";
+export const APP_VERSION = "0.2.3-p2.3";
 export const mm = (value: number) => value * 1e-3;
 export const um = (value: number) => value * 1e-6;
 export const nm = (value: number) => value * 1e-9;

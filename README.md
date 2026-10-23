@@ -1,12 +1,12 @@
 # Photonic Connector Studio
 
-**Fiber-to-Waveguide Optical Design Workspace · v0.2.2-p2.2**
+**Fiber-to-Waveguide Optical Design Workspace · v0.2.3-p2.3**
 
 P1.2는 Air Gaussian q/Beam Axis, Source/WG Small-angle Tilt와 Offset–Tilt–Curvature Coupling을 계산합니다. Alignment Sensitivity Curve·Joint Map·Threshold 구간·CSV Export를 제공합니다. Common X-plane Phase-ramp 근사이며 Lens Tilt/Decenter, Roll과 Clipping은 지원하지 않습니다.
 
 ## 바로 실행
 
-[photonic-connector-studio-p2.2.html](artifacts/photonic-connector-studio-p2.2.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
+[photonic-connector-studio-p2.3.html](artifacts/photonic-connector-studio-p2.3.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
 
 ## Source 실행
 
@@ -42,6 +42,19 @@ Production Preview: `npm run preview` → `http://127.0.0.1:4173`.
 7. Help에서 공통 Vacuum Wavelength를 변경할 수 있습니다.
 
 짧은 Desktop 화면에서는 Tree, Properties와 Data 내부를 스크롤합니다. 작업 내용은 Memory에 있으므로 종료 전에 JSON을 저장하세요. Browser Storage나 Cloud Account는 사용하지 않습니다.
+
+## P2.3 Common Optical Project
+
+Gaussian Workspace / Surface Workbench / Report는 하나의 Project·선택·Undo/Redo·Save/Load를 공유합니다. 기존 Ideal Thin Lens 설계는 그대로 보존하고, Physical Surface 설계에서는 Surface Data를 광학 정의의 기준으로 사용합니다.
+
+- **Source / Mode**: MFD·Polarization과 Source Body 치수를 별도로 입력합니다.
+- **Assemblies & Surfaces → Assembly**: Building Block Geometry에서 Lens 외경/Center Thickness, Mirror 원형·사각형/두께, Prism Depth, Array 기판 크기를 지정합니다. 곡률·Clear Radius·n·Local Frame은 Surface Data/Properties에서 편집합니다.
+- 보고용 형상은 같은 치수를 사용하며, Mirror/Prism의 유한 경계는 Ray 판정에도 적용됩니다. 정의되지 않은 Body 치수는 추정하지 않습니다.
+- **Save Project JSON**은 전체 공통 문서를 저장합니다. 기존 Gaussian JSON / Surface JSON도 Import할 수 있습니다. Legacy Surface 파일의 미정의 Body 치수는 그대로 미정의로 남습니다.
+- Physical Project의 Gaussian Workspace에서도 같은 Source/Target Mode와 부품을 확인·편집합니다. Physical Lens / Folded Path의 Gaussian 전파와 η는 아직 미지원이며 이전 결과를 표시하지 않습니다.
+- Ideal Gaussian 설계의 Surface View는 위치·Clear Aperture 참조입니다. Parent Assembly 자세와 Aperture를 편집할 수 있으며 실제 곡률·두께로 자동 변환하지 않습니다. Report의 Gaussian Envelope는 기존 검증된 Solver를 사용합니다.
+
+[설계 원칙과 범위](docs/P2_3_COMMON_PROJECT_CONTRACT.md) · [구현/검증](docs/P2_3_IMPLEMENTATION_REPORT.md).
 
 ## P2.2 Report Figure
 
