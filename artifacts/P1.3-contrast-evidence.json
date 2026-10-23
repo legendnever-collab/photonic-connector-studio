@@ -1,0 +1,186 @@
+[
+  {
+    "appearanceContrast": "desktop",
+    "evidence": [
+      {
+        "name": "Lab Light",
+        "ratios": [
+          {
+            "selector": ".project-strip h1",
+            "ratio": 13.90339804226234
+          },
+          {
+            "selector": ".result-summary .metric span",
+            "ratio": 6.078573922628965
+          },
+          {
+            "selector": ".result-summary .metric-coupling strong",
+            "ratio": 5.125239347374425
+          },
+          {
+            "selector": ".tree-item small",
+            "ratio": 5.64623889057699
+          },
+          {
+            "selector": ".example-bar>span",
+            "ratio": 6.078573922628965
+          },
+          {
+            "selector": ".finish-editing",
+            "ratio": 4.76070968207378
+          }
+        ]
+      },
+      {
+        "name": "Precision Dark",
+        "ratios": [
+          {
+            "selector": ".project-strip h1",
+            "ratio": 13.512056912154494
+          },
+          {
+            "selector": ".result-summary .metric span",
+            "ratio": 8.435280181566572
+          },
+          {
+            "selector": ".result-summary .metric-coupling strong",
+            "ratio": 9.081900237472903
+          },
+          {
+            "selector": ".tree-item small",
+            "ratio": 7.304485849727509
+          },
+          {
+            "selector": ".example-bar>span",
+            "ratio": 8.435280181566572
+          },
+          {
+            "selector": ".finish-editing",
+            "ratio": 7.864423035790323
+          }
+        ]
+      },
+      {
+        "name": "Focus Hybrid",
+        "ratios": [
+          {
+            "selector": ".project-strip h1",
+            "ratio": 13.90339804226234
+          },
+          {
+            "selector": ".result-summary .metric span",
+            "ratio": 6.078573922628965
+          },
+          {
+            "selector": ".result-summary .metric-coupling strong",
+            "ratio": 5.125239347374425
+          },
+          {
+            "selector": ".tree-item small",
+            "ratio": 5.64623889057699
+          },
+          {
+            "selector": ".example-bar>span",
+            "ratio": 6.078573922628965
+          },
+          {
+            "selector": ".finish-editing",
+            "ratio": 4.76070968207378
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "appearanceContrast": "mobile",
+    "evidence": [
+      {
+        "name": "Lab Light",
+        "ratios": [
+          {
+            "selector": ".project-strip h1",
+            "ratio": 13.90339804226234
+          },
+          {
+            "selector": ".result-summary .metric span",
+            "ratio": 6.078573922628965
+          },
+          {
+            "selector": ".result-summary .metric-coupling strong",
+            "ratio": 5.125239347374425
+          },
+          {
+            "selector": ".tree-item small",
+            "ratio": 5.64623889057699
+          },
+          {
+            "selector": ".example-bar>span",
+            "ratio": 6.078573922628965
+          },
+          {
+            "selector": ".finish-editing",
+            "ratio": 4.76070968207378
+          }
+        ]
+      },
+      {
+        "name": "Precision Dark",
+        "ratios": [
+          {
+            "selector": ".project-strip h1",
+            "ratio": 13.512056912154494
+          },
+          {
+            "selector": ".result-summary .metric span",
+            "ratio": 8.435280181566572
+          },
+          {
+            "selector": ".result-summary .metric-coupling strong",
+            "ratio": 9.081900237472903
+          },
+          {
+            "selector": ".tree-item small",
+            "ratio": 7.304485849727509
+          },
+          {
+            "selector": ".example-bar>span",
+            "ratio": 8.435280181566572
+          },
+          {
+            "selector": ".finish-editing",
+            "ratio": 7.864423035790323
+          }
+        ]
+      },
+      {
+        "name": "Focus Hybrid",
+        "ratios": [
+          {
+            "selector": ".project-strip h1",
+            "ratio": 13.90339804226234
+          },
+          {
+            "selector": ".result-summary .metric span",
+            "ratio": 6.078573922628965
+          },
+          {
+            "selector": ".result-summary .metric-coupling strong",
+            "ratio": 5.125239347374425
+          },
+          {
+            "selector": ".tree-item small",
+            "ratio": 5.64623889057699
+          },
+          {
+            "selector": ".example-bar>span",
+            "ratio": 6.078573922628965
+          },
+          {
+            "selector": ".finish-editing",
+            "ratio": 4.76070968207378
+          }
+        ]
+      }
+    ]
+  }
+]

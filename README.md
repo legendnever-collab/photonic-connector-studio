@@ -49,7 +49,7 @@ Production Preview: `npm run preview` → `http://127.0.0.1:4173`.
 - **Appearance**: Lab Light (default), Precision Dark, Focus Hybrid. Switch the actual workspace without resetting the Design, camera or computed results. This session preference is not included in Design JSON.
 - Persistent η / Loss / Radius ribbon; larger input and Canvas labels; stronger secondary text; full-height Desktop Inspect / Analyze tabs. Short Desktop windows scroll the center workspace rather than clipping controls. Mobile retains Layout / Train / Edit / Analysis.
 - [Visual options](artifacts/P1.3-design-options.png) · [Implementation / Validation](docs/P1_3_IMPLEMENTATION_REPORT.md).
-- Branch `feature/p1-3-visual-workstation`; design review before merging this new visual change. No P2 implementation starts automatically.
+- Branch `feature/p1-3-visual-workstation`; [Draft PR #4](https://github.com/legendnever-collab/photonic-connector-studio/pull/4), based on main. Design review before merging this new visual change. No P2 implementation starts automatically.
 - Next: P2 Physical Lens / Ray Tracing → P3 Physical Optics / Complex Field Overlap → P4 Optimization → P5 Connector Tolerance → P6 Multi-channel / Measurement Validation.
 
 ## P1.2 Play Review (historical)
