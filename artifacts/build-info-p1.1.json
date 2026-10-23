@@ -1,0 +1,31 @@
+{
+  "version": "0.1.1-p1.1",
+  "schemaVersion": 1,
+  "sourceCommit": "f0cf2da816fdf9c3dd8ecf41eb2a49b74772b8ce",
+  "sourceFingerprint": "54ed1a2cf99d33ab96b0115f601df974593dee1a226817ed53063eff5452f88b",
+  "inputs": {
+    "index.html": "0d47b1844d1727781a6059e7f9f435dabc41f38d184f93675f7d39391a0511d2",
+    "package-lock.json": "da476ab099eb17e0e9f71f817c538c086f7c524b940089a4b89fd76bd6b18e11",
+    "package.json": "7fd9be421ac1abdb9f068830c4b3be0ffd61fc4f00fb3d75af25353689abd9aa",
+    "scripts/package-artifact.mjs": "17498ad19de8f8f670c0dcc4b809a16d5bd3d4d68cabec247121d36202d391d2",
+    "src/Analysis.tsx": "ce79886d38da0e197b720f41bc0a277fa411784104061925b4e40b2a7c1dbb0f",
+    "src/App.tsx": "b9a2287f6b3ac1d39e4983f2cd9beb1ebb16664a6c31d3b5fbb979b291c56933",
+    "src/Fields.tsx": "538c1950764b01a30f3248c15904c38e068c93332a87370ce4064aee7e4b10a1",
+    "src/Layout.tsx": "7b12d993cc316e37ad476faeab5bbca061fe1119ea51c2be159e86cc7c5c910a",
+    "src/assets/NotoSansKR-OFL.txt": "18aabf190848725e2576eefb5c29ba06aac1029d02132252a7f312eac2e50cf3",
+    "src/assets/README.md": "2361c41ede01a2b6e543988baeeace755e3dbb8a510648a1b4de702cf61cdc5d",
+    "src/assets/noto-kr-p0.woff": "a4efcd34a69c95a7a89e540165380506faf39fa367ee07a1061cf1edc76da88f",
+    "src/assets/noto-kr-p1-coverage.json": "a0907d3d8e3f348cd75199c77190408aee656a3db79aae1c2690466790f67c96",
+    "src/assets/noto-kr-p1.woff": "3b36dfeeac38f821bad85f4529d64f9463fa7178a55b67bb650e17d4fdbc746f",
+    "src/domain.ts": "0751babf153b56ba54e0a8c0d22e20b6f8b68b4cc2f0e586c44ace7381ac367b",
+    "src/examples.ts": "5c58aa3f03ef8718839722b9fadbbe7b883c3dd26c7ff92dd251bb57eec77edc",
+    "src/main.tsx": "7dd0ec7c005211dc0191dbe92115cb395ec8f04c2591d2259039a5d7b42fb3c0",
+    "src/physics.ts": "b2695230e1e27ffb161114843e1d92b26e8db747c2555c861e688b4e5f227df6",
+    "src/styles.css": "a0080d4d90a23889d3cb504b16b2a6f2fe31603f92f315b88eb08dd3736985c4",
+    "tsconfig.json": "6210a6d05f22c3f5b3030645892b2cd5e568c70ea2a71abd70ace41fadf58634",
+    "vite.config.ts": "e7735db44b0a908f1501d28553beae1001f0d1227426d4bb2a695a53e9a0800d"
+  },
+  "artifact": "photonic-connector-studio-p1.1.html",
+  "artifactSHA256": "2d06cd6bcddc9ea9cc105b533ad77ac4a9ea747ab8d8e55d02e35bd15432c7f9",
+  "artifactBytes": 351246
+}
