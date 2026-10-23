@@ -94,7 +94,7 @@ test.each(["order","rotation","source-tilt","decenter","roll","mfd","lambda","f"
   if(f.kind!=="fiber"||w.kind!=="waveguide"||l.kind!=="lens")throw 0;
   if(kind==="order")l.frame.origin.x=mm(3.5);
   if(kind==="rotation")l.frame.rotation.yaw=1e-10;
-  if(kind==="source-tilt")f.frame.rotation.pitch=0.01;
+  if(kind==="source-tilt")f.frame.rotation.pitch=0.1;
   if(kind==="roll")w.frame.rotation.roll=0.01;
   if(kind==="decenter")l.frame.origin.y=um(1);
   if(kind==="mfd")f.mode.mfdX=0;

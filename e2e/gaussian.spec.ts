@@ -35,8 +35,8 @@ test("source/target MFD, offset, projection update results; rotation and TBD sup
   await example(page,"matching");await choose(page,"waveguide");await page.getByLabel("MFDx",{exact:true}).fill("50");
   await expect(page.getByTestId("summary-eta")).not.toHaveText("100%");
   await page.getByLabel("Y Position",{exact:true}).fill("0.02");
-  await page.getByLabel("Yaw",{exact:true}).fill("1");await tab(page,"Analysis");await expect(page.getByTestId("solver-status")).toHaveText("out-of-domain");await expect(page.getByTestId("eta")).toHaveText("Not calculated");
-  await choose(page,"waveguide");await page.getByLabel("Yaw",{exact:true}).fill("0");await page.getByLabel("MFDx",{exact:true}).fill("");await tab(page,"Analysis");await expect(page.getByTestId("calculation-reason")).toContainText("TBD");
+  await page.getByLabel("Roll",{exact:true}).fill("1");await tab(page,"Analysis");await expect(page.getByTestId("solver-status")).toHaveText("out-of-domain");await expect(page.getByTestId("eta")).toHaveText("Not calculated");
+  await choose(page,"waveguide");await page.getByLabel("Roll",{exact:true}).fill("0");await page.getByLabel("MFDx",{exact:true}).fill("");await tab(page,"Analysis");await expect(page.getByTestId("calculation-reason")).toContainText("TBD");
   await tab(page,"Layout");await page.getByRole("button",{name:"Reset Matching",exact:true}).click();await choose(page,"fiber");await page.getByLabel("MFDy",{exact:true}).fill("45");
   await tab(page,"Layout");await page.getByRole("button",{name:"X–Z",exact:true}).click();await expect(page.getByTestId("beam-overlay")).toBeVisible();await expect(page.getByTestId("summary-eta")).not.toHaveText("100%");
 });

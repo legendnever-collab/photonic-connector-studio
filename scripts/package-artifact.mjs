@@ -41,7 +41,7 @@ if (
     "Standalone HTML unexpectedly contains external script/style dependencies.",
   );
 mkdirSync("artifacts", { recursive: true });
-const name = "photonic-connector-studio-p1.1.html";
+const name = "photonic-connector-studio-p1.2.html";
 cpSync("dist/index.html", `artifacts/${name}`);
 const manifest = {
   version: JSON.parse(readFileSync("package.json", "utf8")).version,
@@ -58,11 +58,11 @@ const manifest = {
   artifactBytes: html.length,
 };
 writeFileSync(
-  "artifacts/build-info-p1.1.json",
+  "artifacts/build-info-p1.2.json",
   JSON.stringify(manifest, null, 2) + "\n",
 );
 writeFileSync(
-  "artifacts/SHA256SUMS-p1.1.txt",
+  "artifacts/SHA256SUMS-p1.2.txt",
   `${manifest.artifactSHA256}  ${name}\n`,
 );
 console.log(

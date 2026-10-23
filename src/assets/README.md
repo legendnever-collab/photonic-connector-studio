@@ -3,3 +3,5 @@ Source: @fontsource/noto-sans-kr 5.3.1; https://github.com/notofonts/noto-cjk
 P0: noto-kr-p0.woff — preserved original subset (143 Korean syllables).
 P1.1: noto-kr-p1.woff — 199 Korean syllables present in src/*.ts,tsx,css; generated with fontTools subset + merge from 400-normal .woff chunks. Other characters use system fonts; no web-font requests.
 Coverage is verified by tests/font.test.ts. Adding Korean UI strings requires refreshing the font subset.
+
+P1.2: noto-kr-p12.woff — 214 Korean source syllables; same fontTools subset/merge and license. P0/P1.1 assets preserved.

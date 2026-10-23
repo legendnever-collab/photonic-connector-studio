@@ -3,7 +3,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("./assets/noto-kr-p1.woff") format("woff");
+  src: url("./assets/noto-kr-p12.woff") format("woff");
   unicode-range: U+AC00-D7A3;
 }
 :root {
@@ -1669,4 +1669,43 @@ td input:focus {
   .example-bar label select { display:block; width:100%; font-size:12px; }
   .example-bar button { font-size:12px; padding:6px; }
   .example-bar > span { flex-basis:100%; font-size:10px; }
+}
+
+.sensitivity { border-top:1px solid #dce7e7; margin-top:14px; padding:10px 0; color:#3d5d6d; }
+.scan-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.scan-heading h3 { margin:0; font-size:14px; }
+.scan-heading button, .scan-actions button { border:1px solid #c5dcd6; background:#f4faf7; font-size:12px; }
+.scan-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-top:12px; }
+.scan-controls label { font-size:11px; min-width:0; }
+.scan-controls input, .scan-controls select { font-size:13px; margin-top:4px; }
+.scan-actions { display:flex; gap:7px; margin-top:9px; flex-wrap:wrap; }
+.scan-plot, .scan-map { margin:15px 0 4px; min-width:0; }
+.scan-plot svg, .scan-map svg { width:100%; height:auto; display:block; }
+.scan-plot figcaption, .scan-map figcaption { font-size:12px; color:#536f7b; }
+.scan-plot text, .scan-map text { font-size:10px; fill:#516d7b; }
+.scan-map rect { cursor:pointer; }
+.scan-map rect:focus { outline:2px solid #c79329; }
+.sensitivity p { font-size:11px; }
+.sensitivity .scan-warning { background:#fff5e3; color:#94662e; padding:9px; }
+.sensitivity .acceptance-range { font-size:11px; color:#207360; }
+.sensitivity.expanded { position:fixed; inset:3vh 4vw; z-index:20; background:#fff; border:1px solid #b4ccc6; border-radius:10px; padding:18px 24px; overflow:auto; box-shadow:0 0 0 100vmax #142d4380; }
+.sensitivity.expanded .scan-heading { position:sticky; top:-18px; background:white; z-index:1; padding:10px 0; }
+.sensitivity.expanded .scan-controls { grid-template-columns:repeat(4,minmax(0,1fr)); max-width:900px; }
+.sensitivity.expanded .scan-grid { display:grid; grid-template-columns:1fr 1fr; gap:30px; }
+.sensitivity.expanded p { font-size:14px; color:#5e7680; }
+.sensitivity.expanded .scan-plot figcaption, .sensitivity.expanded .scan-map figcaption { font-size:15px; }
+.sensitivity.expanded .scan-controls label { font-size:14px; }
+.sensitivity.expanded .scan-controls input, .sensitivity.expanded .scan-controls select { font-size:16px; }
+.axis-metrics { border-top:1px solid #dce7e7; margin-top:15px; }
+@media(max-width:700px){
+ .sensitivity.expanded { inset:0; border-radius:0; padding:12px 16px max(20px,env(safe-area-inset-bottom)); }
+ .sensitivity.expanded .scan-grid { display:block; }
+ .sensitivity.expanded .scan-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .sensitivity.expanded .scan-heading { top:-12px; padding:8px 0; }
+ .scan-controls input,.scan-controls select { font-size:16px; }
+ .scan-heading button { min-height:44px; }
+}
+@media(max-width:1000px){
+ body.alignment-expanded .properties-column { display:flex !important; }
+ body.alignment-expanded .analysis-panel { display:flex !important; }
 }

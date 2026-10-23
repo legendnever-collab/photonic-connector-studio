@@ -1,7 +1,9 @@
 import { DocumentSchema, exampleDocument, mm, nm, newFrame, um } from "./domain";
 import type { DesignDocument } from "./domain";
-export type ExampleId = "free" | "matching" | "mismatch";
+export type ExampleId = "free" | "matching" | "mismatch" | "tilt" | "pointing";
 export const EXAMPLES: Record<ExampleId, { label: string; description: string }> = {
+  tilt: { label: "WG Tilt / Angular Mismatch", description: "Synthetic · Matching 기준 WG Yaw=λ/(πw₀)=17.841241 mrad. Phase-ramp Overlap η=exp(−1)=36.787944%." },
+  pointing: { label: "Source Tilt / Beam Axis", description: "Synthetic · Matching 기준 Source Yaw=5 mrad. W Beam Center Y=4 µm, Slope Y=−3 mrad. Common X Plane 근사입니다." },
   free: { label: "Free-space Gaussian", description: "Synthetic · λ=1000 nm, w₀=20 µm, F–W=2 mm, Lens 없음. Target waist도20 µm이며 Phase/Size mismatch가 발생합니다." },
   matching: { label: "Mode Matching", description: "Synthetic · λ=1000 nm, zR=1 mm, w₀=√(λzR/π)=17.841241 µm. F=0, Lens=2 mm, f=1.25 mm, W=4 mm. q(W)=i·1 mm → η=100%. Optimization이 아닌 기준값 Reset입니다." },
   mismatch: { label: "Mismatch / WG Offset", description: "Synthetic · Matching과 동일하되 WG Y Offset=w₀=17.841241 µm. η=exp(−1)=36.787944%." },
@@ -16,6 +18,8 @@ export function syntheticExample(id: ExampleId): DesignDocument {
   target.mode = { ...source.mode };
   target.frame = newFrame(mm(id === "free" ? 2 : 4));
   if (id === "mismatch") target.frame.origin.y = radius;
+  if (id === "tilt") target.frame.rotation.yaw = doc.wavelength / (Math.PI * radius);
+  if (id === "pointing") source.frame.rotation.yaw = .005;
   const mating = doc.components.find(c => c.kind === "mating-plane")!;
   mating.frame = newFrame(mm(id === "free" ? 1 : 3));
   const lens = doc.components.find(c => c.id === "lens-f")!;

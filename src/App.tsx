@@ -234,7 +234,7 @@ export default function App() {
           </strong>
           <span className="header-caption">OPTICAL DESIGN WORKSPACE</span>
         </div>
-        <span className="build-tag">P1.1 · GAUSSIAN</span>
+        <span className="build-tag">P1.2 · ALIGNMENT</span>
         <div className="header-right">
           <span className="local-status">
             <span className="live-dot" />
@@ -614,7 +614,7 @@ export default function App() {
                     value={degrees(component.frame.rotation[axis])}
                     min={-180}
                     max={180}
-                    step={1}
+                    step={isPort(component) ? 0.01 : 1}
                     disabled={component.locked}
                     onChange={(v) =>
                       update({
@@ -631,6 +631,7 @@ export default function App() {
                   />
                 ))}
               </div>
+              {isPort(component) && <p className="field-note">Port Pitch/Yaw: Small-angle Phase ramp · norm ≤50 mrad (약2.865°) · Roll 미지원. sY=Yaw, sZ=−Pitch. Common X Plane 근사입니다.</p>}
               {isPort(component) && "mode" in component ? (
                 <>
                   <div className="section-label">
@@ -859,7 +860,7 @@ export default function App() {
               </div>
               <span className={`unavailable ${result.status}`} data-testid="solver-status">{result.status === "valid" ? "Valid · Scalar" : result.status}</span>
             </div>
-            <div className="analysis-body"><Analysis result={result}/></div>
+            <div className="analysis-body"><Analysis result={result} doc={doc}/></div>
           </section>
         </aside>
       </div>
@@ -947,7 +948,7 @@ export default function App() {
               onChange={(v) => change((d) => ({ ...d, wavelength: nm(v!) }))}
             />
             <p className="field-note">
-              P1.1은 Air의 정렬된 Gaussian과 Ideal Lens만 계산합니다. Source/Target는 각 Plane의 Waist입니다. Source/Lens Tilt·Decenter 및 Clipping은 지원하지 않습니다. 입력값은 예제 가정이며 측정값이 아닙니다.
+              P1.2는 Air Gaussian과 Centered Ideal Lens, Port의 Small-angle Tilt를 계산합니다. Source/Target는 Common X Plane의 Waist입니다. Lens Tilt·Decenter, Roll 및 Clipping은 지원하지 않습니다. 입력값은 예제 가정이며 측정값이 아닙니다.
             </p>
             <button className="primary" onClick={() => setHelp(false)}>
               Workspace로 돌아가기
