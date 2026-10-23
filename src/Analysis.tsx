@@ -3,12 +3,12 @@ import { toMM, toNM, toUM } from "./domain";
 export const number = (v: number, digits = 4) => Number.isFinite(v) ? Number(v.toPrecision(digits)).toString() : "∞";
 export function Metrics({ result, compact = false }: { result: GaussianResult; compact?: boolean }) {
   return <div className={compact ? "result-summary" : "result-metrics"} data-testid={compact ? "live-summary" : "analysis-metrics"}>
+    {result.warnings.filter(w => w.includes("Polarization")).map(w => <p className="physics-warning" key={w}>{w}</p>)}
     <div className="metric"><span>Gaussian Mode Coupling η</span><strong data-testid={compact ? "summary-eta" : "eta"}>{result.status === "valid" ? `${number(result.eta * 100, 6)}%${result.underflow ? " (underflow)" : ""}` : "Not calculated"}</strong></div>
     <div className="metric"><span>Gaussian Coupling Loss</span><strong>{result.status === "valid" ? `${number(result.lossDB, 6)} dB` : "Not calculated"}</strong></div>
     <div className="metric"><span>W Beam / Target Radius Y · Z [µm]</span><strong>{result.status === "valid" ? `${number(toUM(result.incident.y.radius))} / ${number(toUM(result.target.y))} · ${number(toUM(result.incident.z.radius))} / ${number(toUM(result.target.z))}` : "Not calculated"}</strong></div>
     {!compact && <p>Gaussian Coupling만 계산합니다. 전체 Connector Insertion Loss가 아닙니다.</p>}
     {compact && result.status !== "valid" && <p>{result.reason}</p>}
-    {compact && result.warnings.some(w => w.includes("Polarization")) && <p>{result.warnings.find(w => w.includes("Polarization"))}</p>}
   </div>;
 }
 function Trace({ series, label, unit }: { series: { x: number; y: number; z: number }[]; label: string; unit: string }) {
@@ -38,7 +38,7 @@ export default function Analysis({result}:{result:GaussianResult}) {
   return <><Metrics result={result}/>
     {result.status !== "valid" ? <p className="calculation-error" data-testid="calculation-reason">{result.reason}</p> : <>
       <p className="waist-assumption">Source waist: F · Target waist: W · WG Y/Z Offset만 지원</p>
-      {result.warnings.map(w=><p className="physics-warning" key={w}>{w}</p>)}
+      {result.warnings.filter(w => !w.includes("Polarization")).map(w=><p className="physics-warning" key={w}>{w}</p>)}
       <Trace label="Beam Radius w(X)" unit="µm" series={result.samples.map(s=>({x:s.x,y:toUM(s.y.radius),z:toUM(s.z.radius)}))}/>
       <details><summary>Curvature · Mode · Waist 상세</summary>
         <Trace label="Wavefront Curvature 1/R(X)" unit="m⁻¹" series={result.samples.map(s=>({x:s.x,y:s.y.curvature,z:s.z.curvature}))}/>
