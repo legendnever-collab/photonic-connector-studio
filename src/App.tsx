@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Activity,
   ArrowDown,
@@ -52,7 +52,7 @@ import {
   undo,
 } from "./domain";
 import Layout from "./Layout";
-import { NumberField, format } from "./Fields";
+import { FieldValidity, NumberField, format } from "./Fields";
 
 type Tab = "layout" | "tree" | "properties" | "analysis";
 export default function App() {
@@ -62,6 +62,25 @@ export default function App() {
     future: [],
   }));
   const doc = history.present;
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
+  const fieldValidity = useCallback((label: string, invalid: boolean) => {
+    setInvalidFields(old => invalid ? (old.includes(label) ? old : [...old, label]) : (old.includes(label) ? old.filter(x => x !== label) : old));
+  }, []);
+  const [editNotice, setEditNotice] = useState("유효한 값은 자동 반영됩니다. 파일 보존은 Save JSON을 사용하세요.");
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const resize = () => {
+      document.documentElement.style.setProperty("--visible-height", `${viewport?.height ?? innerHeight}px`);
+      document.documentElement.style.setProperty("--visible-top", `${viewport?.offsetTop ?? 0}px`);
+    };
+    resize(); viewport?.addEventListener("resize", resize); viewport?.addEventListener("scroll", resize);
+    return () => { viewport?.removeEventListener("resize", resize); viewport?.removeEventListener("scroll", resize); };
+  }, []);
+  const finishEditing = () => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    setTab("layout"); setFailure("");
+    setMessage("편집을 종료했습니다. 유효한 변경은 이미 반영됐으며 미반영 입력은 마지막 유효 값으로 복구했습니다. 파일 보존: Save JSON.");
+  };
   const [selected, setSelected] = useState("fiber");
   const component =
     doc.components.find((c) => c.id === selected) ?? doc.components[0];
@@ -89,6 +108,7 @@ export default function App() {
       DocumentSchema.parse(next);
       setHistory((h) => commit(h, next));
       setFailure("");
+      setEditNotice("변경사항이 반영되었습니다. 파일 보존: Save JSON.");
       if (success) setMessage(success);
       return true;
     } catch (e) {
@@ -97,7 +117,7 @@ export default function App() {
     }
   }
   function update(next: OpticalComponent) {
-    change((d) => replaceComponent(d, next));
+    return change((d) => replaceComponent(d, next));
   }
   const select = (id: string) => {
     setSelected(id);
@@ -190,6 +210,7 @@ export default function App() {
   };
   const result = P0_SOLVER.evaluate(doc);
   return (
+    <FieldValidity.Provider value={fieldValidity}>
     <div className="app-shell">
       <header className="app-header">
         <div className="brand-mark">
@@ -481,11 +502,12 @@ export default function App() {
             className="properties-panel panel"
             aria-label="Properties Editor"
           >
-            <div className="panel-toolbar">
+            <div className="panel-toolbar editor-toolbar">
               <div className="panel-title">
                 <SlidersHorizontal size={16} />
                 Properties
               </div>
+              <button className="finish-editing" onClick={finishEditing}>편집 종료 · Layout</button>
               <button
                 className="icon-button"
                 title={component.locked ? "Unlock Component" : "Lock Component"}
@@ -504,6 +526,7 @@ export default function App() {
               </button>
             </div>
             <div className="properties-content" key={component.id}>
+              <p className="editing-notice" aria-live="polite">{invalidFields.length ? "입력이 반영되지 않았습니다. 유효한 값을 입력하거나 Enter/Blur로 복구하세요." : editNotice}</p>
               <div className="selection-heading">
                 <span className={`component-symbol ${component.kind}`}>
                   <ComponentIcon c={component} />
@@ -923,6 +946,7 @@ export default function App() {
         </div>
       )}
     </div>
+    </FieldValidity.Provider>
   );
 }
 function ComponentIcon({ c }: { c: OpticalComponent }) {

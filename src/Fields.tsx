@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+export const FieldValidity = createContext<(label: string, invalid: boolean) => void>(() => {});
 export function NumberField({
   label,
   value,
@@ -12,7 +13,7 @@ export function NumberField({
 }: {
   label: string;
   value: number | null;
-  onChange: (v: number | null) => void;
+  onChange: (v: number | null) => void | boolean;
   unit: string;
   min?: number;
   max?: number;
@@ -22,7 +23,11 @@ export function NumberField({
 }) {
   const [raw, setRaw] = useState(value === null ? "" : format(value));
   const [error, setError] = useState("");
+  const validity = useContext(FieldValidity);
+  const ownValue = useRef<number | null | undefined>(undefined);
+  useEffect(() => { validity(label, !!error); return () => validity(label, false); }, [error, label, validity]);
   useEffect(() => {
+    if (ownValue.current === value) { ownValue.current = undefined; return; }
     setRaw(value === null ? "" : format(value));
     setError("");
   }, [value]);
@@ -40,14 +45,22 @@ export function NumberField({
           placeholder={nullable ? "TBD" : undefined}
           value={raw}
           disabled={disabled}
+          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+          onBlur={() => {
+            setRaw(value === null ? "" : format(value));
+            if (error) setError("");
+            // A rejected draft never becomes a committed number.
+            validity(label, false);
+          }}
           onChange={(e) => {
             const raw = e.target.value;
             setRaw(raw);
             if (raw === "") {
               if (nullable) {
                 setError("");
+                ownValue.current = null;
                 onChange(null);
-              } else setError("값을 입력하세요.");
+              } else setError("값을 입력하세요. Blur/Enter로 마지막 유효 값을 복구합니다.");
               return;
             }
             const v = Number(raw);
@@ -60,7 +73,8 @@ export function NumberField({
               return;
             }
             setError("");
-            onChange(v);
+            ownValue.current = v;
+            if (onChange(v) === false) setError("반영할 수 없습니다. Geometry/범위를 확인하세요. Blur/Enter로 마지막 유효 값을 복구합니다.");
           }}
         />
         <span>{unit}</span>
