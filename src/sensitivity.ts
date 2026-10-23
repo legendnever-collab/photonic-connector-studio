@@ -1,9 +1,10 @@
+import { ComponentSchema } from "./domain";
 import type { DesignDocument } from "./domain";
-import { solveGaussian } from "./physics";
+import { axisLogOverlap, MAX_SLOPE, SOLVER_VERSION, solveGaussian } from "./physics";
 import type { GaussianResult } from "./physics";
 export type SensitivitySettings = { axis: "y" | "z"; offsetSpan: number; tiltSpan: number; threshold: number; points: number; mapPoints: number };
 export const DEFAULT_SENSITIVITY: SensitivitySettings = { axis: "y", offsetSpan: 30e-6, tiltSpan: 0.02, threshold: 0.8, points: 61, mapPoints: 21 };
-export type ScanPoint = { offset: number; rotation: number; eta: number | null; status: GaussianResult["status"]; reason?: string };
+export type ScanPoint = { offset: number; rotation: number; eta: number | null; status: GaussianResult["status"]; reason?: string; logEta?: number; underflow?: boolean };
 export type Boundary = { delta: number; kind: "crossing" | "scan-edge" | "domain-edge" };
 export type Acceptance = { status: "passes"; low: Boundary; high: Boundary } | { status: "nominal-below-threshold" };
 export type SensitivityResult = { status: "valid"; fingerprint: string; settings: SensitivitySettings; nominalEta: number; offsetCurve: ScanPoint[]; tiltCurve: ScanPoint[]; map: ScanPoint[]; offsetAcceptance: Acceptance; tiltAcceptance: Acceptance } | { status: "invalid"; reason: string };
@@ -18,8 +19,18 @@ export function computeSensitivity(doc: DesignDocument, settings: SensitivitySet
   const nominal = solveGaussian(doc, {sampleBeam:false});
   if (nominal.status !== "valid") return {status:"invalid",reason:nominal.reason};
   const point = (offset:number,rotation:number):ScanPoint => {
-    const r = solveGaussian(shiftedTarget(doc,s.axis,offset,rotation),{sampleBeam:false});
-    return r.status === "valid" ? {offset,rotation,eta:r.eta,status:r.status} : {offset,rotation,eta:null,status:r.status,reason:r.reason};
+    // Frozen train: only accepted WG field changes. Reuse validated W incident field,
+    // avoiding hundreds of q propagations and full-design fingerprints per keystroke.
+    const changed = shiftedTarget(doc,s.axis,offset,rotation).components.at(-1)!;
+    const parsed = ComponentSchema.safeParse(changed);
+    if (!parsed.success) return {offset,rotation,eta:null,status:"invalid",reason:parsed.error.issues.map(i=>i.message).join(" · ")};
+    if (Math.hypot(changed.frame.rotation.yaw,changed.frame.rotation.pitch)>MAX_SLOPE) return {offset,rotation,eta:null,status:"out-of-domain",reason:"WG Tilt norm >50 mrad"};
+    const dY=nominal.mismatch.offsetY+(s.axis==="y"?offset:0),dZ=nominal.mismatch.offsetZ+(s.axis==="z"?offset:0);
+    const angleY=nominal.mismatch.angleY-(s.axis==="y"?rotation:0),angleZ=nominal.mismatch.angleZ+(s.axis==="z"?rotation:0);
+    try {
+      const log=axisLogOverlap(nominal.incident.y.radius,nominal.target.y,nominal.incident.y.curvature,dY,doc.wavelength,angleY)+axisLogOverlap(nominal.incident.z.radius,nominal.target.z,nominal.incident.z.curvature,dZ,doc.wavelength,angleZ);
+      const eta=Math.exp(log);return {offset,rotation,eta,logEta:log,underflow:eta===0,status:"valid"};
+    } catch(error) { return {offset,rotation,eta:null,status:"invalid",reason:String(error)}; }
   };
   const grid = (span:number,n:number) => Array.from({length:n},(_,i)=>(i-(n-1)/2)*span/((n-1)/2));
   const offsetCurve=grid(s.offsetSpan,s.points).map(d=>point(d,0));
@@ -52,7 +63,7 @@ export function computeSensitivity(doc: DesignDocument, settings: SensitivitySet
 }
 export function sensitivityCSV(r:Extract<SensitivityResult,{status:"valid"}>) {
   const quote=(v:unknown)=>`"${String(v??"").replaceAll('"','""')}"`;
-  const rows=[['kind','axis','delta_offset_m','delta_port_rotation_rad','eta','validity','reason','nominal_fingerprint','absolute_eta_threshold','solver_version']];
-  for(const [kind,points] of [['offset',r.offsetCurve],['tilt',r.tiltCurve],['map',r.map]] as const) for(const p of points) rows.push([kind,r.settings.axis,String(p.offset),String(p.rotation),p.eta===null?'':String(p.eta),p.status,p.reason??'',r.fingerprint,String(r.settings.threshold),'1.2.0']);
+  const rows=[['kind','axis','delta_offset_m','delta_port_rotation_rad','eta','validity','reason','nominal_fingerprint','absolute_eta_threshold','solver_version','log_eta','underflow']];
+  for(const [kind,points] of [['offset',r.offsetCurve],['tilt',r.tiltCurve],['map',r.map]] as const) for(const p of points) rows.push([kind,r.settings.axis,String(p.offset),String(p.rotation),p.eta===null?'':String(p.eta),p.status,p.reason??'',r.fingerprint,String(r.settings.threshold),SOLVER_VERSION,p.logEta===undefined?'':String(p.logEta),String(p.underflow??'')]);
   return rows.map(row=>row.map(quote).join(',')).join('\n')+'\n';
 }

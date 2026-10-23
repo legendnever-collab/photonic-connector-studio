@@ -1,3 +1,5 @@
+import Sensitivity from "./Sensitivity";
+import type { DesignDocument } from "./domain";
 import type { GaussianResult } from "./physics";
 import { toMM, toNM, toUM } from "./domain";
 export const number = (v: number, digits = 4) => Number.isFinite(v) ? Number(v.toPrecision(digits)).toString() : "∞";
@@ -24,7 +26,7 @@ function Trace({ series, label, unit }: { series: { x: number; y: number; z: num
   </svg></figure>;
 }
 function ModeProfile({ result, axis }: { result: Extract<GaussianResult,{status:"valid"}>; axis: "y" | "z" }) {
-  const wi=result.incident[axis].radius, wt=result.target[axis], offset=axis === "y" ? result.target.offsetY : result.target.offsetZ;
+  const wi=result.incident[axis].radius, wt=result.target[axis], offset=axis === "y" ? result.mismatch.offsetY : result.mismatch.offsetZ;
   const lo=Math.min(-3*wi,offset-3*wt), hi=Math.max(3*wi,offset+3*wt);
   const samples=Array.from({length:181},(_,i)=>lo+(hi-lo)*i/180);
   const points=(target:boolean)=>samples.map((u,i)=>`${30+i*300/180},${115-90*Math.exp(-2*((u-(target?offset:0))/(target?wt:wi))**2)}`).join(" ");
@@ -34,12 +36,20 @@ function ModeProfile({ result, axis }: { result: Extract<GaussianResult,{status:
       <text x="30" y="138">{number(toUM(lo))} µm</text><text x="270" y="138">{number(toUM(hi))} µm</text><text x="3" y="25">1</text>
     </svg><small>각 Peak=1로 표시 · Phase Curvature는 아래 1/R에서 확인</small></figure>;
 }
-export default function Analysis({result}:{result:GaussianResult}) {
+export default function Analysis({result,doc}:{result:GaussianResult;doc:DesignDocument}) {
   return <><Metrics result={result}/>
+    <Sensitivity doc={doc} result={result}/>
     {result.status !== "valid" ? <p className="calculation-error" data-testid="calculation-reason">{result.reason}</p> : <>
-      <p className="waist-assumption">Source waist: F · Target waist: W · WG Y/Z Offset만 지원</p>
+      <p className="waist-assumption">Common X planes · Source waist F / Target waist W · Port Tilt: Phase ramp (≤50 mrad)</p>
       {result.warnings.filter(w => !w.includes("Polarization")).map(w=><p className="physics-warning" key={w}>{w}</p>)}
+      <div className="axis-metrics" data-testid="axis-metrics">
+        <p>W Beam Center Y/Z: {number(toUM(result.incident.axis.y.height))} / {number(toUM(result.incident.axis.z.height))} µm</p>
+        <p>W Incident Slope Y/Z: {number(result.incident.axis.y.slope*1e3)} / {number(result.incident.axis.z.slope*1e3)} mrad</p>
+        <p>Target Slope Y/Z: {number(result.target.angleY*1e3)} / {number(result.target.angleZ*1e3)} mrad</p>
+        <p>Target−Beam Offset Y/Z: {number(toUM(result.mismatch.offsetY))} / {number(toUM(result.mismatch.offsetZ))} µm · Incident−Target Angle Y/Z: {number(result.mismatch.angleY*1e3)} / {number(result.mismatch.angleZ*1e3)} mrad</p>
+      </div>
       <Trace label="Beam Radius w(X)" unit="µm" series={result.samples.map(s=>({x:s.x,y:toUM(s.y.radius),z:toUM(s.z.radius)}))}/>
+      <Trace label="Beam Axis Center h(X)" unit="µm" series={result.samples.map(s=>({x:s.x,y:toUM(s.axis.y.height),z:toUM(s.axis.z.height)}))}/>
       <details><summary>Curvature · Mode · Waist 상세</summary>
         <Trace label="Wavefront Curvature 1/R(X)" unit="m⁻¹" series={result.samples.map(s=>({x:s.x,y:s.y.curvature,z:s.z.curvature}))}/>
         <p>W Incident 1/R: Y {number(result.incident.y.curvature)} / Z {number(result.incident.z.curvature)} m⁻¹. Target: 0 (R=∞).</p>

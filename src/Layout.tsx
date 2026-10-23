@@ -74,7 +74,7 @@ export default function Layout({
   );
   const axisKey = view === "XY" ? "y" : "z";
   const sourceT = doc.components[0].frame.origin[axisKey];
-  const envelope = result.status === "valid" ? [...result.samples.map(s=>world(s.x, sourceT + s[axisKey].radius*beamScale)), ...[...result.samples].reverse().map(s=>world(s.x, sourceT - s[axisKey].radius*beamScale))].map(p=>`${p.x},${p.y}`).join(" ") : "";
+  const envelope = result.status === "valid" ? [...result.samples.map(s=>world(s.x, sourceT + (s.axis[axisKey].height-sourceT+s[axisKey].radius)*beamScale)), ...[...result.samples].reverse().map(s=>world(s.x, sourceT + (s.axis[axisKey].height-sourceT-s[axisKey].radius)*beamScale))].map(p=>`${p.x},${p.y}`).join(" ") : "";
   const mating = doc.components.find((c) => c.kind === "mating-plane")!;
   const m = world(
     mating.frame.origin.x,
@@ -114,9 +114,9 @@ export default function Layout({
           Mating Plane
         </span>
       </div>
-      <label className="beam-scale">Beam/Target transverse display ×
+      <label className="beam-scale">Axis/Beam/Target display ×
         <select aria-label="Beam display scale" value={beamScale} onChange={e=>setBeamScale(Number(e.target.value))}>{[1,10,100].map(n=><option key={n} value={n}>{n}</option>)}</select>
-        <span>Geometry는 1:1 · Overlay만 확대</span>
+        <span>Geometry는 1:1 · Center·Radius·Offset를 함께 확대</span>
       </label>
       <div ref={holder} className="canvas-holder">
         <svg
@@ -231,6 +231,7 @@ export default function Layout({
             {view === "XY" ? "⊙" : "⊗"}
           </text>
           {result.status === "valid" && <g className="gaussian-overlay" pointerEvents="none" data-testid="beam-overlay">
+            <polyline data-testid="beam-axis" points={result.samples.map(s=>{const p=world(s.x,sourceT+(s.axis[axisKey].height-sourceT)*beamScale);return `${p.x},${p.y}`;}).join(" ")} fill="none" stroke="#c97e29" strokeWidth="2"/>
             <polygon points={envelope} fill="#30a68d" fillOpacity=".13" stroke="#218977" strokeWidth="1.7"/>
             {(() => { const targetX=doc.components.at(-1)!.frame.origin.x, d=axisKey === "y" ? result.target.offsetY : result.target.offsetZ;
               const upper=world(targetX, sourceT+(d+result.target[axisKey])*beamScale), lower=world(targetX, sourceT+(d-result.target[axisKey])*beamScale);
@@ -493,7 +494,7 @@ export default function Layout({
       </div>
       <div className="layout-caption">
         <span>{result.status === "valid" ? `η ${Number((result.eta*100).toPrecision(6))}% · Coupling Loss ${Number.isFinite(result.lossDB) ? Number(result.lossDB.toPrecision(5)) : "∞"} dB · ${view} radius ×${beamScale}` : "Beam 미계산 · Analysis에서 사유 확인"}</span>
-        <span>Geometry Symbol은 도식 · Target bracket도 동일 배율 · 배경 Drag로 Pan</span>
+        <span>Axis/Envelope/Target 동일 배율 · 각도 값은 Analysis · 배경 Drag로 Pan</span>
       </div>
     </section>
   );

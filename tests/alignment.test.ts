@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { axisLogOverlap, lensAxis, MAX_SLOPE, propagateAxis, solveGaussian } from "../src/physics";
 import { syntheticExample } from "../src/examples";
 import { mm, nm, um, parseDocument, serialize } from "../src/domain";
-import { computeSensitivity, DEFAULT_SENSITIVITY, sensitivityCSV } from "../src/sensitivity";
+import { computeSensitivity, DEFAULT_SENSITIVITY, sensitivityCSV, shiftedTarget } from "../src/sensitivity";
 function valid(doc=syntheticExample("matching")){const r=solveGaussian(doc);if(r.status!=="valid")throw new Error(r.reason);return r;}
 // Direct sampled fields, including independent spatial centers / both phase ramps.
 function numeric(wi:number,wt:number,c:number,hi:number,ht:number,si:number,st:number,window:number,n:number){
@@ -79,4 +79,10 @@ test("finite scan edge, domain edge, nominal failure and off-nominal passing poi
 test.each([0,-1,NaN,Infinity])("invalid sensitivity span %s",offsetSpan=>{expect(computeSensitivity(syntheticExample("matching"),{...DEFAULT_SENSITIVITY,offsetSpan}).status).toBe("invalid");});
 test("invalid nominal and zero threshold never produce stale sensitivity",()=>{
  const doc=syntheticExample("matching");doc.components[0].frame.rotation.yaw=.1;expect(computeSensitivity(doc).status).toBe("invalid");expect(computeSensitivity(syntheticExample("matching"),{...DEFAULT_SENSITIVITY,threshold:0}).status).toBe("invalid");
+});
+
+test("frozen-train scan agrees with full solver for curved, tilted elliptical fields and both axes",()=>{
+ for(const axis of ["y","z"] as const){const doc=syntheticExample("free"),f=doc.components[0],w=doc.components.at(-1)!;if(f.kind!=="fiber"||w.kind!=="waveguide")throw 0;f.mode.mfdY=um(60);w.mode.mfdX=um(60);f.frame.rotation.yaw=.004;f.frame.rotation.pitch=-.003;
+ const r=computeSensitivity(doc,{...DEFAULT_SENSITIVITY,axis,points:7,mapPoints:5});if(r.status!=="valid")throw 0;for(const point of r.map){const full=solveGaussian(shiftedTarget(doc,axis,point.offset,point.rotation));expect(point.status).toBe(full.status);if(full.status==="valid")expect(point.eta).toBeCloseTo(full.eta,14);}
+ }
 });
