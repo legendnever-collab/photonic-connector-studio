@@ -1,12 +1,12 @@
 # Photonic Connector Studio
 
-**Fiber-to-Waveguide Optical Design Workspace · v0.1.3-p1.3**
+**Fiber-to-Waveguide Optical Design Workspace · v0.2.1-p2.1**
 
 P1.2는 Air Gaussian q/Beam Axis, Source/WG Small-angle Tilt와 Offset–Tilt–Curvature Coupling을 계산합니다. Alignment Sensitivity Curve·Joint Map·Threshold 구간·CSV Export를 제공합니다. Common X-plane Phase-ramp 근사이며 Lens Tilt/Decenter, Roll과 Clipping은 지원하지 않습니다.
 
 ## 바로 실행
 
-[photonic-connector-studio-p1.3.html](artifacts/photonic-connector-studio-p1.3.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
+[photonic-connector-studio-p2.1.html](artifacts/photonic-connector-studio-p2.1.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
 
 ## Source 실행
 
@@ -42,6 +42,18 @@ Production Preview: `npm run preview` → `http://127.0.0.1:4173`.
 7. Help에서 공통 Vacuum Wavelength를 변경할 수 있습니다.
 
 짧은 Desktop 화면에서는 Tree, Properties와 Data 내부를 스크롤합니다. 작업 내용은 Memory에 있으므로 종료 전에 JSON을 저장하세요. Browser Storage나 Cloud Account는 사용하지 않습니다.
+
+## P2.1 Surface Workbench
+
+상단 **Surface Workbench**를 누르거나 URL에 `#surfaces`를 붙입니다. Surface 중심 설계와 계산된 Ray를 동일한 XY/XZ/YZ·3D로 확인합니다. 기존 Gaussian Workspace와 각 Design 상태는 보존됩니다.
+
+- Surface / Assembly Local Frame·공통 Pivot, signed sphere Radius, circular Clear Radius, n, refraction/reflection/explicit TIR, repeated lenslets, computed OPL.
+- Physical Lens / Fold Mirror / TIR Prism / Microlens Array / MLA+Prism+Mirror 예제. 입력은 모두 Synthetic이며 실제 부품 성능이 아닙니다.
+- Table의 Radius/Clear Radius 또는 Inspect에서 편집 → Ray·Target Centroid/RMS 갱신. **Ray Analysis**에서 Footprint와 blocked 원인을 확인합니다.
+- **3D**는 드래그 회전, **Shaded**는 광학면 Preview, **SVG**는 현재 계산 경로의 보고용 Vector Snapshot입니다. 완전한 Solid CAD/Photorealistic Render는 후속 범위입니다.
+- **Save Surface JSON / Open Surface JSON**과 Undo/Redo. P1 Gaussian JSON과 별도 Schema이며 전용 파일 호환을 주장하지 않습니다.
+- Ray count·RMS는 Optical Efficiency / Mode Coupling이 아닙니다. Constant supplied n, 지정된 Sequential 경로만 지원합니다. 상세 범위는 [Contract](docs/P2_1_SURFACE_CONTRACT.md) / [Report](docs/P2_1_IMPLEMENTATION_REPORT.md).
+- [Draft PR #5](https://github.com/legendnever-collab/photonic-connector-studio/pull/5), stacked on unmerged PR #4. main 병합 및 다음 Checkpoint 자동 시작 없음.
 
 ## P1.3 Visual Workstation Review
 

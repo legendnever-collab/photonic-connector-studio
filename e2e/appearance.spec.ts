@@ -16,7 +16,7 @@ test('offline themes expose readable key text, keyboard dismissal and bounded re
  await page.context().setOffline(true);await page.goto(pathToFileURL(resolve('dist/index.html')).href);await page.getByLabel('Synthetic Example',{exact:true}).selectOption('pointing');
  const evidence:unknown[]=[];
  for(const [id,name] of [['light','Lab Light'],['dark','Precision Dark'],['hybrid','Focus Hybrid']]){
-  await appearance(page,name);await expect(page.locator('.app-shell')).toHaveAttribute('data-theme',id);
+  await appearance(page,name);await expect(page.locator('.app-shell:visible')).toHaveAttribute('data-theme',id);
   const ratios=await page.evaluate(()=>{
    function luminance(rgb:string){const values=(rgb.match(/[\d.]+/g)??[]).slice(0,3).map(Number).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});return values[0]*.2126+values[1]*.7152+values[2]*.0722;}
    return ['.project-strip h1','.result-summary .metric span','.result-summary .metric-coupling strong','.tree-item small','.example-bar>span','.finish-editing'].map(selector=>{const el=document.querySelector(selector)!;const style=getComputedStyle(el);let node:Element|null=el,bg='';while(node){bg=getComputedStyle(node).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent')break;node=node.parentElement;}const a=luminance(style.color),b=luminance(bg);return {selector,ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05)};});

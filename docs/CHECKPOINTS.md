@@ -29,3 +29,8 @@ No force push, lost work or automated advancement.
 ## 2026-10-23 · P1.3 Visual Workstation
 
 User-authorized P1.1/P1.2 merges complete; main e505652b219ee97d33c0f4916fa8c8f50feb4235. New visual branch feature/p1-3-visual-workstation: three actual theme options, persistent KPI ribbon, full-height Inspect/Analyze, contrast and offline/regression evidence. See P1_3_IMPLEMENTATION_REPORT.md. P2 remains next; not started.
+
+
+## 2026-10-23 · P2.1 Surface-first Workbench
+
+User authorized Surface-first design with optional derived 3D. Canonical Surface/nested Assembly frames, physical sequential rays, Mirror/Prism/lenslet examples, Surface Editor and shared 2D/3D with SVG export implemented. 143 Unit/Numerical/Font + 64 Browser PASS, 2 existing intentional Mobile skips. See P2_1_SURFACE_CONTRACT.md and P2_1_IMPLEMENTATION_REPORT.md. Branch feature/p2-1-surface-workbench / Draft PR #5, stacked on unmerged PR #4. No main merge or next checkpoint auto-start.

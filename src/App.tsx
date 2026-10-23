@@ -51,6 +51,7 @@ import {
   undo,
 } from "./domain";
 import Appearance from "./Appearance";
+import SurfaceWorkbench from "./surface/Workbench";
 import Layout from "./Layout";
 import Analysis, { Metrics } from "./Analysis";
 import { solveGaussian } from "./physics";
@@ -92,6 +93,7 @@ export default function App() {
   const component =
     doc.components.find((c) => c.id === selected) ?? doc.components[0];
   const [view, setView] = useState<"XY" | "XZ">("XY");
+  const [surfaceOpen, setSurfaceOpen] = useState(() => location.hash === "#surfaces");
   const [theme, setTheme] = useState<"light" | "dark" | "hybrid">("light");
   const [inspector, setInspector] = useState<"properties" | "analysis">("properties");
   const [tab, setTab] = useState<Tab>("layout");
@@ -227,7 +229,8 @@ export default function App() {
   };
   return (
     <FieldValidity.Provider value={fieldValidity}>
-    <div className="app-shell" data-theme={theme}>
+    <>
+    <div className="app-shell" data-theme={theme} style={surfaceOpen ? {display:"none"} : undefined}>
       <header className="app-header">
         <div className="brand-mark">
           <Activity size={25} />
@@ -240,6 +243,7 @@ export default function App() {
         </div>
         <span className="build-tag">P1.3 · WORKSTATION</span>
         <div className="header-right">
+          <button className="surface-launch" onClick={() => setSurfaceOpen(true)}>Surface Workbench</button>
           <Appearance theme={theme} onChange={setTheme}/>
           <span className="local-status">
             <span className="live-dot" />
@@ -966,6 +970,8 @@ export default function App() {
         </div>
       )}
     </div>
+    <div hidden={!surfaceOpen}><SurfaceWorkbench onReturn={() => setSurfaceOpen(false)} theme={theme} setTheme={setTheme}/></div>
+    </>
     </FieldValidity.Provider>
   );
 }
