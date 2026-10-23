@@ -67,7 +67,8 @@ export default function App() {
   }));
   const doc = history.present;
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
-  const fieldValidity = useCallback((label: string, invalid: boolean) => {
+  const fieldValidity = useCallback((label: string, invalid: boolean, recovered?: boolean) => {
+    if (recovered) setFailure("");
     setInvalidFields(old => invalid ? (old.includes(label) ? old : [...old, label]) : (old.includes(label) ? old.filter(x => x !== label) : old));
   }, []);
   const [editNotice, setEditNotice] = useState("유효한 값은 자동 반영됩니다. 파일 보존은 Save JSON을 사용하세요.");

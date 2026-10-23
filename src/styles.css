@@ -3,7 +3,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("./assets/noto-kr-p0.woff") format("woff");
+  src: url("./assets/noto-kr-p1.woff") format("woff");
   unicode-range: U+AC00-D7A3;
 }
 :root {
@@ -1657,4 +1657,16 @@ td input:focus {
   .mobile-properties .properties-column { top:calc(var(--visible-top, 0px) + 112px); height:calc(var(--visible-height, 100dvh) - 177px); }
   .mobile-tabs { position:fixed; top:calc(var(--visible-top, 0px) + var(--visible-height, 100dvh) - 65px - env(safe-area-inset-bottom)); left:0; right:0; bottom:auto; z-index:5; }
   .app-shell { padding-bottom:calc(65px + env(safe-area-inset-bottom)); }
+}
+@media (min-width:1001px) {
+  .main-workspace { grid-template-rows:36px minmax(280px,1fr) 150px; }
+  .main-workspace > .result-summary { display:none; }
+}
+@media (max-width:1000px) {
+  .project-strip { padding:12px 15px; gap:6px; }
+  .project-strip h1 { font-size:18px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100vw - 30px); }
+  .example-bar label { min-width:0; display:block; font-size:10px; }
+  .example-bar label select { display:block; width:100%; font-size:12px; }
+  .example-bar button { font-size:12px; padding:6px; }
+  .example-bar > span { flex-basis:100%; font-size:10px; }
 }

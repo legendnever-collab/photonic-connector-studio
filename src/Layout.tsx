@@ -492,7 +492,7 @@ export default function Layout({
         </div>
       </div>
       <div className="layout-caption">
-        <span>{result.status === "valid" ? `Computed Gaussian Envelope · ${view} radius ×${beamScale}` : "Beam 미계산 · Analysis에서 사유 확인"}</span>
+        <span>{result.status === "valid" ? `η ${Number((result.eta*100).toPrecision(6))}% · Coupling Loss ${Number.isFinite(result.lossDB) ? Number(result.lossDB.toPrecision(5)) : "∞"} dB · ${view} radius ×${beamScale}` : "Beam 미계산 · Analysis에서 사유 확인"}</span>
         <span>Geometry Symbol은 도식 · Target bracket도 동일 배율 · 배경 Drag로 Pan</span>
       </div>
     </section>

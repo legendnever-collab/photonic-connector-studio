@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-export const FieldValidity = createContext<(label: string, invalid: boolean) => void>(() => {});
+export const FieldValidity = createContext<(label: string, invalid: boolean, recovered?: boolean) => void>(() => {});
 export function NumberField({
   label,
   value,
@@ -48,7 +48,7 @@ export function NumberField({
           onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
           onBlur={() => {
             setRaw(value === null ? "" : format(value));
-            if (error) setError("");
+            if (error) { setError(""); validity(label, false, true); }
             // A rejected draft never becomes a committed number.
             validity(label, false);
           }}

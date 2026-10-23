@@ -6,6 +6,7 @@ import { exampleDocument } from "../src/domain";
 import type { Page } from "@playwright/test";
 
 async function mobileTab(page: Page, name: string) {
+  if (await page.getByRole("button", {name:"편집 종료 · Layout"}).isVisible() && await page.getByRole("navigation",{name:"Workspace tabs"}).isVisible()) await page.getByRole("button", {name:"편집 종료 · Layout"}).click();
   if (
     await page.getByRole("navigation", { name: "Workspace tabs" }).isVisible()
   )
@@ -19,10 +20,14 @@ async function choose(page: Page, id: string) {
   await page.getByTestId(`tree-${id}`).click();
 }
 async function save(page: Page) {
+  const inMobileEditor = await page.getByRole("navigation", {name:"Workspace tabs"}).isVisible() && await page.getByRole("button", {name:"편집 종료 · Layout"}).isVisible();
+  if (inMobileEditor) await page.getByRole("button", {name:"편집 종료 · Layout"}).click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Save JSON" }).click();
   const download = await downloadPromise;
-  return JSON.parse(await readFile((await download.path())!, "utf8"));
+  const data = JSON.parse(await readFile((await download.path())!, "utf8"));
+  if (inMobileEditor) await mobileTab(page, "Edit");
+  return data;
 }
 
 test.beforeEach(async ({ page }) => {
@@ -41,7 +46,7 @@ test("initial layout has honest analysis, terminal ports and no horizontal overf
     ),
   ).toBe(true);
   await mobileTab(page, "Analysis");
-  await expect(page.getByText("Not calculated", { exact: true })).toHaveCount(
+  await expect(page.getByTestId("analysis-metrics").getByText("Not calculated", { exact: true })).toHaveCount(
     3,
   );
   await choose(page, "fiber");
@@ -146,6 +151,7 @@ test("JSON round-trip and bad imports preserve the design", async ({
   await choose(page, "waveguide");
   await page.getByLabel("MFDx", { exact: true }).fill("3.8");
   const data = await save(page);
+  await mobileTab(page, "Layout");
   await page
     .getByRole("button", { name: "1310 nm Example", exact: true })
     .click();
@@ -176,7 +182,7 @@ test("validation blocks invalid geometry; lock blocks editing", async ({
 }) => {
   await choose(page, "lens-f");
   await page.getByLabel("X Position", { exact: true }).fill("20");
-  await expect(page.getByRole("alert")).toContainText("Port 사이");
+  await expect(page.locator(".statusbar").getByRole("alert")).toContainText("Port 사이");
   expect((await save(page)).components[1].frame.origin.x).toBe(0.003);
   await page.getByLabel("X Position", { exact: true }).fill("3.5");
   await page
@@ -238,6 +244,7 @@ test("offline single HTML works with networking disabled and no runtime errors",
   await page.getByLabel("MFDx", { exact: true }).fill("4");
   const data = await save(page);
   expect(data.components.at(-1).mode.mfdX).toBeCloseTo(0.000004);
+  await mobileTab(page, "Layout");
   await page.getByTestId("json-input").setInputFiles({
     name: "offline.json",
     mimeType: "application/json",
@@ -310,6 +317,7 @@ test("pan changes the camera; fit restores it; flags and wavelength are persiste
   ).toBe(before);
   await choose(page, "lens-f");
   await page.getByLabel("X Variable", { exact: true }).check();
+  await mobileTab(page, "Layout");
   await page.getByRole("button", { name: "Help", exact: true }).click();
   await page.getByLabel("Vacuum Wavelength", { exact: true }).fill("1550");
   await page.getByRole("button", { name: "Close Help" }).click();
