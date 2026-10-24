@@ -128,3 +128,10 @@ version/source/hash manifest identifies the current F1.1 content.
 
 Review: startup → S1 Type / Even Asphere → K and A4/A6/A8 → Properties Sag plot →
 Surface / Report → Gaussian boundary → Undo / Save Project JSON / Open.
+
+## Standalone provenance
+
+Verified implementation source: `f40c9f651e7f2f6fa9fa1e8ba3320ca0a5f66725`.
+HTML: 585946 bytes.
+SHA256: `5c47818bed31022822d97a204f9b63aa438de4599c7a228dd4dedd648d5eb57e`.
+Source fingerprint: `0eea9403ff689f3355247b79a56d54755d8a2f7f112f39dfc3eb64c3a2ec2b8b`.
