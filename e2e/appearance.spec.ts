@@ -7,7 +7,7 @@ async function appearance(page:Page,name:string){await page.getByRole('button',{
  await page.evaluate(async()=>{await Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished));});
 }
 test('appearance options preserve optical state, geometry nodes, zoom and edited parameters',async({page},info)=>{
- await page.goto('/');await page.getByLabel('Synthetic Example',{exact:true}).selectOption('pointing');await page.getByRole('button',{name:'Zoom in',exact:true}).click();
+ await page.goto('/');await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:pointing');await page.getByRole('button',{name:'Zoom in',exact:true}).click();
  const eta=await page.getByTestId('summary-eta').textContent();await page.evaluate(()=>{(window as any).originalSVG=document.querySelector('[data-testid="optical-canvas"]');(window as any).originalAxis=document.querySelector('[data-testid="beam-axis"]');(window as any).axisPoints=document.querySelector('[data-testid="beam-axis"]')?.getAttribute('points');});
  for(const name of ['Precision Dark','Focus Hybrid','Lab Light']){await appearance(page,name);await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await expect(page.getByTestId('zoom-level')).toHaveText('125%');expect(await page.evaluate(()=>{const w=window as any;return w.originalSVG===document.querySelector('[data-testid="optical-canvas"]')&&w.originalAxis===document.querySelector('[data-testid="beam-axis"]')&&w.axisPoints===w.originalAxis.getAttribute('points');})).toBe(true);}
  if(info.project.name==='desktop'){
@@ -16,13 +16,13 @@ test('appearance options preserve optical state, geometry nodes, zoom and edited
  }
 });
 test('offline themes expose readable key text, keyboard dismissal and bounded responsive dialogs',async({page},info)=>{
- await page.context().setOffline(true);await page.goto(pathToFileURL(resolve('dist/index.html')).href);await page.getByLabel('Synthetic Example',{exact:true}).selectOption('pointing');
+ await page.context().setOffline(true);await page.goto(pathToFileURL(resolve('dist/index.html')).href);await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:pointing');
  const evidence:unknown[]=[];
  for(const [id,name] of [['light','Lab Light'],['dark','Precision Dark'],['hybrid','Focus Hybrid']]){
   await appearance(page,name);await expect(page.locator('.app-shell:visible')).toHaveAttribute('data-theme',id);
   const ratios=await page.evaluate(()=>{
    function luminance(rgb:string){const values=(rgb.match(/[\d.]+/g)??[]).slice(0,3).map(Number).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});return values[0]*.2126+values[1]*.7152+values[2]*.0722;}
-   return ['.project-strip h1','.result-summary .metric span','.result-summary .metric-coupling strong','.tree-item small','.example-bar>span','.finish-editing'].map(selector=>{const el=document.querySelector(selector)!;const style=getComputedStyle(el);let node:Element|null=el,bg='';while(node){bg=getComputedStyle(node).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent')break;node=node.parentElement;}const a=luminance(style.color),b=luminance(bg);return {selector,ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05)};});
+   return ['.surface-heading h1','.result-summary .metric span','.result-summary .metric-coupling strong','.tree-item small','.representation-tabs small','.finish-editing'].map(selector=>{const el=document.querySelector(selector)!;const style=getComputedStyle(el);let node:Element|null=el,bg='';while(node){bg=getComputedStyle(node).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent')break;node=node.parentElement;}const a=luminance(style.color),b=luminance(bg);return {selector,ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05)};});
   });
   for(const entry of ratios)expect(entry.ratio,`${name}: ${entry.selector}`).toBeGreaterThanOrEqual(4.5);evidence.push({name,ratios});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

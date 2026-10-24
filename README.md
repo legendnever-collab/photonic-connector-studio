@@ -1,3 +1,26 @@
+## P2.4 — Unified Optical Workstation
+
+Gaussian / Surface / Report are central views of **one project**. Open/Save, Undo/Redo,
+Add Component, Example, component tree, Properties and Analysis stay in the same shell.
+All prior Gaussian/Surface examples are available in the common Example menu.
+
+Download `artifacts/photonic-connector-studio-p2.4.html` and open it in a JavaScript-capable
+browser. It includes scripts, styles and Korean font for offline use. For development:
+`npm ci`, then `npm run dev`; validation: `npm run check`.
+
+Try a Physical example → Report → Add → TIR Prism → enter Global XYZ / angles → Insert.
+Edit its Assembly pose / Prism Depth in Properties, then switch Gaussian / Surface / Report.
+All views retain the same components, inputs and global Undo history. Physical Gaussian
+propagation/coupling, Freeform surfaces and CAD import are **not implemented in P2.4**.
+An ideal-only project retains its original model and supports Ideal Lens / Gap / Reference
+Plane insertion. Mixed ideal/physical model migration is a subsequent explicit contract.
+
+See [P2.4 report](docs/P2_4_IMPLEMENTATION_REPORT.md) and
+[full Freeform / off-axis / coupling plan](docs/UNIFIED_WORKSTATION_AND_FREEFORM_PLAN.md).
+P2.4 is stacked on PR #7; main remains unmerged pending Play Review.
+
+---
+
 # Photonic Connector Studio
 
 **Fiber-to-Waveguide Optical Design Workspace · v0.2.3-p2.3**

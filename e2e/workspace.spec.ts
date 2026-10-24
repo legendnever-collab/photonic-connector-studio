@@ -1,3 +1,4 @@
+import { tab as unifiedTab } from './ui';
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -5,28 +6,16 @@ import { pathToFileURL } from "node:url";
 import { exampleDocument } from "../src/domain";
 import type { Page } from "@playwright/test";
 
-async function mobileTab(page: Page, name: string) {
-  const desktop = page.getByRole("navigation", {name:"Inspector tabs"});
-  if (await desktop.isVisible() && ["Analysis", "Edit", "Train"].includes(name)) await desktop.getByRole("button", {name:name === "Analysis" ? "Analyze" : "Inspect",exact:true}).click();
-
-  if (await page.getByRole("button", {name:"편집 종료 · Layout"}).isVisible() && await page.getByRole("navigation",{name:"Workspace tabs"}).isVisible()) await page.getByRole("button", {name:"편집 종료 · Layout"}).click();
-  if (
-    await page.getByRole("navigation", { name: "Workspace tabs" }).isVisible()
-  )
-    await page
-      .getByRole("navigation", { name: "Workspace tabs" })
-      .getByRole("button", { name, exact: true })
-      .click();
-}
+const mobileTab=unifiedTab;
 async function choose(page: Page, id: string) {
   await mobileTab(page, "Train");
   await page.getByTestId(`tree-${id}`).click();
 }
 async function save(page: Page) {
-  const inMobileEditor = await page.getByRole("navigation", {name:"Workspace tabs"}).isVisible() && await page.getByRole("button", {name:"편집 종료 · Layout"}).isVisible();
+  const inMobileEditor = await page.getByRole("navigation", {name:"Surface Workspace tabs"}).isVisible() && await page.getByRole("button", {name:"편집 종료 · Layout"}).isVisible();
   if (inMobileEditor) await page.getByRole("button", {name:"편집 종료 · Layout"}).click();
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Save JSON" }).click();
+  await page.getByRole("button", { name: "Save Project JSON" }).click();
   const download = await downloadPromise;
   const project = JSON.parse(await readFile((await download.path())!, "utf8"));
   const data = project.kind==='optical-project'?project.model.design:project;
@@ -124,8 +113,10 @@ test("shared XY and XZ coordinates, orientation and MFD survive save", async ({
 });
 test("add, reorder, disable, remove, undo and redo", async ({ page }) => {
   await mobileTab(page, "Train");
-  await page.getByLabel("Component type").selectOption("lens");
+  await mobileTab(page,"Layout");
   await page.getByRole("button", { name: "Add Component" }).click();
+  await page.getByLabel("Component type").selectOption("lens");
+  await page.getByRole("button",{name:"Insert at Position",exact:true}).click();
   await expect(page.getByLabel("Component Name", { exact: true })).toHaveValue(
     "Thin Lens",
   );
@@ -144,8 +135,10 @@ test("add, reorder, disable, remove, undo and redo", async ({ page }) => {
   ).toBe(false);
   await page.getByRole("button", { name: "Delete Component" }).click();
   expect((await save(page)).components).toHaveLength(6);
+  await mobileTab(page,"Layout");
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   expect((await save(page)).components).toHaveLength(7);
+  await mobileTab(page,"Layout");
   await page.getByRole("button", { name: "Redo", exact: true }).click();
   expect((await save(page)).components).toHaveLength(6);
 });
@@ -156,16 +149,14 @@ test("JSON round-trip and bad imports preserve the design", async ({
   await page.getByLabel("MFDx", { exact: true }).fill("3.8");
   const data = await save(page);
   await mobileTab(page, "Layout");
-  await page
-    .getByRole("button", { name: "1310 nm Example", exact: true })
-    .click();
-  await page.getByTestId("json-input").setInputFiles({
+  await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:initial');
+  await page.getByTestId("surface-json-input").setInputFiles({
     name: "saved.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(data)),
   });
   expect(await save(page)).toEqual(data);
-  await page.getByTestId("json-input").setInputFiles({
+  await page.getByTestId("surface-json-input").setInputFiles({
     name: "broken.json",
     mimeType: "application/json",
     buffer: Buffer.from("{bad"),
@@ -173,7 +164,7 @@ test("JSON round-trip and bad imports preserve the design", async ({
   await expect(page.getByRole("alert")).toContainText("기존");
   expect(await save(page)).toEqual(data);
   const future = { ...data, schemaVersion: 99 };
-  await page.getByTestId("json-input").setInputFiles({
+  await page.getByTestId("surface-json-input").setInputFiles({
     name: "future.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(future)),
@@ -186,7 +177,7 @@ test("validation blocks invalid geometry; lock blocks editing", async ({
 }) => {
   await choose(page, "lens-f");
   await page.getByLabel("X Position", { exact: true }).fill("20");
-  await expect(page.locator(".statusbar").getByRole("alert")).toContainText("Port 사이");
+  await expect(page.locator(".statusbar[role=alert]")).toContainText("Port 사이");
   expect((await save(page)).components[1].frame.origin.x).toBe(0.003);
   await page.getByLabel("X Position", { exact: true }).fill("3.5");
   await page
@@ -249,7 +240,7 @@ test("offline single HTML works with networking disabled and no runtime errors",
   const data = await save(page);
   expect(data.components.at(-1).mode.mfdX).toBeCloseTo(0.000004);
   await mobileTab(page, "Layout");
-  await page.getByTestId("json-input").setInputFiles({
+  await page.getByTestId("surface-json-input").setInputFiles({
     name: "offline.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(exampleDocument())),
@@ -322,9 +313,9 @@ test("pan changes the camera; fit restores it; flags and wavelength are persiste
   await choose(page, "lens-f");
   await page.getByLabel("X Variable", { exact: true }).check();
   await mobileTab(page, "Layout");
-  await page.getByRole("button", { name: "Help", exact: true }).click();
-  await page.getByLabel("Vacuum Wavelength", { exact: true }).fill("1550");
-  await page.getByRole("button", { name: "Close Help" }).click();
+  await choose(page,"fiber");
+  await page.getByLabel("Surface Edit Target",{exact:true}).selectOption("source");
+  await page.getByLabel("Surface Vacuum Wavelength", { exact: true }).fill("1550");
   const data = await save(page);
   expect(data.wavelength).toBeCloseTo(0.00000155);
   expect(data.components[1].variables).toEqual(["x"]);

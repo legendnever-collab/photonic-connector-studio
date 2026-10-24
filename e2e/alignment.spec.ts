@@ -1,15 +1,13 @@
+import { tab as unifiedTab } from './ui';
 import { expect,test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import {readFile} from "node:fs/promises";
 import {pathToFileURL} from "node:url";
 import {resolve} from "node:path";
-async function tab(page:Page,name:string){
-  const desktop = page.getByRole("navigation", {name:"Inspector tabs"});
-  if (await desktop.isVisible() && ["Analysis", "Edit", "Train"].includes(name)) await desktop.getByRole("button", {name:name === "Analysis" ? "Analyze" : "Inspect",exact:true}).click();
-const nav=page.getByRole('navigation',{name:'Workspace tabs'});if(await nav.isVisible())await nav.getByRole('button',{name,exact:true}).click();}
-async function example(page:Page,id:string){await page.getByLabel('Synthetic Example',{exact:true}).selectOption(id);}
+const tab=unifiedTab;
+async function example(page:Page,id:string){await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:'+id);}
 async function choose(page:Page,id:string){await tab(page,'Train');await page.getByTestId(`tree-${id}`).click();}
-async function save(page:Page){await tab(page,'Layout');const d=page.waitForEvent('download');await page.getByRole('button',{name:'Save JSON',exact:true}).click();return JSON.parse(await readFile((await(await d).path())!,'utf8'));}
+async function save(page:Page){await tab(page,'Layout');const d=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await d).path())!,'utf8'));}
 async function expand(page:Page){await tab(page,'Analysis');await page.getByRole('button',{name:'Expand Alignment Analysis',exact:true}).click();await expect(page.getByRole('dialog',{name:'Alignment Analysis',exact:true})).toBeVisible();}
 test.beforeEach(async({page})=>{await page.goto('/');});
 test('Source Tilt propagates beam axis and preserves focus/SVG/camera under repeated edits',async({page})=>{
@@ -38,8 +36,8 @@ test('map cell inspection, invalid scan drafts and domain edges remain explicit'
  await page.getByRole('button',{name:'Close Alignment Analysis',exact:true}).press('Escape');await expect(page.getByRole('dialog',{name:'Alignment Analysis',exact:true})).toHaveCount(0);
 });
 test('Tilt and sensitivity recompute after Save/Load and Undo/Redo',async({page})=>{
- await example(page,'pointing');const data=await save(page),eta=await page.getByTestId('summary-eta').textContent();await page.getByRole('button',{name:'Reset Matching',exact:true}).click();await expect(page.getByTestId('summary-eta')).toHaveText('100%');await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await page.getByRole('button',{name:'Redo',exact:true}).click();await expect(page.getByTestId('summary-eta')).toHaveText('100%');
- await page.getByTestId('json-input').setInputFiles({name:'axis.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await tab(page,'Analysis');await expect(page.getByTestId('scan-provenance')).toContainText(eta!);
+ await example(page,'pointing');const data=await save(page),eta=await page.getByTestId('summary-eta').textContent();await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:matching');await expect(page.getByTestId('summary-eta')).toHaveText('100%');await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await page.getByRole('button',{name:'Redo',exact:true}).click();await expect(page.getByTestId('summary-eta')).toHaveText('100%');
+ await page.getByTestId('surface-json-input').setInputFiles({name:'axis.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await tab(page,'Analysis');await expect(page.getByTestId('scan-provenance')).toContainText(eta!);
 });
 test('offline alignment/CSV work and expanded layouts fit mobile/tablet/desktop',async({page},info)=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.context().setOffline(true);await page.route('**/*',r=>r.request().url().startsWith('file:')?r.continue():r.abort());await page.goto(pathToFileURL(resolve('dist/index.html')).href);await example(page,'pointing');await expand(page);

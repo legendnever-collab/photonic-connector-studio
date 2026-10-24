@@ -1,17 +1,13 @@
+import { tab as unifiedTab } from './ui';
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-async function tab(page:Page,name:string){
-  const desktop = page.getByRole("navigation", {name:"Inspector tabs"});
-  if (await desktop.isVisible() && ["Analysis", "Edit", "Train"].includes(name)) await desktop.getByRole("button", {name:name === "Analysis" ? "Analyze" : "Inspect",exact:true}).click();
-
-  if(await page.getByRole("navigation",{name:"Workspace tabs"}).isVisible())await page.getByRole("navigation",{name:"Workspace tabs"}).getByRole("button",{name,exact:true}).click();
-}
+const tab=unifiedTab;
 async function choose(page:Page,id:string){await tab(page,"Train");await page.getByTestId(`tree-${id}`).click();}
-async function example(page:Page,id:string){await page.getByLabel("Synthetic Example",{exact:true}).selectOption(id);}
-async function save(page:Page){await tab(page,"Layout");const d=page.waitForEvent("download");await page.getByRole("button",{name:"Save JSON",exact:true}).click();const p=JSON.parse(await readFile((await(await d).path())!,"utf8"));return p.kind==='optical-project'?p.model.design:p;}
+async function example(page:Page,id:string){await page.getByLabel("Project Example",{exact:true}).selectOption('ideal:'+id);}
+async function save(page:Page){await tab(page,"Layout");const d=page.waitForEvent("download");await page.getByRole("button",{name:"Save Project JSON",exact:true}).click();const p=JSON.parse(await readFile((await(await d).path())!,"utf8"));return p.kind==='optical-project'?p.model.design:p;}
 test.beforeEach(async({page})=>{await page.goto("/");});
 test("synthetic matching, mismatch, free propagation and reset have benchmark KPIs",async({page})=>{
   await example(page,"matching");await expect(page.getByTestId("summary-eta")).toHaveText("100%");
@@ -23,7 +19,7 @@ test("synthetic matching, mismatch, free propagation and reset have benchmark KP
   await example(page,"free");await expect(page.getByTestId("summary-eta")).not.toHaveText("100%");
   const path=await page.getByTestId("beam-overlay").locator("polygon").getAttribute("points");const pts=path!.split(" ").map(p=>p.split(",").map(Number));
   expect(Math.abs(pts[0][1]-pts.at(-1)![1])).toBeLessThan(Math.abs(pts[Math.floor(pts.length/2)-1][1]-pts[Math.floor(pts.length/2)][1]));
-  await page.getByRole("button",{name:"Reset Matching",exact:true}).click();await expect(page.getByTestId("summary-eta")).toHaveText("100%");
+  await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:matching');await expect(page.getByTestId("summary-eta")).toHaveText("100%");
 });
 test("continuous lens editing retains focus, SVG, envelope, camera and responds to position/focal length",async({page})=>{
   await example(page,"matching");await page.getByRole("button",{name:"Zoom in",exact:true}).click();await choose(page,"lens-f");
@@ -40,7 +36,7 @@ test("source/target MFD, offset, projection update results; rotation and TBD sup
   await page.getByLabel("Y Position",{exact:true}).fill("0.02");
   await page.getByLabel("Roll",{exact:true}).fill("1");await tab(page,"Analysis");await expect(page.getByTestId("solver-status")).toHaveText("out-of-domain");await expect(page.getByTestId("eta")).toHaveText("Not calculated");
   await choose(page,"waveguide");await page.getByLabel("Roll",{exact:true}).fill("0");await page.getByLabel("MFDx",{exact:true}).fill("");await tab(page,"Analysis");await expect(page.getByTestId("calculation-reason")).toContainText("TBD");
-  await tab(page,"Layout");await page.getByRole("button",{name:"Reset Matching",exact:true}).click();await choose(page,"fiber");await page.getByLabel("MFDy",{exact:true}).fill("45");
+  await tab(page,"Layout");await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:matching');await choose(page,"fiber");await page.getByLabel("MFDy",{exact:true}).fill("45");
   await tab(page,"Layout");await page.getByRole("button",{name:"X–Z",exact:true}).click();await expect(page.getByTestId("beam-overlay")).toBeVisible();await expect(page.getByTestId("summary-eta")).not.toHaveText("100%");
 });
 test("invalid numeric drafts restore last valid values on Enter/Blur; auto-applied close persists",async({page})=>{
@@ -61,17 +57,17 @@ test("visual viewport resize keeps mobile editing exit reachable; JSON roundtrip
     await page.evaluate(()=>{const v=window.visualViewport!;delete (v as unknown as Record<string,unknown>).height;delete (v as unknown as Record<string,unknown>).offsetTop;v.dispatchEvent(new Event("resize"));});
   }else await tab(page,"Layout");
   const eta=await page.getByTestId("summary-eta").textContent();const data=await save(page);
-  await page.getByRole("button",{name:"Reset Matching",exact:true}).click();await expect(page.getByTestId("summary-eta")).toHaveText("100%");
+  await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:matching');await expect(page.getByTestId("summary-eta")).toHaveText("100%");
   await page.getByRole("button",{name:"Undo",exact:true}).click();await expect(page.getByTestId("summary-eta")).toHaveText(eta!);
   await page.getByRole("button",{name:"Redo",exact:true}).click();await expect(page.getByTestId("summary-eta")).toHaveText("100%");
-  await page.getByTestId("json-input").setInputFiles({name:"p1.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});await expect(page.getByTestId("summary-eta")).toHaveText(eta!);expect(await save(page)).toEqual(data);
+  await page.getByTestId("surface-json-input").setInputFiles({name:"p1.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});await expect(page.getByTestId("summary-eta")).toHaveText(eta!);expect(await save(page)).toEqual(data);
 });
 test("offline file calculation/edit/save/load and responsive evidence",async({page},info)=>{
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));await page.context().setOffline(true);await page.route("**/*",r=>r.request().url().startsWith("file:")?r.continue():r.abort());
   await page.goto(pathToFileURL(resolve("dist/index.html")).href);await example(page,"matching");await expect(page.getByTestId("summary-eta")).toHaveText("100%");
   await choose(page,"lens-f");await page.getByLabel("Focal Length",{exact:true}).fill("1.4");await page.getByRole("button",{name:"편집 종료 · Layout",exact:true}).click();const data=await save(page);
-  await page.getByRole("button",{name:"Reset Matching",exact:true}).click();await page.getByTestId("json-input").setInputFiles({name:"offline-p1.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});expect(await save(page)).toEqual(data);await expect(page.getByTestId("summary-eta")).not.toHaveText("100%");expect(errors).toEqual([]);
-  await page.getByRole("button",{name:"Reset Matching",exact:true}).click();
+  await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:matching');await page.getByTestId("surface-json-input").setInputFiles({name:"offline-p1.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});expect(await save(page)).toEqual(data);await expect(page.getByTestId("summary-eta")).not.toHaveText("100%");expect(errors).toEqual([]);
+  await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:matching');
   if(info.project.name==="desktop")for(const width of [360,412,768,1366,1920]){await page.setViewportSize({width,height:width<1000?915:900});await page.evaluate(()=>document.fonts.ready);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`test-results/P1.1-${width}.png`,fullPage:true});}
   else await page.screenshot({path:"test-results/P1.1-mobile.png",fullPage:true});
 });

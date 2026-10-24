@@ -1,0 +1,15 @@
+import { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
+import { useProject } from './Store';
+import { insertBlock, suggestedPose } from './insertion';
+import type { BlockKind } from './insertion';
+import { pose } from '../surface/model';
+export default function InsertBlock({onClose,onInserted}:{onClose:()=>void;onInserted:()=>void}){
+ const shared=useProject(),dialog=useRef<HTMLDialogElement>(null),[error,setError]=useState(''),ideal=shared.project.model.kind==='ideal';
+ const [kind,setKind]=useState<BlockKind>('lens'),initial=useRef(suggestedPose(shared.project,shared.selection));
+ useEffect(()=>{const el=dialog.current,opener=document.activeElement as HTMLElement;el?.showModal();return()=>{el?.close();opener?.focus();};},[]);
+ return <dialog ref={dialog} className="insert-dialog" aria-labelledby="insert-title" onCancel={e=>{e.preventDefault();onClose();}}><form onSubmit={e=>{
+  e.preventDefault();try{const data=new FormData(e.currentTarget),n=(k:string)=>Number(data.get(k));const frame=pose(n('x')*1e-3,n('y')*1e-3,n('z')*1e-3,n('yaw')*Math.PI/180,n('pitch')*Math.PI/180,n('roll')*Math.PI/180);
+  const result=insertBlock(shared.project,kind,frame,crypto.randomUUID(),shared.selection);shared.commit(result.project);shared.setSelection(result.selection);onInserted();onClose();}catch(err){setError(err instanceof Error?err.message:String(err));}
+ }}><header><h2 id="insert-title">Add Component</h2><button type="button" aria-label="Close Add Component" onClick={onClose}><X size={18}/></button></header><div className="insert-dialog-body"><label className="field">Component type<select aria-label="Component type" value={kind} onChange={e=>setKind(e.target.value as BlockKind)}>{(ideal?[['lens','Ideal Thin Lens'],['gap','Air Gap'],['reference-plane','Reference Plane']]:[['lens','Physical Lens'],['mirror','Fold Mirror'],['prism','TIR Prism'],['array','Microlens Array'],['probe','Probe Surface']]).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label><p>Global Position [mm]</p><div className="fields-three">{(['x','y','z'] as const).map(k=><label className="field" key={k}>{k.toUpperCase()}<input aria-label={`Insert ${k.toUpperCase()}`} name={k} type="number" step="any" min={-1000} max={1000} required defaultValue={initial.current.origin[k]*1e3}/></label>)}</div><p>Orientation [°] · Rz · Ry · Rx</p><div className="fields-three">{['roll','pitch','yaw'].map(k=><label className="field" key={k}>{k}<input aria-label={`Insert ${k}`} name={k} type="number" step="any" min={-180} max={180} required defaultValue="0"/></label>)}</div><p className="surface-note">{ideal?'Ideal Project: 실제 곡률·두께는 미정의입니다. Physical 부품은 Physical 예제 또는 Project에서 추가하세요.':'학습용 가정 치수입니다. 추가 후 Properties에서 정확한 치수와 Local Frame을 입력하세요. 기존 Target은 이동하지 않습니다.'}</p><p className="surface-note">현재 선택한 Block 다음, Target 이전에 추가합니다. Position과 Surface 순서는 별도입니다.</p>{error&&<p role="alert">{error}</p>}</div><footer><button type="button" onClick={onClose}>Cancel</button><button type="submit" className="primary">Insert at Position</button></footer></form></dialog>;
+}

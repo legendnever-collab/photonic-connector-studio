@@ -44,3 +44,13 @@ User requested a report button with a style closer to the earlier B/C concepts. 
 ## 2026-10-24 · P2.3 Common Optical Project
 
 Engineering-first shared Project / Surface Data / Assembly frames and explicit body dimensions. Gaussian, Surface and Report share selection, input document, Undo/Redo and Save/Load. Ideal vs Physical model class is preserved; physical Gaussian propagation remains gated. Mirror/Prism finite boundaries constrain both sampled ray acceptance and report patches. See P2_3_COMMON_PROJECT_CONTRACT.md and P2_3_IMPLEMENTATION_REPORT.md. Branch feature/p2-3-common-project, stacked on PR #6; no main merge.
+
+## 2026-10-24 · P2.4 Unified Optical Workstation
+
+User requested one stable engineering shell with central Gaussian / Surface / Report switching,
+editing from every representation, and eventual Freeform / off-axis / full-result support. The common
+shell preserves menus, examples, selection, Properties, Analysis and global Project history. Report
+is inline; one coordinate-based Add palette inserts physical blocks from any view of a physical
+project. Existing ideal models retain their solver and semantics. See
+P2_4_IMPLEMENTATION_REPORT.md and UNIFIED_WORKSTATION_AND_FREEFORM_PLAN.md. Branch
+feature/p2-4-unified-workstation, stacked on PR #7. Stop for Play Review; main remains unmerged.

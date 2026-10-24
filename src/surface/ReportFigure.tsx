@@ -17,7 +17,7 @@ const ISOMETRIC: ReportCamera = {yaw:-.55,pitch:.62,zoom:1};
 type Projected = { x:number;y:number;depth:number };
 type Primitive = { depth:number; node:ReactNode };
 
-export default function ReportFigure({doc,trace,initialSelection,onClose}:{doc:Prescription;trace:Trace;initialSelection:string;onClose:()=>void}) {
+export default function ReportFigure({doc,trace,initialSelection,onClose,embedded=false}:{doc:Prescription;trace:Trace;initialSelection:string;onClose?:()=>void;embedded?:boolean}) {
     const shared=useProject(),opticalProject=shared.project,gaussian=shared.gaussian;
     const dialog=useRef<HTMLDialogElement>(null), svg=useRef<SVGSVGElement>(null);
     const [mode,setMode]=useState<'B'|'C'>('B'),[localSelected,setLocalSelected]=useState(initialSelection);
@@ -28,7 +28,7 @@ export default function ReportFigure({doc,trace,initialSelection,onClose}:{doc:P
     const setSelected=(id:string)=>{setLocalSelected(id);shared.setSelection(id);};
     const geometry=useMemo(()=>{const optical=reportGeometry(doc,trace,false),body=bodyGeometry(doc,trace.surfaces,opticalProject.bodies,opticalProject.sourceBody);return {...optical,faces:[...optical.faces.map(f=>({...f,points:clipToBody(f.points,f.surfaceId,body)})).filter(f=>f.points.length>=3),...(envelopes?body.faces:[])],edges:[...optical.edges.map(e=>{const ps=clipToBody(e.points,e.surfaceId,body);return {...e,points:ps.length?[...ps,ps[0]]:[]};}).filter(e=>e.points.length>=3),...(envelopes?body.edges:[])],issues:body.issues};},[doc,trace,envelopes,opticalProject]);
     const bounds=useMemo(()=>sceneBounds(doc,trace),[doc,trace]);
-    useEffect(()=>{const opener=document.activeElement as HTMLElement|null,el=dialog.current;el?.showModal();return ()=>{el?.close();opener?.focus();};},[]);
+    useEffect(()=>{if(embedded)return;const opener=document.activeElement as HTMLElement|null,el=dialog.current;el?.showModal();return ()=>{el?.close();opener?.focus();};},[embedded]);
     const focusSurface=trace.surfaces.find(s=>s.id===selected)??trace.surfaces.at(-1);
     const metadata={renderer:'report-figure/2.3.0',solver:'surface-sequential-3d/2.1.0',fingerprint:projectFingerprint(opticalProject),wavelengthM:doc.wavelength,units:'SI',mode,camera,selectedSurface:focusSurface?.id,sourceMode:modes(opticalProject).source,targetMode:modes(opticalProject).target,bodies:opticalProject.bodies,sourceBody:opticalProject.sourceBody,bodyIssues:geometry.issues,modelClass:opticalProject.model.kind,beamScope:opticalProject.model.kind==='ideal'?'validated ideal Gaussian envelope':'sampled geometric bundle; no intensity or Gaussian propagation'};
     const W=1600,H=1000,sceneWidth=mode==='B'?1480:1090,sceneHeight=610,sceneX=60,sceneY=180;
@@ -43,14 +43,16 @@ export default function ReportFigure({doc,trace,initialSelection,onClose}:{doc:P
     const coords=(ps:Vec[])=>ps.map(p=>{const q=project(p);return `${q.x.toFixed(3)},${q.y.toFixed(3)}`;}).join(' ');
     const primitives:Primitive[]=[];
     const depth=(ps:Vec[])=>ps.reduce((s,p)=>s+raw(p).depth,0)/ps.length;
+    const focusTargets=new Set<string>();
     geometry.faces.forEach((f,i)=>{
+        const focusable=!focusTargets.has(f.surfaceId);focusTargets.add(f.surfaceId);
         const normal=cross(sub(f.points[1],f.points[0]),sub(f.points[2],f.points[0]));
         if(norm(normal)<1e-24)return;
         const n=unit(normal),lambert=Math.abs(dot(n,light)),fresnel=(1-Math.abs(dot(n,eye)))**3;
         const selectedFace=mode==='C'&&f.surfaceId===focusSurface?.id;
         const fill=f.material==='metal'?((f.illustrative||f.bodyId&&Math.abs(dot(n,trace.surfaces.find(s=>s.id===f.surfaceId)?.world.axes[0]??n))<.99)?`rgb(${Math.round(60+lambert*90)},${Math.round(83+lambert*88)},${Math.round(100+lambert*83)})`:'url(#report-metal)'):f.material==='probe'?'#a3a4e0':`rgb(${Math.round(125+lambert*75)},${Math.round(190+lambert*47)},${Math.round(205+lambert*42)})`;
         const alpha=f.material==='glass'?.19+fresnel*.2:f.material==='probe'?.05:.88;
-        primitives.push({depth:depth(f.points),node:<polygon key={`f${i}`} data-report-face={f.surfaceId} data-defined-body={f.bodyId} data-illustrative={f.illustrative||undefined} points={coords(f.points)} fill={selectedFace?'#ada0dc':fill} fillOpacity={selectedFace?.24:alpha} stroke="none"/>});
+        primitives.push({depth:depth(f.points),node:<polygon key={`f${i}`} data-report-face={f.surfaceId} data-surface={f.surfaceId} role={focusable?'button':undefined} tabIndex={focusable?0:undefined} aria-label={focusable?`Select report Surface ${f.surfaceId}`:undefined} onClick={()=>setSelected(f.surfaceId)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(f.surfaceId);}}} data-defined-body={f.bodyId} data-illustrative={f.illustrative||undefined} points={coords(f.points)} fill={selectedFace?'#ada0dc':fill} fillOpacity={selectedFace?.24:alpha} stroke="none"/>});
     });
     geometry.edges.forEach((e,i)=>primitives.push({depth:depth(e.points)+bounds.span*1e-7,node:<polyline key={`e${i}`} points={coords(e.points)} fill="none" stroke={mode==='C'&&e.surfaceId===focusSurface?.id?'#7756b0':e.illustrative?'#7398ad':'#527d90'} strokeOpacity={e.illustrative?.6:.75} strokeWidth={mode==='C'&&e.surfaceId===focusSurface?.id?2:1.1}/> }));
     trace.surfaces.filter(s=>s.interaction==='refract').forEach(s=>cellCenters(s).forEach(c=>{
@@ -97,10 +99,11 @@ export default function ReportFigure({doc,trace,initialSelection,onClose}:{doc:P
     const selectedHits=trace.status==='valid'?trace.paths.flatMap(p=>p.hits.filter(h=>h.surfaceId===focusSurface?.id)):[];
     const localSpan=focusSurface?Math.max(...cellCenters(focusSurface).flatMap(c=>[Math.abs(c.u)+focusSurface.aperture,Math.abs(c.v)+focusSurface.aperture]),...selectedHits.flatMap(h=>[Math.abs(h.local.y),Math.abs(h.local.z)]),1e-9)*1.12:1;
     async function png(){if(!svg.current)return;setBusy(true);setExportError('');try{await downloadReportPNG(svg.current,metadata);}catch(e){setExportError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}}
-    return <dialog ref={dialog} className="report-dialog" aria-labelledby="report-title" onCancel={e=>{e.preventDefault();onClose();}}>
-        <header className="report-toolbar"><div><Camera size={19}/><h2 id="report-title">보고용 그림 <span>Report Figure</span></h2></div><button aria-label="Close Report Figure" onClick={onClose}><X size={19}/></button></header>
+    const Container=embedded?'section':'dialog';
+    return <Container ref={embedded?undefined:dialog} className={`report-dialog ${embedded?'report-inline':''}`} aria-label={embedded?'Report Figure':undefined} aria-labelledby={embedded?undefined:'report-title'} onCancel={e=>{e.preventDefault();onClose?.();}}>
+        {!embedded&&<header className="report-toolbar"><div><Camera size={19}/><h2 id="report-title">보고용 그림 <span>Report Figure</span></h2></div><button aria-label="Close Report Figure" onClick={onClose}><X size={19}/></button></header>}
         <nav className="report-controls" aria-label="Report Figure controls"><div className="report-mode"><button aria-pressed={mode==='B'} onClick={()=>setMode('B')}>B · Technical Isometric</button><button aria-pressed={mode==='C'} onClick={()=>setMode('C')}>C · Linked Inspector</button></div><label><input type="checkbox" checked={envelopes} onChange={e=>setEnvelopes(e.target.checked)}/>Show defined bodies</label><label><input type="checkbox" checked={beams} onChange={e=>setBeams(e.target.checked)}/>Beam / Ray bundles</label><label><input type="checkbox" checked={labels} onChange={e=>setLabels(e.target.checked)}/>Labels</label><label className="report-surface-select">Surface<select aria-label="Report selected Surface" value={focusSurface?.id??''} onChange={e=>setSelected(e.target.value)}>{trace.surfaces.map((s,i)=><option key={s.id} value={s.id}>S{i+1} · {s.name}</option>)}</select></label><div className="report-exports"><button onClick={()=>svg.current&&downloadScene(svg.current,'optical-report.svg',metadata)}><Download size={15}/>SVG</button><button disabled={busy} onClick={()=>void png()}><Download size={15}/>{busy?'Saving…':'PNG 2×'}</button></div></nav>
-        <div className="report-paper-wrap"><svg ref={svg} className="report-paper" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Optical Report Figure" data-testid="report-figure" data-fingerprint={projectFingerprint(opticalProject)} onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,camera};}} onPointerMove={e=>{if(!drag.current)return;const d=drag.current;setCamera({...d.camera,yaw:d.camera.yaw+(e.clientX-d.x)*.007,pitch:Math.max(-1.3,Math.min(1.3,d.camera.pitch+(e.clientY-d.y)*.007))});}} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}>
+        <div className="report-paper-wrap"><svg ref={svg} className="report-paper" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Optical Report Figure" data-testid="report-figure" data-fingerprint={projectFingerprint(opticalProject)} onPointerDown={e=>{if((e.target as Element).closest('[data-surface]'))return;e.currentTarget.setPointerCapture(e.pointerId);drag.current={x:e.clientX,y:e.clientY,camera};}} onPointerMove={e=>{if(!drag.current)return;const d=drag.current;setCamera({...d.camera,yaw:d.camera.yaw+(e.clientX-d.x)*.007,pitch:Math.max(-1.3,Math.min(1.3,d.camera.pitch+(e.clientY-d.y)*.007))});}} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}>
         <defs><linearGradient id="report-paper-bg" x2="0" y2="1"><stop stopColor="#ffffff"/><stop offset="1" stopColor="#f5f8fb"/></linearGradient><linearGradient id="report-metal" x1="0" y1="0" x2=".8" y2="1"><stop stopColor="#4b6373"/><stop offset=".25" stopColor="#dce5e9"/><stop offset=".46" stopColor="#f9fcfd"/><stop offset=".53" stopColor="#8fa4af"/><stop offset="1" stopColor="#354f61"/></linearGradient><linearGradient id="report-beam" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#ffe5a1" stopOpacity=".7"/><stop offset=".5" stopColor="#ffc84e"/><stop offset="1" stopColor="#f3ad2c" stopOpacity=".4"/></linearGradient><filter id="report-shadow" x="-60%" y="-100%" width="220%" height="300%"><feGaussianBlur stdDeviation="11"/></filter><clipPath id="report-scene-clip"><rect x={sceneX} y={sceneY-30} width={sceneWidth} height={sceneHeight+80}/></clipPath><clipPath id="report-uv-clip"><rect x="1215" y="345" width="300" height="300"/></clipPath></defs>
         <rect width={W} height={H} fill="url(#report-paper-bg)"/>
         <text x="70" y="66" fontFamily="Inter,Arial,sans-serif" fontSize="13" fontWeight="600" letterSpacing="3" fill="#53788b">PHOTONIC CONNECTOR STUDIO / OPTICAL DESIGN</text>
@@ -124,7 +127,7 @@ export default function ReportFigure({doc,trace,initialSelection,onClose}:{doc:P
         <text x="70" y="967" fontFamily="Inter,Arial,sans-serif" fontSize="11" fill="#7e8d9a">{opticalProject.model.kind==='ideal'?(gaussian.status==='valid'?'Envelope is the validated ideal Gaussian 1/e² radius. No physical lens solid is inferred.':gaussian.reason):'Golden envelopes show sampled geometric ray bundles. No field intensity or Gaussian mode coupling is implied.'}</text>
         </svg></div>
         <footer className="report-footer"><div><button onClick={()=>setCamera(ISOMETRIC)}><RotateCcw size={15}/>Isometric</button><button onClick={()=>setCamera({yaw:-.18,pitch:1.24,zoom:1})}>Top oblique</button><button aria-label="Report zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(.35,c.zoom/1.2)}))}>−</button><output>{Math.round(camera.zoom*100)}%</output><button aria-label="Report zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(4,c.zoom*1.2)}))}>+</button></div><p>{exportError||'Drag to orbit · Defined bodies / exact Surface poses · same Project'}</p></footer>
-    </dialog>;
+    </Container>;
 }
 
 async function downloadReportPNG(svg:SVGSVGElement,metadata:Record<string,unknown>) {

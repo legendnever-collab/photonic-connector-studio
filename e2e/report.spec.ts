@@ -7,9 +7,9 @@ test.beforeEach(async({page})=>{await page.goto('/#surfaces');});
 test('report B/C, orbit and display envelopes share the current prescription without editing it',async({page})=>{
     const count=await page.getByTestId('surface-reached').textContent();
     const ray=await page.getByTestId('surface-ray-0').getAttribute('points');
-    await page.getByRole('button',{name:'보고용 그림 · Report',exact:true}).click();
+    await page.getByRole('button',{name:'Report View',exact:true}).click();
     const figure=page.getByTestId('report-figure'),fingerprint=await figure.getAttribute('data-fingerprint');
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.locator('.report-inline')).toBeVisible();
     await expect(figure.locator('[data-defined-body]').first()).toBeVisible();
     const first=await figure.locator('[data-report-face]').first().getAttribute('points');
     const box=await figure.boundingBox();
@@ -22,17 +22,17 @@ test('report B/C, orbit and display envelopes share the current prescription wit
     await expect(page.getByTestId('report-inspector')).toContainText('45 accepted hits');
     await expect(figure).toHaveAttribute('data-fingerprint',fingerprint!);
     await page.getByLabel('Beam / Ray bundles',{exact:true}).uncheck();await expect(page.getByTestId('report-bundle')).toHaveCount(0);
-    await page.getByRole('button',{name:'Close Report Figure',exact:true}).click();
+    await page.getByRole('button',{name:'Surface View',exact:true}).click();
     await expect(page.getByTestId('surface-reached')).toHaveText(count!);
     expect(await page.getByTestId('surface-ray-0').getAttribute('points')).toEqual(ray);
-    await expect(page.getByRole('button',{name:'Undo Surface',exact:true})).toBeDisabled();
-    await expect(page.getByRole('button',{name:'보고용 그림 · Report',exact:true})).toBeFocused();
+    await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
+    await expect(page.getByRole('button',{name:'Surface View',exact:true})).toBeFocused();
 });
-test('offline report exports complete standalone SVG and 3200 × 2000 PNG',async({page},info)=>{
+test('offline report exports complete standalone SVG and 3200 × 2000 PNG',async({page})=>{
     await page.context().setOffline(true);
     await page.goto(pathToFileURL(resolve('dist/index.html')).href+'#surfaces');
-    await page.getByRole('button',{name:'보고용 그림 · Report',exact:true}).click();
-    const dialog=page.getByRole('dialog');
+    await page.getByRole('button',{name:'Report View',exact:true}).click();
+    const dialog=page.locator('.report-inline');
     await page.getByRole('button',{name:'C · Linked Inspector',exact:true}).click();
     await page.getByLabel('Report selected Surface',{exact:true}).selectOption('Target');
     const download=page.waitForEvent('download');await dialog.getByRole('button',{name:'SVG',exact:true}).click();
@@ -43,6 +43,6 @@ test('offline report exports complete standalone SVG and 3200 × 2000 PNG',async
     const png=await readFile((await(await pngDownload).path())!);
     expect(png.subarray(1,4).toString()).toBe('PNG');expect(png.readUInt32BE(16)).toBe(3200);expect(png.readUInt32BE(20)).toBe(2000);expect(png.length).toBeGreaterThan(100000);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-    if(info.project.name==='desktop')await page.keyboard.press('Escape');else await page.getByRole('button',{name:'Close Report Figure',exact:true}).click();
-    await expect(dialog).toHaveCount(0);
+    await page.getByRole('button',{name:'Surface View',exact:true}).click();
+    await expect(dialog).not.toBeVisible();
 });

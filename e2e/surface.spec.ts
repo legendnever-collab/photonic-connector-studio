@@ -1,15 +1,15 @@
+import { tab as unifiedTab } from './ui';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-async function tab(page: Page, name: string) { const nav = page.getByRole('navigation', { name: 'Surface Workspace tabs' }); if (await nav.isVisible())
-    await nav.getByRole('button', { name, exact: true }).click(); }
-async function example(page: Page, id: string) { await tab(page, 'Layout'); await page.getByLabel('Surface Example', { exact: true }).selectOption(id); }
+const tab=unifiedTab;
+async function example(page: Page, id: string) { await tab(page, 'Layout'); await page.getByLabel('Project Example', { exact: true }).selectOption(id); }
 async function select(page: Page, id: string) { await tab(page, 'Surfaces'); await page.getByTestId(`surface-tree-${id}`).click(); }
 async function save(page: Page) { await tab(page, 'Layout'); const promise = page.waitForEvent('download'); await page.getByRole('button', { name: 'Save Project JSON', exact: true }).click(); const project=JSON.parse(await readFile((await (await promise).path())!, 'utf8'));return project.kind==='optical-project'?project.model.prescription:project; }
 async function analysis(page: Page) { await tab(page, 'Analysis'); const nav = page.getByRole('navigation', { name: 'Surface Inspector tabs' }); if (await nav.isVisible())
-    await nav.getByRole('button', { name: 'Ray Analysis', exact: true }).click(); }
+    await nav.getByRole('button', { name: 'Analysis', exact: true }).click(); }
 test.beforeEach(async ({ page }) => { await page.goto('/#surfaces'); });
 test('all physical examples reach targets and table selection exposes local Surface frames', async ({ page }) => {
     for (const [id, expected] of [['lens', '13 / 13'], ['mirror', '13 / 13'], ['prism', '13 / 13'], ['array', '45 / 45'], ['compound', '45 / 45']]) {
@@ -68,9 +68,9 @@ test('Assembly pivot preserves child local definitions, JSON roundtrip and Undo/
     const edited = await save(page);
     expect(edited.surfaces).toEqual(before.surfaces);
     expect(edited.assemblies.find((a: any) => a.id === 'Module').frame.rotation.roll).toBeCloseTo(5 * Math.PI / 180, 10);
-    await page.getByRole('button', { name: 'Undo Surface', exact: true }).click();
+    await page.getByRole('button', { name: 'Undo', exact: true }).click();
     expect(await save(page)).toEqual(before);
-    await page.getByRole('button', { name: 'Redo Surface', exact: true }).click();
+    await page.getByRole('button', { name: 'Redo', exact: true }).click();
     expect(await save(page)).toEqual(edited);
     await example(page, 'lens');
     await page.getByTestId('surface-json-input').setInputFiles({ name: 'compound.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(edited)) });
@@ -107,9 +107,9 @@ test('source tilt and Gaussian switching retain the shared physical project', as
     await page.getByLabel('Source Yaw', { exact: true }).fill('1');
     const d = await save(page);
     expect(d.source.frame.rotation.yaw).toBeCloseTo(Math.PI / 180, 12);
-    await page.getByRole('button', { name: 'Gaussian Workspace', exact: true }).click();
+    await page.getByRole('button', { name: 'Gaussian View', exact: true }).click();
     await expect(page.getByTestId('gaussian-support')).toContainText('Not calculated');
-    await page.getByRole('button', { name: 'Surface Workbench', exact: true }).click();
+    await page.getByRole('button', { name: 'Surface View', exact: true }).click();
     expect(await save(page)).toEqual(d);
 });
 test('offline responsive workbench and mobile keyboard exit remain usable', async ({ page }, info) => {
@@ -145,19 +145,19 @@ test('inline Surface table and inserted probe share one undoable prescription', 
         await page.getByLabel('S1 Radius', { exact: true }).fill('6');
         const updated = await save(page);
         expect(updated.surfaces[0].radius).toBe(.006);
-        await page.getByRole('button', { name: 'Undo Surface', exact: true }).click();
+        await page.getByRole('button', { name: 'Undo', exact: true }).click();
     }
     await tab(page, 'Surfaces');
-    await page.getByRole('button', { name: 'Surface', exact: true }).click();
+    await tab(page,'Layout');await page.getByRole('button',{name:'Add Component',exact:true}).click();await page.getByLabel('Component type',{exact:true}).selectOption('probe');await page.getByRole('button',{name:'Insert at Position',exact:true}).click();
     let added = await save(page);
     expect(added.surfaces).toHaveLength(before.surfaces.length + 1);
     await expect(page.getByTestId('surface-reached')).toHaveText('45 / 45');
     await tab(page, 'Surfaces');
-    await page.getByTestId(`surface-tree-${added.surfaces[1].id}`).click();
+    await page.getByTestId(`surface-tree-${added.surfaces.find((s:any)=>s.id.startsWith('Probe-')).id}`).click();
     await page.getByRole('button', { name: 'Remove Surface', exact: true }).click();
     expect((await save(page)).surfaces).toEqual(before.surfaces);
     await tab(page, 'Surfaces');
-    await page.getByRole('button', { name: 'Assembly', exact: true }).click();
+    await tab(page,'Layout');await page.getByRole('button',{name:'Add Component',exact:true}).click();await page.getByLabel('Component type',{exact:true}).selectOption('probe');await page.getByRole('button',{name:'Insert at Position',exact:true}).click();
     added = await save(page);
     expect(added.surfaces).toHaveLength(before.surfaces.length + 1);
     await expect(page.getByTestId('surface-reached')).toHaveText('45 / 45');
