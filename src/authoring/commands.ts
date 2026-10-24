@@ -2,7 +2,7 @@ import { resolveMaterials } from '../surface/materials';
 import { applySmfReference } from './smf';
 import { compile, pose, frame, pointToLocal, pointToWorld, add, mul } from '../surface/model';
 import type { Frame, Surface } from '../surface/model';
-import { physicalProject, prescription, ProjectSchema, projectFingerprint } from '../project/model';
+import { physicalProject, prescription, ProjectSchema } from '../project/model';
 import type { Project } from '../project/model';
 import { unknownAuthoring } from './contract';
 import { fingerprint } from '../physics';
@@ -55,7 +55,6 @@ export function spacing(p:Project,id:string){const d=prescription(p),w=compile(d
  const editable=paired&&Math.hypot(local.y,local.z)<1e-10&&dot(a.world.axes[0],b.world.axes[0])>1-1e-10;
  return {distance:Math.hypot(local.x,local.y,local.z),editable,axial:local.x,nextId:b.id};}
 export function withThickness(p:Project,id:string,value:number):Project {const model=physical(p),d=model.prescription,info=spacing(p,id);if(!info?.editable||value<=0)throw Error('Spacing is Derived; a paired coaxial Lens is required.');const a=d.surfaces.find(s=>s.id===id)!;return ProjectSchema.parse({...p,model:{...model,prescription:{...d,surfaces:d.surfaces.map(s=>s.id===info.nextId?{...s,frame:{...s.frame,origin:pointToWorld(frame(a.frame),{x:value,y:0,z:0})}}:s)}}});}
-export function modeResultState(p:Project){const a=p.authoring,hash=projectFingerprint(p);return {hash,status:'not-calculated' as const,reason:p.model.kind==='surface'?'Physical Mode Bridge B1에서 Incident Field 전파를 연결합니다.':a?'U1 Port 계약은 저장됩니다. 아래 기존 Gaussian 결과는 Legacy Scalar 근사입니다.':'Legacy Gaussian: 기존 Scalar / Paraxial 계산 범위입니다.'};}
 
 /** Save a leaf component as a reusable per-project template, not another active design. */
 export function saveBuildingBlock(p:Project,selected:string,token:string):Project {

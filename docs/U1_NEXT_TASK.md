@@ -1,25 +1,22 @@
-# Latest U1 Starter checkpoint
+# Current checkpoint — B1.0 Physical Gaussian Bridge
 
-Read `docs/FIBER_LENS_FIBER_STARTER.md` first. Preserve startup Fiber–BK7 Lens–Fiber,
-Input/Output Fiber templates, two real Fiber bodies, 10 mm facet spacing and the
-shared named Lens medium. Latest verified source is in `artifacts/build-info-u1.json`.
+Read `docs/B1_PHYSICAL_GAUSSIAN.md` and `docs/FIBER_LENS_FIBER_STARTER.md`.
+The user authorized the next Gaussian / Surface development checkpoint after
+reviewing the previous shared-geometry behavior. B1.0 now propagates the same
+coaxial sphere/plane prescription and reports normalized conditional overlap.
+The 10 mm Fiber–BK7 Lens–Fiber starter and both editable Fiber templates remain.
 
-# U1 다음 Checkpoint
+PR #10 stays Draft: https://github.com/legendnever-collab/photonic-connector-studio/pull/10
+PC first. No main merge before user Play Review. Do not automatically begin the
+next feature. Exact verified source is recorded in `artifacts/build-info-u1.json`.
 
-U1 Draft PR #10: https://github.com/legendnever-collab/photonic-connector-studio/pull/10
-검증 Source: `3881889fd68a2ea2e737c04b5d1f885b287c2e35`.
-SMF 기본 Input Reference (1310 nm / MFD 9.2 µm / Gaussian Waist)를 유지한다.
-PC 우선. 사용자 Play Review 전 main 병합 금지. 다음 기능 자동 시작 금지.
+Resume from the current remote branch `feature/u1-mode-port-authoring`; preserve
+one canonical Surface prescription, Port contract, saved JSON and Undo history.
+`src/project/physicalGaussian.ts` handles B1.0, while the old Ideal solver remains
+separate. Do not infer Transmission or Total Coupling from normalized overlap or
+geometric Ray counts. Do not bypass explicit field eligibility gates.
 
-재개 시 `docs/U1_IMPLEMENTATION_REPORT.md`, `docs/U1_MODE_PORT_CONTRACT.md`,
-기존 Surface evaluator / geometry / trace를 먼저 읽고 현재 원격 Branch를 확인한다.
-U1을 다시 만들거나 Port와 Component를 새 저장 모델로 분리하지 않는다.
-
-승인된 후속 Checkpoint는 F1.1 Conic / Aspheric이다. 공통 sag / gradient / normal /
-intersection / Report geometry를 연결하고 Radius / Conic / 계수와 Decenter / Tilt를
-같은 Surface ID로 편집한다. Sphere limit, 독립 Normal, root residual, Trace / Report
-형상 일치 기준 사례를 검증한다. U1의 입력·Tree·Dock·History·SaveLoad를 유지한다.
-
-B1 Physical Mode Bridge는 별도 승인 Checkpoint다. 강하게 구속된 Port Mode를
-일반 Ray나 두 Transverse E 성분으로 조용히 치환하지 않는다. Sampling / Frame /
-정규화 / Phase 전달을 검증하기 전에는 Coupling 결과를 활성화하지 않는다.
+F1.1 Conic / Aspheric and broader Field/Folded work are subsequent scoped tasks.
+Imported/confined fields still require a real adapter. Alignment ΔPose remains a
+saved Draft (`applied=false`); the actual Port/Assembly Pose controls propagation.
+Review B1 before choosing the next checkpoint.

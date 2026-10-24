@@ -110,7 +110,8 @@ test('source tilt and Gaussian switching retain the shared physical project', as
     const d = await save(page);
     expect(d.source.frame.rotation.yaw).toBeCloseTo(Math.PI / 180, 12);
     await page.getByRole('button', { name: 'Gaussian View', exact: true }).click();
-    await expect(page.getByTestId('gaussian-support')).toContainText('Not calculated');
+    await expect(page.getByTestId('physical-gaussian-reason')).toContainText('Port phase / medium');
+    await expect(page.getByTestId('surface-canvas')).toBeHidden();
     await page.getByRole('button', { name: 'Surface View', exact: true }).click();
     expect(await save(page)).toEqual(d);
 });

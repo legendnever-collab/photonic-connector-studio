@@ -1,5 +1,9 @@
 # U1 — Mode-Port Authoring contract
 
+> B1.0 update (0.4.0-b1): the coaxial physical Gaussian bridge is now implemented.
+> See [current scope and verification](B1_PHYSICAL_GAUSSIAN.md). The U1 text below
+> is historical where it describes all physical Gaussian results as pending.
+
 Baseline: merged P2.4 main `1b4e8f9b483d8c7b3e625839e05247e75d61a9d9`.
 User priority (2026-10-24 KST): general PC design workflow; mobile receives regression maintenance only.
 

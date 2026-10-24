@@ -33,7 +33,7 @@ test('physical block thickness, modes, selection and report dimensions persist a
  for(const v of ['1.1','1.2','1.3']){await thickness.fill(v);await expect(thickness).toBeFocused();}
  await page.getByLabel('Body Outer Radius',{exact:true}).fill('1.4');await finish(page);
  const edited=await save(page);expect(edited.model.prescription.surfaces[1].frame.origin.x).toBeCloseTo(.0013,12);expect(edited.bodies[0].outerRadius).toBeCloseTo(.0014,12);
- await page.getByRole('button',{name:'Gaussian View',exact:true}).click();await expect(page.getByTestId('gaussian-support')).toContainText('Not calculated');
+ await page.getByRole('button',{name:'Gaussian View',exact:true}).click();await expect(page.getByTestId('physical-gaussian-reason')).toContainText('Port phase / medium');
  await tab(page,'Surfaces');await page.getByTestId('shared-source').click();const g=page.locator('.unified-workstation');await g.getByLabel('Input MFD X',{exact:true}).fill('20');await g.getByLabel('Input MFD Y',{exact:true}).fill('25');await finish(page);await tab(page,'Surfaces');await page.getByTestId('surface-tree-L1-back').click();await finish(page);
  const promise=page.waitForEvent('download');await g.getByRole('button',{name:'Save Project JSON',exact:true}).click();const common=JSON.parse(await readFile((await(await promise).path())!,'utf8'));expect(common.model.sourceMode.mfdX).toBeCloseTo(.00002,12);expect(common.model.prescription).toEqual(edited.model.prescription);
  await page.getByRole('button',{name:'Surface View',exact:true}).click();await expect(page.getByTestId('surface-tree-L1-back')).toHaveClass(/selected/);

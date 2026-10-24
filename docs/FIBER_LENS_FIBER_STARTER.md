@@ -1,5 +1,9 @@
 # U1 Starter — Fiber → BK7 Lens → Fiber
 
+> B1.0 update (0.4.0-b1): the coaxial physical Gaussian bridge is now implemented.
+> See [current scope and verification](B1_PHYSICAL_GAUSSIAN.md). The U1 text below
+> is historical where it describes all physical Gaussian results as pending.
+
 Version: 0.3.2-u1. User feedback: first-start usability, receiving Fiber Template,
 Source identity, visible 3D Fibers and a concrete two-surface BK7 Lens example.
 

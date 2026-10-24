@@ -1,5 +1,9 @@
 # Fiber–Lens–Fiber Starter 업데이트 — 0.3.2-u1
 
+> B1.0 update (0.4.0-b1): the coaxial physical Gaussian bridge is now implemented.
+> See [current scope and verification](B1_PHYSICAL_GAUSSIAN.md). The U1 text below
+> is historical where it describes all physical Gaussian results as pending.
+
 첫 화면을 Input Fiber(0 mm) → BK7 Lens(S1 4.5 mm / S2 5.5 mm) → Output Fiber(10 mm)로
 바꿨다. 두 Port에 SMF Fiber Template을 제공하며 3D Layout과 Report에 실제 치수의
 Fiber Body를 표시한다. Source 표시는 Input Fiber의 기준면으로 통합했다.
