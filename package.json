@@ -1,7 +1,7 @@
 {
   "name": "photonic-connector-studio",
   "private": true,
-  "version": "0.3.0-u1",
+  "version": "0.3.1-u1",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",

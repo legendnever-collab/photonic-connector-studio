@@ -3,6 +3,28 @@
 Baseline: merged P2.4 main `1b4e8f9b483d8c7b3e625839e05247e75d61a9d9`.
 User priority (2026-10-24 KST): general PC design workflow; mobile receives regression maintenance only.
 
+## SMF default update — user instruction, 2026-10-24
+
+Startup and New Physical Project now use an editable SMF Fiber Gaussian reference:
+1310 nm, circular MFD 9.2 µm, flat phase / waist at the Fiber Facet, unit-power
+normalization and an outgoing homogeneous plane in air. This is a nominal design
+approximation, not a measured eigenmode or a solved facet interface. Polarization
+and actual launch power remain unspecified. Output Reference Mode remains undefined.
+The independent geometric diagnostic source uses air n=1 and retains its own bundle
+radius / uniform parallel sampling; it is not generated from this Mode.
+
+The MFD reference is grounded in Corning SMF-28 Ultra PI-1424-AEN (nominal 9.2 µm
+at 1310 nm):
+https://www.corning.com/content/dam/corning/media/worldwide/coc/documents/Fiber/product-information-sheets/PI-1424-AEN.pdf
+
+Changing MFD or wavelength marks the SMF-derived input Custom; the code does not
+invent wavelength dispersion or Fresnel loss. Apply SMF 1310 Reference explicitly
+resets the input reference in one history transaction without moving Ports or
+defining the Output Mode. Existing JSON and examples are not retroactively filled.
+The optional Port preset tag records the reference's origin; active MFD and
+wavelength retain one authoritative location. Legacy Ideal startup remains
+available at #ideal for regression / legacy workflow access.
+
 ## Authoritative state and migration
 
 The existing optical-project schemaVersion 1 remains readable. An optional, strict

@@ -10,7 +10,7 @@ async function save(page:Page){await tab(page,'Layout');const d=page.waitForEven
 async function view(page:Page,v:string){await page.getByRole('button',{name:v+' View',exact:true}).click();}
 async function addPrism(page:Page){await tab(page,'Layout');await page.getByRole('button',{name:'Add Component',exact:true}).click();await page.getByLabel('Component type',{exact:true}).selectOption('prism');for(const [k,v]of[['X','1.1'],['Y','-0.2'],['Z','0.35']])await page.getByLabel('Insert '+k,{exact:true}).fill(v);await page.getByLabel('Insert yaw',{exact:true}).fill('12');await page.getByRole('button',{name:'Insert at Position',exact:true}).click();await tab(page,'Layout');}
 for(const start of ['Gaussian','Surface','Report'])test(`Prism inserted in ${start} persists across every view and common Undo/Save`,async({page})=>{
- await page.goto('/');await openProjectExample(page,'lens');await acceptProjectReplacement(page);await view(page,start);const original=await save(page);
+ await page.goto('/#ideal');await openProjectExample(page,'lens');await acceptProjectReplacement(page);await view(page,start);const original=await save(page);
  await page.evaluate(()=>{const w=window as any;w.header=document.querySelector('.app-header');w.menu=document.querySelector('[aria-label="Project controls"]');w.example=document.querySelector('[aria-label="Project Example"]');w.inspector=document.querySelector('.surface-inspector');});
  await addPrism(page);const added=await save(page),block=added.bodies.find((b:any)=>b.kind==='prism'),a=added.model.prescription.assemblies.find((a:any)=>a.id===block.assemblyId),surface=added.model.prescription.surfaces.find((s:any)=>s.assemblyId===a.id);
  expect(a.frame.origin).toEqual({x:.0011,y:-.0002,z:.00035});expect(a.frame.rotation.yaw).toBeCloseTo(Math.PI/15,12);expect(added.model.prescription.surfaces.at(-1)).toEqual(original.model.prescription.surfaces.at(-1));
@@ -22,7 +22,7 @@ for(const start of ['Gaussian','Surface','Report'])test(`Prism inserted in ${sta
  await page.getByTestId('surface-json-input').setInputFiles({name:'shared.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(edited))});await acceptProjectReplacement(page);expect(await save(page)).toEqual(edited);
 });
 test('view switch preserves ideal inputs, physics, selection and Gaussian/report cameras',async({page})=>{
- await page.goto('/');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);await expect(page.getByTestId('summary-eta')).toHaveText('92.4465%');await page.getByRole('button',{name:'Zoom in',exact:true}).click();
+ await page.goto('/#ideal');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);await expect(page.getByTestId('summary-eta')).toHaveText('92.4465%');await page.getByRole('button',{name:'Zoom in',exact:true}).click();
  await tab(page,'Surfaces');await page.getByTestId('tree-lens-f').click();const f=page.getByLabel('Focal Length',{exact:true});await f.fill('1.4');const before=await save(page);await view(page,'Report');await expect(page.getByTestId('report-gaussian-envelope').first()).toBeVisible();await page.getByRole('button',{name:'Report zoom in',exact:true}).click();
  await view(page,'Surface');await view(page,'Gaussian');await expect(page.getByTestId('zoom-level')).toHaveText('125%');await tab(page,'Inspect');await expect(f).toHaveValue('1.4');await tab(page,'Layout');await view(page,'Report');await expect(page.locator('.report-footer output')).toHaveText('120%');expect(await save(page)).toEqual(before);
 });

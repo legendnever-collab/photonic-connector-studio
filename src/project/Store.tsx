@@ -1,3 +1,4 @@
+import { newPhysicalProject } from '../authoring/commands';
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { idealProject, projectExample, ProjectSchema, serializeProject, parseProject, prescription, withPrescription, gaussianForProject, projectFingerprint } from './model';
@@ -11,13 +12,13 @@ type ProjectHistory = {
     future: Project[];
 };
 function useProjectStore() {
-    const [history, setHistory] = useState<ProjectHistory>(() => ({ past: [], present: location.hash === '#surfaces' ? projectExample('compound') : idealProject(), future: [] }));
+    const [history, setHistory] = useState<ProjectHistory>(() => ({ past: [], present: location.hash === '#surfaces' ? projectExample('compound') : location.hash==='#ideal'?idealProject():newPhysicalProject(), future: [] }));
     const project = history.present, [saved, setSaved] = useState(() => serializeProject(project));
-    const [selection, setSelection] = useState(() => prescription(project).surfaces[0].id), [revision, setRevision] = useState(0);
+    const [selection, setSelection] = useState(() => project.authoring?.ports.source.preset?'@source':prescription(project).surfaces[0].id), [revision, setRevision] = useState(0);
     const [pending, setPending] = useState<Project|null>(null);
     const [invalid, setInvalid] = useState<string[]>([]);
     function commit(next: Project) { ProjectSchema.parse(next); setHistory(h => JSON.stringify(next) === JSON.stringify(h.present) ? h : { past: [...h.past.slice(-49), h.present], present: next, future: [] }); }
-    function replace(next: Project) { commit(next); setSelection(prescription(next).surfaces[0].id); setRevision(r => r + 1); setInvalid([]); }
+    function replace(next: Project) { commit(next); setSelection(next.authoring?.ports.source.preset?'@source':prescription(next).surfaces[0].id); setRevision(r => r + 1); setInvalid([]); }
     const undo = () => { setHistory(h => h.past.length ? { past: h.past.slice(0, -1), present: h.past.at(-1)!, future: [h.present, ...h.future] } : h); setInvalid([]); };
     const redo = () => { setHistory(h => h.future.length ? { past: [...h.past, h.present], present: h.future[0], future: h.future.slice(1) } : h); setInvalid([]); };
     const doc = useMemo(() => prescription(project), [project.model]);

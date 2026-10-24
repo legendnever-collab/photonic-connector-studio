@@ -10,7 +10,7 @@ const tab=unifiedTab;
 async function choose(page:Page,id:string){await tab(page,"Train");await page.getByTestId(`tree-${id}`).click();}
 async function example(page:Page,id:string){await openProjectExample(page,'ideal:'+id);await acceptProjectReplacement(page);}
 async function save(page:Page){await tab(page,"Layout");const d=page.waitForEvent("download");await page.getByRole("button",{name:"Save Project JSON",exact:true}).click();const p=JSON.parse(await readFile((await(await d).path())!,"utf8"));return p.kind==='optical-project'?p.model.design:p;}
-test.beforeEach(async({page})=>{await page.goto("/");});
+test.beforeEach(async({page})=>{await page.goto("/#ideal");});
 test("synthetic matching, mismatch, free propagation and reset have benchmark KPIs",async({page})=>{
   await example(page,"matching");await expect(page.getByTestId("summary-eta")).toHaveText("100%");
   await expect(page.getByTestId("beam-overlay")).toBeVisible();
@@ -66,7 +66,7 @@ test("visual viewport resize keeps mobile editing exit reachable; JSON roundtrip
 });
 test("offline file calculation/edit/save/load and responsive evidence",async({page},info)=>{
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));await page.context().setOffline(true);await page.route("**/*",r=>r.request().url().startsWith("file:")?r.continue():r.abort());
-  await page.goto(pathToFileURL(resolve("dist/index.html")).href);await example(page,"matching");await expect(page.getByTestId("summary-eta")).toHaveText("100%");
+  await page.goto(pathToFileURL(resolve("dist/index.html")).href+"#ideal");await example(page,"matching");await expect(page.getByTestId("summary-eta")).toHaveText("100%");
   await choose(page,"lens-f");await page.getByLabel("Focal Length",{exact:true}).fill("1.4");await page.getByRole("button",{name:"편집 종료 · Layout",exact:true}).click();const data=await save(page);
   await openProjectExample(page,'ideal:matching');await acceptProjectReplacement(page);await page.getByTestId("surface-json-input").setInputFiles({name:"offline-p1.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});await acceptProjectReplacement(page);expect(await save(page)).toEqual(data);await expect(page.getByTestId("summary-eta")).not.toHaveText("100%");expect(errors).toEqual([]);
   await openProjectExample(page,'ideal:matching');await acceptProjectReplacement(page);

@@ -26,7 +26,7 @@ async function save(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#ideal");
 });
 test("initial layout has honest analysis, terminal ports and no horizontal overflow", async ({
   page,
@@ -235,7 +235,7 @@ test("offline single HTML works with networking disabled and no runtime errors",
       : route.abort(),
   );
   await page.context().setOffline(true);
-  await page.goto(pathToFileURL(resolve("dist/index.html")).href);
+  await page.goto(pathToFileURL(resolve("dist/index.html")).href+"#ideal");
   await expect(page.getByTestId("optical-canvas")).toBeVisible();
   await choose(page, "waveguide");
   await page.getByLabel("MFDx", { exact: true }).fill("4");

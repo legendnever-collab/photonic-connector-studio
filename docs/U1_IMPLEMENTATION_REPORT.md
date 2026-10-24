@@ -1,3 +1,20 @@
+# SMF Input Reference 업데이트 — 0.3.1-u1
+
+사용자 요청에 따라 앱 시작 및 New Physical Project의 Input을 SMF Fiber Gaussian
+Reference로 설정했다. 기본 λ=1310 nm, MFD X/Y=9.2 µm, Waist=Fiber Facet,
+Flat Phase, Unit-power 정규화, 출사 기준면 매질=air다. 실제 입력 Power와
+Polarization은 지정하지 않았으며 Output Reference Mode도 사용자 정의로 남긴다.
+
+기준값은 SMF-28 Ultra의 nominal MFD를 참고한 Gaussian 근사다. 측정 eigenmode나
+Facet Fresnel / MFD dispersion 계산으로 표시하지 않는다. Source Profile을
+보여주며 값을 바꾸면 Custom으로 표시한다. 기존 저장 파일과 예제는 보존한다.
+
+후속 검증: Model / Physics / Schema / Font **191 PASS**, PC Browser **54 PASS**.
+아래 U1 최초 Checkpoint의 수치와 Source는 과거 기록이다. 최신 Source와 실행 HTML
+SHA256은 `artifacts/build-info-u1.json` / `artifacts/SHA256SUMS-u1.txt`를 참조한다.
+
+---
+
 # U1 — Mode-Port Authoring · 검증 및 Play Review
 
 작성: 2026-10-24 KST. Version: `0.3.0-u1`.

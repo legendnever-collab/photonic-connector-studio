@@ -1,3 +1,4 @@
+import { applySmfReference } from './smf';
 import { compile, pose, frame, pointToLocal, pointToWorld, add, mul } from '../surface/model';
 import type { Frame, Surface } from '../surface/model';
 import { physicalProject, prescription, ProjectSchema, projectFingerprint } from '../project/model';
@@ -6,7 +7,7 @@ import { unknownAuthoring } from './contract';
 import { fingerprint } from '../physics';
 export function newPhysicalProject():Project {
  const target:Surface={id:'Output-Port',name:'Output Reference Plane',assemblyId:'Output',frame:pose(),shape:'plane',radius:.005,aperture:.001,interaction:'probe',nBefore:null,nAfter:null,outsideIndex:null,array:null};
- return {...physicalProject({kind:'surface-prescription',schemaVersion:1,units:'SI',name:'Untitled Mode Matching',wavelength:1310e-9,provenance:'synthetic-assumptions',source:{frame:pose(),radius:.00025,samples:5,n:null,channels:{rows:1,cols:1,pitch:.0006}},assemblies:[{id:'Output',name:'Output Port',kind:'target',parentId:null,frame:pose(.01)}],surfaces:[target]}),authoring:unknownAuthoring()};
+ return applySmfReference({...physicalProject({kind:'surface-prescription',schemaVersion:1,units:'SI',name:'Untitled Mode Matching',wavelength:1310e-9,provenance:'synthetic-assumptions',source:{frame:pose(),radius:.00025,samples:5,n:1,channels:{rows:1,cols:1,pitch:.0006}},assemblies:[{id:'Output',name:'Output Port',kind:'target',parentId:null,frame:pose(.01)}],surfaces:[target]}),authoring:unknownAuthoring()});
 }
 export function templateSignature(p:Project,aid:string){const d=prescription(p);return fingerprint(JSON.stringify({surfaces:d.surfaces.filter(s=>s.assemblyId===aid),body:p.bodies.find(b=>b.assemblyId===aid)}));}
 export function markTemplates(old:Project,next:Project):Project {

@@ -13,7 +13,7 @@ async function finish(page:Page){await page.getByRole('button',{name:'편집 종
 async function report(page:Page){await tab(page,'Layout');await page.getByRole('button',{name:'Report View',exact:true}).click();}
 
 test('ideal Gaussian, Surface positions, report envelope and global Undo use one project',async({page})=>{
- await page.goto('/');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);
+ await page.goto('/#ideal');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);
  await expect(page.getByTestId('summary-eta')).toHaveText('92.4465%');await page.getByRole('button',{name:'Zoom in',exact:true}).click();
  await page.getByRole('button',{name:'Surface View',exact:true}).click();
  const before=await save(page);expect(before.kind).toBe('optical-project');expect(before.model.kind).toBe('ideal');expect(before.bodies).toEqual([]);
@@ -62,7 +62,7 @@ test('offline common project works at narrow widths and invalid drafts suppress 
 });
 
 test('locked Gaussian components remain locked in the Surface editor and shared Mode fields',async({page})=>{
- await page.goto('/');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);await page.getByRole('button',{name:'Surface View',exact:true}).click();
+ await page.goto('/#ideal');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);await page.getByRole('button',{name:'Surface View',exact:true}).click();
  const p=await save(page);p.model.design.components[0].locked=true;p.model.design.components[1].locked=true;
  await page.getByTestId('surface-json-input').setInputFiles({name:'locked.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});await acceptProjectReplacement(page);
  await assembly(page,p.model.design.components[1].id);await expect(page.getByLabel('Assembly X',{exact:true})).toBeDisabled();await finish(page);

@@ -5,8 +5,8 @@ import { newPhysicalProject, rowCommand, groupSurfaces, spacing, withThickness, 
 import { insertBlock } from '../src/project/insertion';
 import { projectTrace } from '../src/project/compute';
 import { unknownAuthoring } from '../src/authoring/contract';
-test('new physical document contains only two ports, no invented modes, phase, power or medium',()=>{
- const p=newPhysicalProject(),d=prescription(p);expect(d.surfaces).toHaveLength(1);expect(d.source.n).toBeNull();expect(d.surfaces[0].nBefore).toBeNull();expect(modes(p).source.mfdX).toBeNull();expect(p.authoring?.ports.source.phase).toBe('unspecified');expect(p.authoring?.ports.target.powerW).toBeNull();expect(projectTrace(p).paths).toEqual([]);expect(projectTrace(p).reason).toContain('Draft');expect(parseProject(serializeProject(p))).toEqual(p);
+test('new physical document uses the requested nominal SMF input and keeps the output mode undefined and labels the air diagnostic separately',()=>{
+ const p=newPhysicalProject(),d=prescription(p);expect(d.surfaces).toHaveLength(1);expect(d.source.n).toBe(1);expect(d.surfaces[0].nBefore).toBeNull();expect(modes(p).source.mfdX).toBe(9.2e-6);expect(modes(p).source.mfdY).toBe(9.2e-6);expect(p.authoring?.ports.source.phase).toBe('waist-plane');expect(p.authoring?.ports.source.normalization).toBe('unit-power');expect(p.authoring?.ports.target.powerW).toBeNull();expect(projectTrace(p).paths).toEqual([]);expect(projectTrace(p).reason).toContain('Draft');expect(parseProject(serializeProject(p))).toEqual(p);
 });
 test.each(['lens','mirror','prism','array','single-surface','blank'] as const)('component path %s preserves port world poses and mode data in one document',kind=>{
  let p=newPhysicalProject();p=withMode(p,'source',{...modes(p).source,mfdX:10e-6,mfdY:11e-6});const before=prescription(p),target=compile(before).at(-1)!.world,copy=serializeProject(p),r=insertBlock(p,kind,pose(.002,.001,-.001,.3,.2,.1),'u1-test',before.surfaces.at(-1)!.id);
@@ -36,3 +36,8 @@ test('user Building Block preserves edited surfaces and body through save/load, 
  const result=insertBuildingBlock(round,round.buildingBlocks![0].id,pose(.004,.001,0,.3),'L1-back','reuse'),next=prescription(result.project);expect(next.surfaces).toHaveLength(5);expect(next.surfaces[2].radius).toBe(.006);expect(compile(next).at(-1)?.world).toEqual(compile(d).at(-1)?.world);expect(result.project.bodies.at(-1)?.assemblyId).toBe(next.surfaces[2].assemblyId);expect(serializeProject(round)).toBe(serializeProject(stored));
 });
 test('unsupported imported or confined Port contract suppresses legacy Gaussian coupling instead of reusing its MFD',async()=>{const {gaussianForProject}=await import('../src/project/model');const p=idealProject();p.authoring=unknownAuthoring();p.authoring.ports.source.fieldModel='imported-complex';expect(gaussianForProject(p).status).toBe('out-of-domain');});
+test('SMF reference is explicit, editable and leaves Output Mode and Port poses unchanged',async()=>{
+ const {applySmfReference,isNominalSmf}=await import('../src/authoring/smf');const p=projectExample('mirror'),d=prescription(p),next=applySmfReference(p);
+ expect(isNominalSmf(next)).toBe(true);expect(modes(next).target).toEqual(modes(p).target);expect(prescription(next).source).toEqual(d.source);expect(compile(prescription(next)).at(-1)?.world).toEqual(compile(d).at(-1)?.world);expect(next.authoring?.ports.source.powerW).toBeNull();expect(modes(p).source.mfdX).toBeNull();expect(parseProject(serializeProject(next))).toEqual(next);expect(isNominalSmf(withMode(next,'source',{...modes(next).source,mfdX:10e-6}))).toBe(false);
+ const changed=withPrescription(next,{...prescription(next),wavelength:1550e-9});expect(modes(changed).source.mfdX).toBe(9.2e-6);expect(isNominalSmf(changed)).toBe(false);
+});
