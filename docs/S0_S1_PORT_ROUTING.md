@@ -95,11 +95,11 @@ not a generic grating's required incidence angle.
 
 ## Validation and acceptance
 
-19 new model tests cover exact height/direction/independent OPL for both examples,
+20 new model tests cover exact height/direction/independent OPL for both examples,
 finite-body bundle reach, reference-ray sampling/MFD independence, nested parent
 world-edit invariance, all six axis presets, independent 3–4–5 µm displacement,
 1°/180° incidence, arbitrary rigid-frame covariance, blocked/clipped/TIR/medium
-termination, constraint statuses, schema failures, old/new JSON and PIC physics gates.
+termination, constraint statuses, schema failures, old/new JSON, PIC physics gates and wavelength-linked BK7 Lens / Prism dispersion.
 
 Five packaged desktop browser workflows cover example loading and focus, linked
 numeric edits / focus / Undo / SaveLoad, Report body and SVG metadata, unsupported

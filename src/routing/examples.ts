@@ -13,7 +13,7 @@ export function routingExample(which:RoutingExample):Project {
  if(p.model.kind!=='surface')throw Error('Physical example required');
  const d=p.model.prescription,n=materialIndex('N-BK7',d.wavelength),z=-10e-6;
  const lens=d.assemblies[0],front=d.surfaces[0],rear=d.surfaces[1],output=d.surfaces.at(-1)!;
- const make=(id:string,assemblyId:string,frame:Surface['frame'],interaction:Surface['interaction'],nBefore=1,nAfter=1):Surface=>({id,name:id,assemblyId,frame,shape:'plane',radius:.005,aperture:30e-6,interaction,nBefore,nAfter,outsideIndex:1,array:null});
+ const make=(id:string,assemblyId:string,frame:Surface['frame'],interaction:Surface['interaction'],nBefore=1,nAfter=1):Surface=>({id,name:id,assemblyId,frame,shape:'plane',radius:.005,aperture:30e-6,interaction,nBefore,nAfter,materialBefore:nBefore===1?'air':'N-BK7',materialAfter:nAfter===1?'air':'N-BK7',outsideIndex:1,array:null});
  let assemblies:Assembly[]=[{...lens,frame:pose(.0015,0,z)}],surfaces:Surface[]=[{...front,aperture:150e-6},{...rear,aperture:150e-6,frame:pose(.0005)}];
  const bodies:Project['bodies']=[{assemblyId:lens.id,kind:'lens',outerRadius:200e-6}];
  if(which==='mirrors'){

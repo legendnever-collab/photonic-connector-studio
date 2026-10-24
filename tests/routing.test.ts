@@ -5,7 +5,8 @@ import {portWorld,withPortWorld,withPortDevice,directionPose} from '../src/routi
 import {RoutingSchema,defaultRouting} from '../src/routing/contract';
 import {fiberLensFiberProject} from '../src/authoring/starter';
 import {framePose} from '../src/authoring/commands';
-import {ProjectSchema,serializeProject,parseProject,idealProject} from '../src/project/model';
+import {ProjectSchema,serializeProject,parseProject,idealProject,withPrescription} from '../src/project/model';
+import {materialIndex} from '../src/surface/materials';
 import {solvePhysicalGaussian} from '../src/project/physicalGaussian';
 import {projectTrace} from '../src/project/compute';
 import {frame,pose,V,norm,sub,compose,vectorToWorld,pointToWorld} from '../src/surface/model';
@@ -28,6 +29,15 @@ test('reference ray is independent of pupil sample radius/count and mode MFD',()
  d.source.radius=10e-6;d.source.samples=1;
  if(p.model.kind==='surface')p.model.sourceMode.mfdX=100e-6;
  const after=analyzeRouting(p);expect(after.path).toEqual(before.path);expect(after.positionError).toBe(before.positionError);expect(after.fingerprint).not.toBe(before.fingerprint);
+});
+test('wavelength editing keeps the BK7 Lens and all three Prism interfaces linked to one dispersion model',()=>{
+ const p=routingExample('prism'),d=physical(p),q=withPrescription(p,{...d,wavelength:1550e-9}),next=physical(q),n=materialIndex('N-BK7',1550e-9);
+ expect(next.surfaces.find(s=>s.id==='S1')!.nAfter).toBe(n);
+ expect(next.surfaces.find(s=>s.id==='P-entry')!.nAfter).toBe(n);
+ expect(next.surfaces.find(s=>s.id==='P-TIR')!.nBefore).toBe(n);
+ expect(next.surfaces.find(s=>s.id==='P-TIR')!.nAfter).toBe(n);
+ expect(next.surfaces.find(s=>s.id==='P-exit')!.nBefore).toBe(n);
+ const r=analyzeRouting(q);expect(r.withinTolerance).toBe(true);expect(r.path!.opl).toBeCloseTo(.00404+60e-6+(n-1)*(.0005+80e-6),13);
 });
 test('Output global position editor preserves parent hierarchy, surface IDs and unrelated optics',()=>{
  const p=routingExample('mirrors'),d=physical(p),old=structuredClone(d),global=pose(.002,.003,-.001,.5,-.3,.2);
