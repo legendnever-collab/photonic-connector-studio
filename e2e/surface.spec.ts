@@ -98,7 +98,7 @@ test('3D shading, camera orbit and standalone SVG export preserve prescription',
     expect(svg).toContain('http://www.w3.org/2000/svg');
     expect(svg.includes('var(--')).toBe(false);
     expect(svg.includes('file:///')).toBe(false);
-    expect(svg).toContain('surface-sequential-3d/2.1.0');
+    expect(svg).toContain('surface-sequential-3d/3.0.0');
     expect(svg).toContain('Computed geometric rays');
     expect(await save(page)).toEqual(before);
 });

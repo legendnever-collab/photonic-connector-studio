@@ -1,5 +1,8 @@
+import {asphereRoot,IntersectionFailure} from './asphereIntersection';
+import {surfaceNormal} from './evaluator';
 import { add, sub, mul, dot, norm, unit, V, frame, pointToWorld, vectorToWorld, pointToLocal, vectorToLocal, compile, PrescriptionSchema, sag } from "./model";
 import type { Vec, Compiled, Prescription } from "./model";
+export const SURFACE_SOLVER_ID='surface-sequential-3d/3.0.0';
 export const EPS = 1e-11;
 export type Ray = {
     origin: Vec;
@@ -78,6 +81,7 @@ export function intersect(ray: Ray, s: Compiled): Intersection | null {
     let roots: number[];
     if (s.shape === "plane")
         roots = [tPlane];
+    else if(s.shape==="even-asphere"){const root=asphereRoot(q,d,s,s.aperture);roots=root===null?[]:[root];}
     else {
         const R = s.radius, oc = sub(q, V(R)), b = dot(oc, d), c = dot(oc, oc) - R * R, perpendicular = sub(oc, mul(d, b)), discriminant = R * R - dot(perpendicular, perpendicular);
         if (discriminant < -1e-12 * Math.max(R * R, dot(perpendicular, perpendicular), 1e-30))
@@ -91,7 +95,7 @@ export function intersect(ray: Ray, s: Compiled): Intersection | null {
         if (s.shape === "sphere" && (s.radius > 0 ? relative.x > s.radius : relative.x < s.radius))
             continue;
         const radius = Math.hypot(relative.y, relative.z), clipped = radius > s.aperture * (1 + 1e-10) || (!!a && (col < 0 || col >= a.cols || row < 0 || row >= a.rows));
-        const n = s.shape === "plane" ? V(1) : unit(mul(sub(relative, V(s.radius)), -Math.sign(s.radius)));
+        const n = surfaceNormal(s,relative.y,relative.z);if(!n)throw new IntersectionFailure("Undefined surface normal");
         return { point: pointToWorld(s.world, local), local, normal: vectorToWorld(s.world, n), t, cell: `${row}:${col}`, clipped };
     }
     return null;
@@ -102,9 +106,9 @@ export function traceRay(input: Ray, surfaces: Compiled[], accepts?: (point: Vec
     const blocked = (reason: string): RayPath => ({ channel: ray.channel, points, hits, status: "blocked", reason, opl });
     for (const s of surfaces) {
         if(s.nBefore === null || s.nAfter === null || (s.interaction === "tir" && s.outsideIndex === null)) return blocked(`${s.id}: undefined medium · Draft`);
-        const hit = intersect(ray, s);
+        let hit:Intersection|null;try{hit=intersect(ray,s);}catch(e){if(e instanceof IntersectionFailure)return blocked(`${s.id}: numerical intersection unavailable · ${e.message}`);throw e;}
         if (!hit)
-            return blocked(`${s.id}: missed / parallel / behind`);
+            return blocked(`${s.id}: missed / parallel / behind${s.shape==='even-asphere'?' / finite aperture':''}`);
         opl += norm(sub(hit.point, ray.origin)) * ray.n;
         points.push(hit.point);
         if (hit.clipped)
