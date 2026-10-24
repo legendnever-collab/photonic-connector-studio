@@ -1,3 +1,5 @@
+import { openProjectExample } from './ui';
+import { acceptProjectReplacement } from './ui';
 import { tab as unifiedTab } from './ui';
 import { test,expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
@@ -11,7 +13,7 @@ async function finish(page:Page){await page.getByRole('button',{name:'편집 종
 async function report(page:Page){await tab(page,'Layout');await page.getByRole('button',{name:'Report View',exact:true}).click();}
 
 test('ideal Gaussian, Surface positions, report envelope and global Undo use one project',async({page})=>{
- await page.goto('/');await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:pointing');
+ await page.goto('/');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);
  await expect(page.getByTestId('summary-eta')).toHaveText('92.4465%');await page.getByRole('button',{name:'Zoom in',exact:true}).click();
  await page.getByRole('button',{name:'Surface View',exact:true}).click();
  const before=await save(page);expect(before.kind).toBe('optical-project');expect(before.model.kind).toBe('ideal');expect(before.bodies).toEqual([]);
@@ -26,7 +28,7 @@ test('ideal Gaussian, Surface positions, report envelope and global Undo use one
  await page.getByRole('button',{name:'Redo',exact:true}).click();expect(await save(page)).toEqual(after);
 });
 test('physical block thickness, modes, selection and report dimensions persist across workspaces',async({page})=>{
- await page.goto('/#surfaces');await page.getByLabel('Project Example',{exact:true}).selectOption('lens');
+ await page.goto('/#surfaces');await openProjectExample(page,'lens');await acceptProjectReplacement(page);
  await assembly(page,'Lens');const thickness=page.getByLabel('Center Thickness',{exact:true});
  for(const v of ['1.1','1.2','1.3']){await thickness.fill(v);await expect(thickness).toBeFocused();}
  await page.getByLabel('Body Outer Radius',{exact:true}).fill('1.4');await finish(page);
@@ -41,17 +43,17 @@ test('physical block thickness, modes, selection and report dimensions persist a
  await page.getByRole('button',{name:'Undo',exact:true}).click();const undone=await save(page);expect(undone.model.sourceMode.mfdY).toBeNull();expect(undone.bodies).toEqual(edited.bodies);
 });
 test('finite prism/mirror body dimensions affect physical acceptance, independently of MFD',async({page})=>{
- await page.goto('/#surfaces');await page.getByLabel('Project Example',{exact:true}).selectOption('prism');await assembly(page,'Prism');
+ await page.goto('/#surfaces');await openProjectExample(page,'prism');await acceptProjectReplacement(page);await assembly(page,'Prism');
  await page.getByLabel('Prism Depth',{exact:true}).fill('0.05');await finish(page);await expect(page.getByTestId('surface-reached')).not.toHaveText('13 / 13');
  await report(page);await expect(page.getByTestId('report-figure')).toContainText('Defined body dimensions');await page.getByRole('button',{name:'Surface View',exact:true}).click();
- await page.getByLabel('Project Example',{exact:true}).selectOption('mirror');await assembly(page,'Mirror');await page.getByLabel('Body Outline',{exact:true}).selectOption('rectangle');await page.getByLabel('Body Width',{exact:true}).fill('0.1');await page.getByLabel('Body Height',{exact:true}).fill('0.1');await finish(page);await expect(page.getByTestId('surface-reached')).toHaveText('1 / 13');
+ await openProjectExample(page,'mirror');await acceptProjectReplacement(page);await assembly(page,'Mirror');await page.getByLabel('Body Outline',{exact:true}).selectOption('rectangle');await page.getByLabel('Body Width',{exact:true}).fill('0.1');await page.getByLabel('Body Height',{exact:true}).fill('0.1');await finish(page);await expect(page.getByTestId('surface-reached')).toHaveText('1 / 13');
  const before=await save(page);await tab(page,'Surfaces');await page.getByTestId('shared-source').click();await page.getByLabel('Source MFD X',{exact:true}).fill('40');await finish(page);const after=await save(page);expect(after.bodies).toEqual(before.bodies);expect(after.model.prescription.source.radius).toBe(before.model.prescription.source.radius);await expect(page.getByTestId('surface-reached')).toHaveText('1 / 13');
 });
 test('common and legacy imports preserve model class, reject unknown references and omit unknown solids',async({page})=>{
  await page.goto('/#surfaces');const original=await save(page);
- const input=page.getByTestId('surface-json-input');await input.setInputFiles({name:'project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(original))});expect(await save(page)).toEqual(original);
- await input.setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...original,bodies:[{kind:'prism',assemblyId:'missing',depth:.01}]}))});await expect(page.getByRole('alert')).toContainText('Import rejected');expect(await save(page)).toEqual(original);
- await input.setInputFiles({name:'legacy-surface.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(original.model.prescription))});const legacy=await save(page);expect(legacy.bodies).toEqual([]);expect(legacy.sourceBody).toBeNull();await report(page);await expect(page.getByTestId('report-figure').locator('[data-defined-body]')).toHaveCount(0);await page.getByRole('button',{name:'Surface View',exact:true}).click();
+ const input=page.getByTestId('surface-json-input');await input.setInputFiles({name:'project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(original))});await acceptProjectReplacement(page);expect(await save(page)).toEqual(original);
+ await input.setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...original,bodies:[{kind:'prism',assemblyId:'missing',depth:.01}]}))});await acceptProjectReplacement(page);await expect(page.getByRole('alert')).toContainText('Import rejected');expect(await save(page)).toEqual(original);
+ await input.setInputFiles({name:'legacy-surface.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(original.model.prescription))});await acceptProjectReplacement(page);const legacy=await save(page);expect(legacy.bodies).toEqual([]);expect(legacy.sourceBody).toBeNull();await report(page);await expect(page.getByTestId('report-figure').locator('[data-defined-body]')).toHaveCount(0);await page.getByRole('button',{name:'Surface View',exact:true}).click();
 });
 test('offline common project works at narrow widths and invalid drafts suppress report results',async({page},info)=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.context().setOffline(true);await page.goto(pathToFileURL(resolve('dist/index.html')).href+'#surfaces');
@@ -60,9 +62,9 @@ test('offline common project works at narrow widths and invalid drafts suppress 
 });
 
 test('locked Gaussian components remain locked in the Surface editor and shared Mode fields',async({page})=>{
- await page.goto('/');await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:pointing');await page.getByRole('button',{name:'Surface View',exact:true}).click();
+ await page.goto('/');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);await page.getByRole('button',{name:'Surface View',exact:true}).click();
  const p=await save(page);p.model.design.components[0].locked=true;p.model.design.components[1].locked=true;
- await page.getByTestId('surface-json-input').setInputFiles({name:'locked.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});
+ await page.getByTestId('surface-json-input').setInputFiles({name:'locked.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});await acceptProjectReplacement(page);
  await assembly(page,p.model.design.components[1].id);await expect(page.getByLabel('Assembly X',{exact:true})).toBeDisabled();await finish(page);
  await tab(page,'Surfaces');await page.getByTestId('tree-fiber').click();await expect(page.getByLabel('MFDx',{exact:true})).toBeDisabled();await expect(page.getByLabel('X Position',{exact:true})).toBeDisabled();await finish(page);expect(await save(page)).toEqual(p);
 });

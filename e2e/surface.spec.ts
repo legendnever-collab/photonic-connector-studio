@@ -1,3 +1,5 @@
+import { openProjectExample } from './ui';
+import { acceptProjectReplacement } from './ui';
 import { tab as unifiedTab } from './ui';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
@@ -5,7 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 const tab=unifiedTab;
-async function example(page: Page, id: string) { await tab(page, 'Layout'); await page.getByLabel('Project Example', { exact: true }).selectOption(id); }
+async function example(page: Page, id: string) { await tab(page, 'Layout'); await openProjectExample(page,id);await acceptProjectReplacement(page); }
 async function select(page: Page, id: string) { await tab(page, 'Surfaces'); await page.getByTestId(`surface-tree-${id}`).click(); }
 async function save(page: Page) { await tab(page, 'Layout'); const promise = page.waitForEvent('download'); await page.getByRole('button', { name: 'Save Project JSON', exact: true }).click(); const project=JSON.parse(await readFile((await (await promise).path())!, 'utf8'));return project.kind==='optical-project'?project.model.prescription:project; }
 async function analysis(page: Page) { await tab(page, 'Analysis'); const nav = page.getByRole('navigation', { name: 'Surface Inspector tabs' }); if (await nav.isVisible())
@@ -73,9 +75,9 @@ test('Assembly pivot preserves child local definitions, JSON roundtrip and Undo/
     await page.getByRole('button', { name: 'Redo', exact: true }).click();
     expect(await save(page)).toEqual(edited);
     await example(page, 'lens');
-    await page.getByTestId('surface-json-input').setInputFiles({ name: 'compound.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(edited)) });
+    await page.getByTestId('surface-json-input').setInputFiles({ name: 'compound.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(edited)) });await acceptProjectReplacement(page);
     expect(await save(page)).toEqual(edited);
-    await page.getByTestId('surface-json-input').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{bad') });
+    await page.getByTestId('surface-json-input').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{bad') });await acceptProjectReplacement(page);
     await expect(page.getByRole('alert')).toContainText('Import rejected');
     expect(await save(page)).toEqual(edited);
 });

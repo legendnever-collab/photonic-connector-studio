@@ -1,3 +1,22 @@
+# Photonic Connector Studio — U1 Mode-Port Authoring
+
+Desktop design workflow for **Input Mode → Optical Train → Output Reference Mode**.
+Baseline P2.4 remains preserved; U1 is a Play Review checkpoint, not a merged release.
+
+Start with **New Physical Project**, define both Port Modes, then add Lens / Prism
+from Component Catalog or insert rows in Surface Data. Layout and Surface Data
+share one Project. Float / Dock and the Splitter change session layout only.
+
+- `npm ci`; `npm run check` for type, model, build and browser checks.
+- `npm run artifact` produces the offline single HTML and source/hash manifest.
+- [U1 contract](docs/U1_MODE_PORT_CONTRACT.md)
+- [U1 verification and review](docs/U1_IMPLEMENTATION_REPORT.md)
+- [Existing development roadmap](docs/DEVELOPMENT_ROADMAP_V1.md)
+
+Physical Ray tracing is a Geometric Diagnostic. Physical Mode propagation and
+coupling are pending B1; Conic / Aspheric solver work is pending F1.1. Existing
+legacy Gaussian / Scalar / Paraxial analysis remains available via Examples.
+
 ## P2.4 — Unified Optical Workstation
 
 Gaussian / Surface / Report are central views of **one project**. Open/Save, Undo/Redo,

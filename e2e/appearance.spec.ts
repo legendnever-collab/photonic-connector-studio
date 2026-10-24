@@ -1,3 +1,5 @@
+import { openProjectExample } from './ui';
+import { acceptProjectReplacement } from './ui';
 import {test,expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
 import {resolve} from 'node:path';
@@ -7,7 +9,7 @@ async function appearance(page:Page,name:string){await page.getByRole('button',{
  await page.evaluate(async()=>{await Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished));});
 }
 test('appearance options preserve optical state, geometry nodes, zoom and edited parameters',async({page},info)=>{
- await page.goto('/');await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:pointing');await page.getByRole('button',{name:'Zoom in',exact:true}).click();
+ await page.goto('/');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);await page.getByRole('button',{name:'Zoom in',exact:true}).click();
  const eta=await page.getByTestId('summary-eta').textContent();await page.evaluate(()=>{(window as any).originalSVG=document.querySelector('[data-testid="optical-canvas"]');(window as any).originalAxis=document.querySelector('[data-testid="beam-axis"]');(window as any).axisPoints=document.querySelector('[data-testid="beam-axis"]')?.getAttribute('points');});
  for(const name of ['Precision Dark','Focus Hybrid','Lab Light']){await appearance(page,name);await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await expect(page.getByTestId('zoom-level')).toHaveText('125%');expect(await page.evaluate(()=>{const w=window as any;return w.originalSVG===document.querySelector('[data-testid="optical-canvas"]')&&w.originalAxis===document.querySelector('[data-testid="beam-axis"]')&&w.axisPoints===w.originalAxis.getAttribute('points');})).toBe(true);}
  if(info.project.name==='desktop'){
@@ -16,7 +18,7 @@ test('appearance options preserve optical state, geometry nodes, zoom and edited
  }
 });
 test('offline themes expose readable key text, keyboard dismissal and bounded responsive dialogs',async({page},info)=>{
- await page.context().setOffline(true);await page.goto(pathToFileURL(resolve('dist/index.html')).href);await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:pointing');
+ await page.context().setOffline(true);await page.goto(pathToFileURL(resolve('dist/index.html')).href);await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);
  const evidence:unknown[]=[];
  for(const [id,name] of [['light','Lab Light'],['dark','Precision Dark'],['hybrid','Focus Hybrid']]){
   await appearance(page,name);await expect(page.locator('.app-shell:visible')).toHaveAttribute('data-theme',id);
