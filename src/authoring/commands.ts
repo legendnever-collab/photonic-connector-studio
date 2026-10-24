@@ -1,3 +1,4 @@
+import { resolveMaterials } from '../surface/materials';
 import { applySmfReference } from './smf';
 import { compile, pose, frame, pointToLocal, pointToWorld, add, mul } from '../surface/model';
 import type { Frame, Surface } from '../surface/model';
@@ -7,7 +8,7 @@ import { unknownAuthoring } from './contract';
 import { fingerprint } from '../physics';
 export function newPhysicalProject():Project {
  const target:Surface={id:'Output-Port',name:'Output Reference Plane',assemblyId:'Output',frame:pose(),shape:'plane',radius:.005,aperture:.001,interaction:'probe',nBefore:null,nAfter:null,outsideIndex:null,array:null};
- return applySmfReference({...physicalProject({kind:'surface-prescription',schemaVersion:1,units:'SI',name:'Untitled Mode Matching',wavelength:1310e-9,provenance:'synthetic-assumptions',source:{frame:pose(),radius:.00025,samples:5,n:1,channels:{rows:1,cols:1,pitch:.0006}},assemblies:[{id:'Output',name:'Output Port',kind:'target',parentId:null,frame:pose(.01)}],surfaces:[target]}),authoring:unknownAuthoring()});
+ return applySmfReference({...physicalProject({kind:'surface-prescription',schemaVersion:1,units:'SI',name:'Untitled Mode Matching',wavelength:1310e-9,provenance:'synthetic-assumptions',source:{frame:pose(),radius:.00025,samples:5,n:1,channels:{rows:1,cols:1,pitch:.0006}},assemblies:[{id:'Output',name:'Output Port',kind:'target',parentId:null,frame:pose(.01)}],surfaces:[target]}),authoring:unknownAuthoring(),sourceBody:{radius:62.5e-6,length:.001}});
 }
 export function templateSignature(p:Project,aid:string){const d=prescription(p);return fingerprint(JSON.stringify({surfaces:d.surfaces.filter(s=>s.assemblyId===aid),body:p.bodies.find(b=>b.assemblyId===aid)}));}
 export function markTemplates(old:Project,next:Project):Project {
@@ -31,7 +32,7 @@ export function rowCommand(p:Project,id:string,action:RowCommand,token:string){
   const aid=`Manual-${token}`,w=compile(d)[i].world,previous=i?compile(d)[i-1].world.origin:d.source.frame.origin;
   const origin=action==='before'?mul(add(previous,w.origin),.5):mul(add(w.origin,compile(d)[i+1]?.world.origin??w.origin),.5);
   assemblies.push({id:aid,name:'Blank Component',kind:'group',parentId:null,frame:{...pose(),origin}});
-  next={...s,id:`Surface-${token}`,name:'Single Surface',assemblyId:aid,frame:pose(),shape:'plane',interaction:'refract',nBefore:null,nAfter:null,outsideIndex:null,array:null};
+  next={...s,id:`Surface-${token}`,name:'Single Surface',materialBefore:undefined,materialAfter:undefined,assemblyId:aid,frame:pose(),shape:'plane',interaction:'refract',nBefore:null,nAfter:null,outsideIndex:null,array:null};
  }
  surfaces.splice(action==='before'?i:i+1,0,next);
  return {project:ProjectSchema.parse({...p,model:{...model,prescription:{...d,assemblies,surfaces}}}),selection:next.id};
@@ -69,6 +70,6 @@ export function insertBuildingBlock(p:Project,blockId:string,placement:ReturnTyp
  const aid=`UserAssembly-${token}`,surfaces=block.surfaces.map((s,i)=>({...structuredClone(s),id:`UserSurface-${i}-${token}`,assemblyId:aid}));
  const chosen=d.surfaces.find(s=>s.id===selected),indices=d.surfaces.flatMap((s,i)=>chosen&&s.assemblyId===chosen.assemblyId?[i]:[]),index=selected==='@source'?0:chosen&&chosen!==d.surfaces.at(-1)?Math.min(Math.max(...indices)+1,d.surfaces.length-1):d.surfaces.length-1;
  const next=[...d.surfaces];next.splice(index,0,...surfaces);
- const project=ProjectSchema.parse({...p,model:{...model,prescription:{...d,assemblies:[...d.assemblies,{id:aid,name:block.name,kind:block.kind,parentId:null,frame:placement}],surfaces:next}},bodies:block.body?[...p.bodies,{...block.body,assemblyId:aid}]:p.bodies});
+ const project=ProjectSchema.parse({...p,model:{...model,prescription:{...d,assemblies:[...d.assemblies,{id:aid,name:block.name,kind:block.kind,parentId:null,frame:placement}],surfaces:resolveMaterials(d,{...d,assemblies:[...d.assemblies,{id:aid,name:block.name,kind:block.kind,parentId:null,frame:placement}],surfaces:next}).surfaces}},bodies:block.body?[...p.bodies,{...block.body,assemblyId:aid}]:p.bodies});
  return {project:markTemplates(p,project),selection:surfaces[0].id};
 }

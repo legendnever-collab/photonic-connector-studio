@@ -1,3 +1,9 @@
+# Latest U1 Starter checkpoint
+
+Read `docs/FIBER_LENS_FIBER_STARTER.md` first. Preserve startup Fiber–BK7 Lens–Fiber,
+Input/Output Fiber templates, two real Fiber bodies, 10 mm facet spacing and the
+shared named Lens medium. Latest verified source is in `artifacts/build-info-u1.json`.
+
 # U1 다음 Checkpoint
 
 U1 Draft PR #10: https://github.com/legendnever-collab/photonic-connector-studio/pull/10

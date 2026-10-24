@@ -3,9 +3,11 @@
 Desktop design workflow for **Input Mode → Optical Train → Output Reference Mode**.
 Baseline P2.4 remains preserved; U1 is a Play Review checkpoint, not a merged release.
 
-Startup and **New Physical Project** use an editable SMF Fiber Gaussian Reference
-(1310 nm, MFD 9.2 µm, waist at the fiber facet). Existing project files retain their
-original input definitions. Define the Output Reference Mode, then add Lens / Prism
+Startup now opens **Fiber → BK7 Lens → Fiber**, with 10 mm between Fiber facets.
+S1 / BK7 / S2 form one 1 mm-thick Lens, and both Fiber bodies are visible in 3D.
+Choose Input or Output **Port Template → SMF Fiber** to set either reference.
+**New Physical Project** remains the blank authoring route. Existing saved
+projects retain their original values. Add components
 from Component Catalog or insert rows in Surface Data. Layout and Surface Data
 share one Project. Float / Dock and the Splitter change session layout only.
 

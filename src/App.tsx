@@ -1,5 +1,4 @@
 import { PanelProvider } from './authoring/Panels';
-import './authoring/authoring.css';
 import { useEffect, useState } from 'react';
 import SurfaceWorkbench from './surface/Workbench';
 import type { Theme } from './Appearance';

@@ -1,3 +1,15 @@
+# Fiber–Lens–Fiber Starter 업데이트 — 0.3.2-u1
+
+첫 화면을 Input Fiber(0 mm) → BK7 Lens(S1 4.5 mm / S2 5.5 mm) → Output Fiber(10 mm)로
+바꿨다. 두 Port에 SMF Fiber Template을 제공하며 3D Layout과 Report에 실제 치수의
+Fiber Body를 표시한다. Source 표시는 Input Fiber의 기준면으로 통합했다.
+
+재질 이름과 굴절률을 연결하고 Paired Lens의 S1–S2 사이 Medium을 함께 편집한다.
+자세한 범위와 검증은 `docs/FIBER_LENS_FIBER_STARTER.md`, 최신 Source와 실행 HTML
+Hash는 `artifacts/build-info-u1.json`을 참조한다. 아래 내용은 이전 Checkpoint 기록이다.
+
+---
+
 # SMF Input Reference 업데이트 — 0.3.1-u1
 
 사용자 요청에 따라 앱 시작 및 New Physical Project의 Input을 SMF Fiber Gaussian

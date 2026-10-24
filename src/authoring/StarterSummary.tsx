@@ -1,0 +1,4 @@
+import {useProject} from '../project/Store';
+import {modes} from '../project/model';
+import {compile,norm,sub} from '../surface/model';
+export default function StarterSummary(){const s=useProject(),m=modes(s.project),ss=compile(s.doc),lens=ss.filter(x=>s.doc.assemblies.find(a=>a.id===x.assemblyId)?.kind==='lens'),diameter=(v:number|null)=>v===null?'Undefined':`${Number((v*1e6).toPrecision(4))} µm`;return <section className="starter-path" aria-label="Starter optical train"><div><small>Input Fiber</small><strong>MFD {diameter(m.source.mfdX)}</strong></div><b>→</b><div><small>One Lens</small><strong>S1 · {lens[0]?.materialAfter==='N-BK7'?'BK7':'Custom n'} · S2</strong></div><b>→</b><div><small>Output Fiber</small><strong>MFD {diameter(m.target.mfdX)}</strong></div><span>Fiber Facets<br/><strong>{(norm(sub(ss.at(-1)!.world.origin,s.doc.source.frame.origin))*1e3).toFixed(2)} mm</strong></span></section>;}

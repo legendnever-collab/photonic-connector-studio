@@ -106,7 +106,7 @@ test('source tilt and Gaussian switching retain the shared physical project', as
     await example(page, 'mirror');
     await select(page, 'M1');
     await page.getByLabel('Surface Edit Target', { exact: true }).selectOption('source');
-    await page.getByLabel('Source Yaw', { exact: true }).fill('1');
+    await page.getByLabel('Input Yaw', { exact: true }).fill('1');
     const d = await save(page);
     expect(d.source.frame.rotation.yaw).toBeCloseTo(Math.PI / 180, 12);
     await page.getByRole('button', { name: 'Gaussian View', exact: true }).click();

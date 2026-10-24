@@ -1,3 +1,4 @@
+import { fiberLensFiberProject } from '../authoring/starter';
 import { newPhysicalProject } from '../authoring/commands';
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -12,7 +13,7 @@ type ProjectHistory = {
     future: Project[];
 };
 function useProjectStore() {
-    const [history, setHistory] = useState<ProjectHistory>(() => ({ past: [], present: location.hash === '#surfaces' ? projectExample('compound') : location.hash==='#ideal'?idealProject():newPhysicalProject(), future: [] }));
+    const [history, setHistory] = useState<ProjectHistory>(() => ({ past: [], present: location.hash === '#surfaces' ? projectExample('compound') : location.hash==='#ideal'?idealProject():location.hash==='#blank'?newPhysicalProject():fiberLensFiberProject(), future: [] }));
     const project = history.present, [saved, setSaved] = useState(() => serializeProject(project));
     const [selection, setSelection] = useState(() => project.authoring?.ports.source.preset?'@source':prescription(project).surfaces[0].id), [revision, setRevision] = useState(0);
     const [pending, setPending] = useState<Project|null>(null);

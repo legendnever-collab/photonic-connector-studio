@@ -3,16 +3,30 @@ import { ModePreview, PortContractFields } from '../authoring/Ports';
 import { NumberField } from '../Fields';
 import { useProject } from './Store';
 import { modes, withMode } from './model';
+import { unknownAuthoring } from '../authoring/contract';
+import type { Project } from './model';
 import type { Body } from './model';
 import { add, mul, frame, pointToLocal } from '../surface/model';
 import { bodyGeometry } from './geometry';
 import { compile } from '../surface/model';
-export function ModeFields({ which }: {
-    which: 'source' | 'target';
-}) {
-    const shared = useProject(), p = shared.project, value = modes(p)[which];
-    const locked=p.model.kind==='ideal'&&p.model.design.components[which==='source'?0:p.model.design.components.length-1].locked;
-    return <section className="project-fields"><h3>{which === 'source' ? 'Source Mode' : 'Target Mode'}</h3>{which==='source'&&<div className="smf-reference"><ModePreview which="source"/><strong>{p.authoring?.ports.source.preset?(isNominalSmf(p)?'SMF Fiber · Gaussian Reference':'SMF-derived · Custom Mode'):'Input Reference'}</strong><p className="surface-note">Nominal SMF: 1310 nm · MFD 9.2 µm · Waist at Fiber Facet · outgoing homogeneous plane in air. Editable Gaussian approximation; not a measured Mode. MFD is not Core / Cladding Diameter. Wavelength dispersion and facet Fresnel loss are not modeled.</p><button disabled={locked} onClick={()=>shared.commit(applySmfReference(p))}>Apply SMF 1310 Reference</button></div>}<p className="surface-note">MFD는 Intensity 1/e² diameter입니다. 기계 외경과 독립적입니다.</p><div className="fields-two">{(['mfdX', 'mfdY'] as const).map((k, i) => <NumberField disabled={locked} key={k} label={`${which === 'source' ? 'Source' : 'Target'} MFD ${i ? 'Y' : 'X'}`} value={value[k] === null ? null : value[k]! * 1e6} unit="µm" min={.001} max={1e6} nullable onChange={v => { shared.commit(withMode(p, which, { ...value, [k]: v === null ? null : v! * 1e-6 })); return true; }}/>)}</div><label className="field">Polarization<select disabled={locked} aria-label={`${which} Mode Polarization`} value={value.polarization} onChange={e => shared.commit(withMode(p, which, { ...value, polarization: e.target.value as typeof value.polarization }))}>{['unspecified', 'TE', 'TM'].map(v => <option key={v}>{v}</option>)}</select></label>{which === 'source' && <><label className="surface-check"><input type="checkbox" disabled={locked} aria-label="Define Source Body" checked={!!p.sourceBody} onChange={e => shared.commit({ ...p, sourceBody: e.target.checked ? { radius: .0000625, length: .001 } : null })}/>Define Source Body</label>{p.sourceBody && <div className="fields-two"><NumberField disabled={locked} label="Source Body Diameter" value={p.sourceBody.radius * 2e3} unit="mm" min={.000001} max={2000} onChange={v => { shared.commit({ ...p, sourceBody: { ...p.sourceBody!, radius: v! * .0005 } }); return true; }}/><NumberField disabled={locked} label="Source Body Length" value={p.sourceBody.length * 1e3} unit="mm" min={.000001} max={1000} onChange={v => { shared.commit({ ...p, sourceBody: { ...p.sourceBody!, length: v! * .001 } }); return true; }}/></div>}<p className="surface-note">Source Body는 기계 형상입니다. Ray Source는 지정된 평면에서 시작합니다.</p></>}<PortContractFields which={which}/></section>;
+export function ModeFields({which}:{which:'source'|'target'}) {
+ const shared=useProject(),p=shared.project,value=modes(p)[which],label=which==='source'?'Input':'Output';
+ const locked=p.model.kind==='ideal'&&p.model.design.components[which==='source'?0:p.model.design.components.length-1].locked;
+ const body=which==='source'?p.sourceBody:p.targetBody;
+ const putBody=(next:Project['sourceBody'])=>shared.commit({...p,[which==='source'?'sourceBody':'targetBody']:next});
+ return <section className="project-fields"><h3>{label} Mode / Fiber</h3>
+ <label className="field">{label} Port Template<select aria-label={`${label} Port Template`} disabled={locked} value={p.authoring?.ports[which].preset?'smf':'custom'} onChange={e=>{
+  if(e.target.value==='smf'){const next=applySmfReference(p,which);shared.commit({...next,[which==='source'?'sourceBody':'targetBody']:body??{radius:62.5e-6,length:.001}});}
+  else {const a=p.authoring??unknownAuthoring(),port={...a.ports[which]};delete port.preset;shared.commit({...p,authoring:{...a,ports:{...a.ports,[which]:port}}});}
+ }}><option value="custom">Custom Mode / Port</option><option value="smf">SMF Fiber · 1310 nm / MFD 9.2 µm</option></select></label>
+ <ModePreview which={which}/><strong>{p.authoring?.ports[which].preset?(isNominalSmf(p,which)?'SMF Fiber · Gaussian Reference':'SMF-derived · Custom Mode'):`${label} Reference`}</strong>
+ <p className="surface-note">Fiber Facet = Mode Reference Plane. MFD는 Intensity 1/e² diameter이며 Fiber 외경과 독립적입니다.</p>
+ <div className="fields-two">{(['mfdX','mfdY'] as const).map((k,i)=><NumberField key={k} disabled={locked} label={`${label} MFD ${i?'Y':'X'}`} value={value[k]===null?null:value[k]!*1e6} unit="µm" min={.001} max={1e6} nullable onChange={v=>{shared.commit(withMode(p,which,{...value,[k]:v===null?null:v*1e-6}));return true;}}/>)}</div>
+ <button disabled={locked} onClick={()=>{const next=applySmfReference(p,which);shared.commit({...next,[which==='source'?'sourceBody':'targetBody']:body??{radius:62.5e-6,length:.001}});}}>Apply {label} SMF 1310 Reference</button>
+ <label className="field">Polarization<select disabled={locked} aria-label={`${which} Mode Polarization`} value={value.polarization} onChange={e=>shared.commit(withMode(p,which,{...value,polarization:e.target.value as typeof value.polarization}))}>{['unspecified','TE','TM'].map(v=><option key={v}>{v}</option>)}</select></label>
+ <details className="fiber-body-details"><summary>{label} Fiber Geometry</summary><label className="surface-check"><input type="checkbox" disabled={locked} aria-label={`Show ${label} Fiber Body`} checked={!!body} onChange={e=>putBody(e.target.checked?{radius:62.5e-6,length:.001}:null)}/>Show Fiber Body</label>
+ {body&&<div className="fields-two"><NumberField disabled={locked} label={`${label} Fiber Diameter`} value={body.radius*2e6} unit="µm" min={.001} max={2e6} onChange={v=>{putBody({...body,radius:v!*.5e-6});return true;}}/><NumberField disabled={locked} label={`${label} Fiber Length`} value={body.length*1e3} unit="mm" min={.000001} max={1000} onChange={v=>{putBody({...body,length:v!*1e-3});return true;}}/></div>}</details>
+ <details><summary>Mode Contract / Advanced</summary><PortContractFields which={which}/></details></section>;
 }
 export function BodyFields({ assemblyId }: {
     assemblyId: string;
