@@ -1,0 +1,32 @@
+import { NumberField } from '../Fields';
+import { useProject } from './Store';
+import { modes, withMode } from './model';
+import type { Body } from './model';
+import { add, mul, frame, pointToLocal } from '../surface/model';
+import { bodyGeometry } from './geometry';
+import { compile } from '../surface/model';
+export function ModeFields({ which }: {
+    which: 'source' | 'target';
+}) {
+    const shared = useProject(), p = shared.project, value = modes(p)[which];
+    const locked=p.model.kind==='ideal'&&p.model.design.components[which==='source'?0:p.model.design.components.length-1].locked;
+    return <section className="project-fields"><h3>{which === 'source' ? 'Source Mode' : 'Target Mode'}</h3><p className="surface-note">MFD는 Intensity 1/e² diameter입니다. 기계 외경과 독립적입니다.</p><div className="fields-two">{(['mfdX', 'mfdY'] as const).map((k, i) => <NumberField disabled={locked} key={k} label={`${which === 'source' ? 'Source' : 'Target'} MFD ${i ? 'Y' : 'X'}`} value={value[k] === null ? null : value[k]! * 1e6} unit="µm" min={.001} max={1e6} nullable onChange={v => { shared.commit(withMode(p, which, { ...value, [k]: v === null ? null : v! * 1e-6 })); return true; }}/>)}</div><label className="field">Polarization<select disabled={locked} aria-label={`${which} Mode Polarization`} value={value.polarization} onChange={e => shared.commit(withMode(p, which, { ...value, polarization: e.target.value as typeof value.polarization }))}>{['unspecified', 'TE', 'TM'].map(v => <option key={v}>{v}</option>)}</select></label>{which === 'source' && <><label className="surface-check"><input type="checkbox" disabled={locked} aria-label="Define Source Body" checked={!!p.sourceBody} onChange={e => shared.commit({ ...p, sourceBody: e.target.checked ? { radius: .0000625, length: .001 } : null })}/>Define Source Body</label>{p.sourceBody && <div className="fields-two"><NumberField disabled={locked} label="Source Body Diameter" value={p.sourceBody.radius * 2e3} unit="mm" min={.000001} max={2000} onChange={v => { shared.commit({ ...p, sourceBody: { ...p.sourceBody!, radius: v! * .0005 } }); return true; }}/><NumberField disabled={locked} label="Source Body Length" value={p.sourceBody.length * 1e3} unit="mm" min={.000001} max={1000} onChange={v => { shared.commit({ ...p, sourceBody: { ...p.sourceBody!, length: v! * .001 } }); return true; }}/></div>}<p className="surface-note">Source Body는 기계 형상입니다. Ray Source는 지정된 평면에서 시작합니다.</p></>}</section>;
+}
+export function BodyFields({ assemblyId }: {
+    assemblyId: string;
+}) {
+    const shared = useProject(), p = shared.project, d = shared.doc, ss = compile(d).filter(s => s.assemblyId === assemblyId), a = d.assemblies.find(a => a.id === assemblyId), body = p.bodies.find(b => b.assemblyId === assemblyId);
+    if (p.model.kind === 'ideal')
+        return <p className="surface-note">Ideal Thin Lens: 곡률·두께·외경은 미정의입니다. Focal Length를 실제 형상으로 자동 변환하지 않습니다.</p>;
+    function update(next: Body) { shared.commit({ ...p, bodies: [...p.bodies.filter(b => b.assemblyId !== assemblyId), next] }); return true; }
+    function define() { const ap = Math.max(...ss.map(s => s.aperture), .0001); if (a?.kind === 'lens')
+        update({ kind: 'lens', assemblyId, outerRadius: ap * 1.1 }); if (a?.kind === 'mirror')
+        update({ kind: 'mirror', assemblyId, outline: 'disc', width: ap * 2.2, height: ap * 2.2, thickness: .0003 }); if (a?.kind === 'prism')
+        update({ kind: 'prism', assemblyId, depth: ap * 2 }); if (a?.kind === 'array') {
+        const ar = ss[0]?.array;
+        update({ kind: 'array', assemblyId, width: (ar ? (ar.cols - 1) * ar.pitch : 0) + 2.2 * ap, height: (ar ? (ar.rows - 1) * ar.pitch : 0) + 2.2 * ap });
+    } }
+    const issues = bodyGeometry(d, compile(d), p.bodies).issues.filter(i => i.startsWith(assemblyId + ':'));
+    const number = (label: string, value: number, key: string) => <NumberField key={key} label={label} value={value * 1e3} unit="mm" min={.000001} max={1000} onChange={v => update({ ...body!, [key]: v! * 1e-3 } as Body)}/>;
+    return <section className="project-fields"><h3>Building Block Geometry</h3><p className="surface-note">Optical Surface는 Surface Data에서 정의합니다. 외형 치수는 이 Block에 저장합니다.</p>{!body ? <><p className="surface-note">Body dimensions: Undefined · Surface만 표시합니다.</p>{a && ['lens', 'mirror', 'prism', 'array'].includes(a.kind) && <button onClick={define}>Define {a.kind} Body · Synthetic defaults</button>}</> : <><div className="fields-two">{body.kind === 'lens' && number('Body Outer Radius', body.outerRadius, 'outerRadius')}{body.kind === 'mirror' && <><label className="field">Body Outline<select aria-label="Body Outline" value={body.outline} onChange={e => update({ ...body, outline: e.target.value as 'disc' | 'rectangle' })}><option value="disc">Disc</option><option value="rectangle">Rectangle</option></select></label>{number(body.outline === 'disc' ? 'Body Diameter' : 'Body Width', body.width, 'width')}{body.outline === 'rectangle' && number('Body Height', body.height, 'height')}{number('Body Thickness', body.thickness, 'thickness')}</>}{body.kind === 'prism' && number('Prism Depth', body.depth, 'depth')}{body.kind === 'array' && <>{number('Substrate Width', body.width, 'width')}{number('Substrate Height', body.height, 'height')}</>}{['lens', 'array'].includes(body.kind) && ss.length === 2 && <NumberField label="Center Thickness" value={pointToLocal(ss[0].world, ss[1].world.origin).x * 1e3} unit="mm" min={.000001} max={1000} onChange={v => { const front = d.surfaces.find(s => s.id === ss[0].id)!, rear = d.surfaces.find(s => s.id === ss[1].id)!; shared.updateSurface({ ...d, surfaces: d.surfaces.map(s => s.id === rear.id ? { ...s, frame: { ...s.frame, origin: add(front.frame.origin, mul(frame(front.frame).axes[0], v! * 1e-3)) } } : s) }); return true; }}/>}</div>{body.kind === 'prism' && <p className="surface-note">Prism의 단면은 세 Surface 평면에서 생성합니다. Depth는 공통 단면의 수직 방향 치수입니다.</p>}<button onClick={() => shared.commit({ ...p, bodies: p.bodies.filter(b => b.assemblyId !== assemblyId) })}>Undefine Body · keep Surfaces</button></>}{issues.map(i => <p role="alert" className="surface-reason" key={i}>{i}</p>)}</section>;
+}

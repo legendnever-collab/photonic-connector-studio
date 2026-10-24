@@ -15,8 +15,8 @@ function Curve({points,kind,span,threshold,nominal}:{points:ScanPoint[];kind:"of
   const factor=kind==="offset"?1e6:1e3,unit=kind==="offset"?"µm":"mrad";
   return <figure className="scan-plot"><figcaption>{kind==="offset"?"WG Offset":"WG Port Rotation"} · absolute η [%]</figcaption><svg viewBox="0 0 350 170" role="img" aria-label={`${kind} sensitivity curve`}>
     <path d="M40 18 V130 H325" stroke="#a4b5bd" fill="none"/><path d={`M40,${130-110*threshold} H325`} stroke="#a77a36" strokeDasharray="5 4"/>
-    <path data-testid={`${kind}-curve-path`} d={d} stroke="#268e7b" strokeWidth="2.4" fill="none"/>
-    <circle cx="180" cy={130-110*nominal} r="4" fill="#334c65"/><text x="5" y="24">100</text><text x="20" y="134">0</text>
+    <path data-testid={`${kind}-curve-path`} d={d} stroke="var(--mint)" strokeWidth="2.4" fill="none"/>
+    <circle cx="180" cy={130-110*nominal} r="4" fill="var(--ink)"/><text x="5" y="24">100</text><text x="20" y="134">0</text>
     <text x="35" y="154">−{fmt(span*factor,3)}</text><text x="175" y="154">0</text><text x="280" y="154">+{fmt(span*factor,3)} {unit}</text>
   </svg></figure>;
 }

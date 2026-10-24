@@ -1,12 +1,35 @@
+## P2.4 — Unified Optical Workstation
+
+Gaussian / Surface / Report are central views of **one project**. Open/Save, Undo/Redo,
+Add Component, Example, component tree, Properties and Analysis stay in the same shell.
+All prior Gaussian/Surface examples are available in the common Example menu.
+
+Download `artifacts/photonic-connector-studio-p2.4.html` and open it in a JavaScript-capable
+browser. It includes scripts, styles and Korean font for offline use. For development:
+`npm ci`, then `npm run dev`; validation: `npm run check`.
+
+Try a Physical example → Report → Add → TIR Prism → enter Global XYZ / angles → Insert.
+Edit its Assembly pose / Prism Depth in Properties, then switch Gaussian / Surface / Report.
+All views retain the same components, inputs and global Undo history. Physical Gaussian
+propagation/coupling, Freeform surfaces and CAD import are **not implemented in P2.4**.
+An ideal-only project retains its original model and supports Ideal Lens / Gap / Reference
+Plane insertion. Mixed ideal/physical model migration is a subsequent explicit contract.
+
+See [P2.4 report](docs/P2_4_IMPLEMENTATION_REPORT.md) and
+[full Freeform / off-axis / coupling plan](docs/UNIFIED_WORKSTATION_AND_FREEFORM_PLAN.md).
+P2.4 is stacked on PR #7; main remains unmerged pending Play Review.
+
+---
+
 # Photonic Connector Studio
 
-**Fiber-to-Waveguide Optical Design Workspace · v0.1.2-p1.2**
+**Fiber-to-Waveguide Optical Design Workspace · v0.2.3-p2.3**
 
 P1.2는 Air Gaussian q/Beam Axis, Source/WG Small-angle Tilt와 Offset–Tilt–Curvature Coupling을 계산합니다. Alignment Sensitivity Curve·Joint Map·Threshold 구간·CSV Export를 제공합니다. Common X-plane Phase-ramp 근사이며 Lens Tilt/Decenter, Roll과 Clipping은 지원하지 않습니다.
 
 ## 바로 실행
 
-[photonic-connector-studio-p1.2.html](artifacts/photonic-connector-studio-p1.2.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
+[photonic-connector-studio-p2.3.html](artifacts/photonic-connector-studio-p2.3.html)을 다운로드하고 Desktop Browser에서 엽니다. JS/CSS와 작은 Korean Font가 포함된 단일 HTML이며 서버와 인터넷 없이 실행됩니다. Mobile에서는 HTML 실행을 지원하는 Browser로 열거나 아래 Vite 서버를 사용하세요. 메신저/파일 앱의 HTML Preview는 JavaScript 실행을 지원하지 않을 수 있습니다.
 
 ## Source 실행
 
@@ -43,16 +66,56 @@ Production Preview: `npm run preview` → `http://127.0.0.1:4173`.
 
 짧은 Desktop 화면에서는 Tree, Properties와 Data 내부를 스크롤합니다. 작업 내용은 Memory에 있으므로 종료 전에 JSON을 저장하세요. Browser Storage나 Cloud Account는 사용하지 않습니다.
 
-## P1.2 Play Review
+## P2.3 Common Optical Project
+
+Gaussian Workspace / Surface Workbench / Report는 하나의 Project·선택·Undo/Redo·Save/Load를 공유합니다. 기존 Ideal Thin Lens 설계는 그대로 보존하고, Physical Surface 설계에서는 Surface Data를 광학 정의의 기준으로 사용합니다.
+
+- **Source / Mode**: MFD·Polarization과 Source Body 치수를 별도로 입력합니다.
+- **Assemblies & Surfaces → Assembly**: Building Block Geometry에서 Lens 외경/Center Thickness, Mirror 원형·사각형/두께, Prism Depth, Array 기판 크기를 지정합니다. 곡률·Clear Radius·n·Local Frame은 Surface Data/Properties에서 편집합니다.
+- 보고용 형상은 같은 치수를 사용하며, Mirror/Prism의 유한 경계는 Ray 판정에도 적용됩니다. 정의되지 않은 Body 치수는 추정하지 않습니다.
+- **Save Project JSON**은 전체 공통 문서를 저장합니다. 기존 Gaussian JSON / Surface JSON도 Import할 수 있습니다. Legacy Surface 파일의 미정의 Body 치수는 그대로 미정의로 남습니다.
+- Physical Project의 Gaussian Workspace에서도 같은 Source/Target Mode와 부품을 확인·편집합니다. Physical Lens / Folded Path의 Gaussian 전파와 η는 아직 미지원이며 이전 결과를 표시하지 않습니다.
+- Ideal Gaussian 설계의 Surface View는 위치·Clear Aperture 참조입니다. Parent Assembly 자세와 Aperture를 편집할 수 있으며 실제 곡률·두께로 자동 변환하지 않습니다. Report의 Gaussian Envelope는 기존 검증된 Solver를 사용합니다.
+
+[설계 원칙과 범위](docs/P2_3_COMMON_PROJECT_CONTRACT.md) · [구현/검증](docs/P2_3_IMPLEMENTATION_REPORT.md).
+
+## P2.2 Report Figure
+
+Surface Workbench → **보고용 그림 · Report**에서 **B · Technical Isometric** / **C · Linked Inspector**를 선택합니다. 같은 Surface / Ray 데이터에 유리 곡면·두께·미러 질감·부품 라벨과 보고용 구도를 적용하고, SVG / PNG 2×로 저장합니다. C는 선택 Surface의 실제 Geometric Footprint를 표시합니다.
+
+표시용 Prism 외형과 Mirror backing은 Ray Trace에 들어가지 않습니다. Field Intensity / Gaussian 연동은 아직 구현하지 않았습니다. [구현 및 범위](docs/P2_2_REPORT_FIGURE.md).
+
+## P2.1 Surface Workbench
+
+상단 **Surface Workbench**를 누르거나 URL에 `#surfaces`를 붙입니다. Surface 중심 설계와 계산된 Ray를 동일한 XY/XZ/YZ·3D로 확인합니다. 기존 Gaussian Workspace와 각 Design 상태는 보존됩니다.
+
+- Surface / Assembly Local Frame·공통 Pivot, signed sphere Radius, circular Clear Radius, n, refraction/reflection/explicit TIR, repeated lenslets, computed OPL.
+- Physical Lens / Fold Mirror / TIR Prism / Microlens Array / MLA+Prism+Mirror 예제. 입력은 모두 Synthetic이며 실제 부품 성능이 아닙니다.
+- Table의 Radius/Clear Radius 또는 Inspect에서 편집 → Ray·Target Centroid/RMS 갱신. **Ray Analysis**에서 Footprint와 blocked 원인을 확인합니다.
+- **3D**는 드래그 회전, **Shaded**는 광학면 Preview, **SVG**는 현재 계산 경로의 보고용 Vector Snapshot입니다. 완전한 Solid CAD/Photorealistic Render는 후속 범위입니다.
+- **Save Surface JSON / Open Surface JSON**과 Undo/Redo. P1 Gaussian JSON과 별도 Schema이며 전용 파일 호환을 주장하지 않습니다.
+- Ray count·RMS는 Optical Efficiency / Mode Coupling이 아닙니다. Constant supplied n, 지정된 Sequential 경로만 지원합니다. 상세 범위는 [Contract](docs/P2_1_SURFACE_CONTRACT.md) / [Report](docs/P2_1_IMPLEMENTATION_REPORT.md).
+- [Draft PR #5](https://github.com/legendnever-collab/photonic-connector-studio/pull/5), stacked on unmerged PR #4. main 병합 및 다음 Checkpoint 자동 시작 없음.
+
+## P1.3 Visual Workstation Review
+
+- P1.1 / P1.2 are merged into main (PR #2 / #3). Physics limitations described above remain in force.
+- **Appearance**: Lab Light (default), Precision Dark, Focus Hybrid. Switch the actual workspace without resetting the Design, camera or computed results. This session preference is not included in Design JSON.
+- Persistent η / Loss / Radius ribbon; larger input and Canvas labels; stronger secondary text; full-height Desktop Inspect / Analyze tabs. Short Desktop windows scroll the center workspace rather than clipping controls. Mobile retains Layout / Train / Edit / Analysis.
+- [Visual options](artifacts/P1.3-design-options.png) · [Implementation / Validation](docs/P1_3_IMPLEMENTATION_REPORT.md).
+- Branch `feature/p1-3-visual-workstation`; [Draft PR #4](https://github.com/legendnever-collab/photonic-connector-studio/pull/4), based on main. Design review before merging this new visual change. No P2 implementation starts automatically.
+- Next: P2 Physical Lens / Ray Tracing → P3 Physical Optics / Complex Field Overlap → P4 Optimization → P5 Connector Tolerance → P6 Multi-channel / Measurement Validation.
+
+## P1.2 Play Review (historical)
 
 - **Source Tilt / Beam Axis**: Source Yaw=5mrad → W Beam Center Y=4µm, Slope Y=−3mrad, η≈92.4465%.
 - **WG Tilt / Angular Mismatch**: η≈36.7879%; **Reset Matching**: η=100%.
 - Analysis → **Expand**: Offset/Tilt Curves, Joint Map, absolute η Threshold, finite nominal-connected pass interval, cell inspection and **Export Sweep CSV**.
 - Matching η≥80%: Offset≈±8.4279µm; Tilt≈±8.4279mrad under this Synthetic model. Scan ends and invalid domains are explicitly distinguished; these are not manufacturing tolerances.
 - Mobile: **편집 종료 · Layout**. Save JSON separately preserves Design. Scan settings are session state.
-- Branch `feature/p1-2-alignment`; [Draft PR #3](https://github.com/legendnever-collab/photonic-connector-studio/pull/3), stacked base `feature/p1-gaussian-optics` / PR #2.
+- PR #2 and [PR #3](https://github.com/legendnever-collab/photonic-connector-studio/pull/3) merged into main on 2026-10-23 (UTC).
 - [Work Order](docs/P1_2_WORK_ORDER.md) · [Implementation Report](docs/P1_2_IMPLEMENTATION_REPORT.md) · [Physics Validation](docs/P1_2_PHYSICS_VALIDATION.md) · [Recovery](docs/P1_2_RECOVERY_NOTE.md).
-- P0 / P1.1 artifacts preserved. Stop at P1.2 Play Review; no main merge or P2 auto-start.
+- P0 / P1.1 / P1.2 artifacts preserved. The user subsequently authorized the P1.1/P1.2 merge and P1.3 visual work.
 
 ## 기존 설계 문서
 

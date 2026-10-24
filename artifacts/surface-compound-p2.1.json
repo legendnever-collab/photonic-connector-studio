@@ -1,0 +1,307 @@
+{
+  "kind": "surface-prescription",
+  "schemaVersion": 1,
+  "units": "SI",
+  "name": "MLA + Prism + Mirror · Synthetic",
+  "wavelength": 0.00000131,
+  "provenance": "synthetic-assumptions",
+  "source": {
+    "frame": {
+      "origin": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "roll": 0,
+        "pitch": 0,
+        "yaw": 0
+      }
+    },
+    "radius": 0.0001,
+    "samples": 3,
+    "n": 1,
+    "channels": {
+      "rows": 3,
+      "cols": 3,
+      "pitch": 0.0006
+    }
+  },
+  "assemblies": [
+    {
+      "id": "MLA",
+      "name": "MLA",
+      "kind": "array",
+      "parentId": null,
+      "frame": {
+        "origin": {
+          "x": 0.001,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      }
+    },
+    {
+      "id": "Target",
+      "name": "Target",
+      "kind": "target",
+      "parentId": null,
+      "frame": {
+        "origin": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      }
+    },
+    {
+      "id": "Module",
+      "name": "Module",
+      "kind": "group",
+      "parentId": null,
+      "frame": {
+        "origin": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      }
+    },
+    {
+      "id": "Prism",
+      "name": "Prism",
+      "kind": "prism",
+      "parentId": "Module",
+      "frame": {
+        "origin": {
+          "x": 0.003,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      }
+    },
+    {
+      "id": "Mirror",
+      "name": "Mirror",
+      "kind": "mirror",
+      "parentId": "Module",
+      "frame": {
+        "origin": {
+          "x": 0.005,
+          "y": 0.004,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 2.356194490192345
+        }
+      }
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "MLA-front",
+      "name": "MLA-front",
+      "assemblyId": "MLA",
+      "frame": {
+        "origin": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      },
+      "shape": "sphere",
+      "radius": 0.005,
+      "aperture": 0.00028000000000000003,
+      "interaction": "refract",
+      "nBefore": 1,
+      "nAfter": 1.5,
+      "outsideIndex": 1,
+      "array": {
+        "rows": 3,
+        "cols": 3,
+        "pitch": 0.0006
+      }
+    },
+    {
+      "id": "MLA-back",
+      "name": "MLA-back",
+      "assemblyId": "MLA",
+      "frame": {
+        "origin": {
+          "x": 0.0002,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      },
+      "shape": "sphere",
+      "radius": -0.005,
+      "aperture": 0.00028000000000000003,
+      "interaction": "refract",
+      "nBefore": 1.5,
+      "nAfter": 1,
+      "outsideIndex": 1,
+      "array": {
+        "rows": 3,
+        "cols": 3,
+        "pitch": 0.0006
+      }
+    },
+    {
+      "id": "P-entry",
+      "name": "P-entry",
+      "assemblyId": "Prism",
+      "frame": {
+        "origin": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      },
+      "shape": "plane",
+      "radius": 0.005,
+      "aperture": 0.0015,
+      "interaction": "refract",
+      "nBefore": 1,
+      "nAfter": 1.5,
+      "outsideIndex": 1,
+      "array": null
+    },
+    {
+      "id": "P-TIR",
+      "name": "P-TIR",
+      "assemblyId": "Prism",
+      "frame": {
+        "origin": {
+          "x": 0.002,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": -0.7853981633974483
+        }
+      },
+      "shape": "plane",
+      "radius": 0.005,
+      "aperture": 0.0015,
+      "interaction": "tir",
+      "nBefore": 1.5,
+      "nAfter": 1.5,
+      "outsideIndex": 1,
+      "array": null
+    },
+    {
+      "id": "P-exit",
+      "name": "P-exit",
+      "assemblyId": "Prism",
+      "frame": {
+        "origin": {
+          "x": 0.002,
+          "y": 0.002,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 1.5707963267948966
+        }
+      },
+      "shape": "plane",
+      "radius": 0.005,
+      "aperture": 0.0015,
+      "interaction": "refract",
+      "nBefore": 1.5,
+      "nAfter": 1,
+      "outsideIndex": 1,
+      "array": null
+    },
+    {
+      "id": "M1",
+      "name": "M1",
+      "assemblyId": "Mirror",
+      "frame": {
+        "origin": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      },
+      "shape": "plane",
+      "radius": 0.005,
+      "aperture": 0.0015,
+      "interaction": "reflect",
+      "nBefore": 1,
+      "nAfter": 1,
+      "outsideIndex": 1,
+      "array": null
+    },
+    {
+      "id": "Target",
+      "name": "Target",
+      "assemblyId": "Target",
+      "frame": {
+        "origin": {
+          "x": 0.008,
+          "y": 0.004,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      },
+      "shape": "plane",
+      "radius": 0.005,
+      "aperture": 0.0015,
+      "interaction": "probe",
+      "nBefore": 1,
+      "nAfter": 1,
+      "outsideIndex": 1,
+      "array": null
+    }
+  ]
+}

@@ -6,9 +6,9 @@ export const number = (v: number, digits = 4) => Number.isFinite(v) ? Number(v.t
 export function Metrics({ result, compact = false }: { result: GaussianResult; compact?: boolean }) {
   return <div className={compact ? "result-summary" : "result-metrics"} data-testid={compact ? "live-summary" : "analysis-metrics"}>
     {result.warnings.filter(w => w.includes("Polarization")).map(w => <p className="physics-warning" key={w}>{w}</p>)}
-    <div className="metric"><span>Gaussian Mode Coupling η</span><strong data-testid={compact ? "summary-eta" : "eta"}>{result.status === "valid" ? `${number(result.eta * 100, 6)}%${result.underflow ? " (underflow)" : ""}` : "Not calculated"}</strong></div>
-    <div className="metric"><span>Gaussian Coupling Loss</span><strong>{result.status === "valid" ? `${number(result.lossDB, 6)} dB` : "Not calculated"}</strong></div>
-    <div className="metric"><span>W Beam / Target Radius Y · Z [µm]</span><strong>{result.status === "valid" ? `${number(toUM(result.incident.y.radius))} / ${number(toUM(result.target.y))} · ${number(toUM(result.incident.z.radius))} / ${number(toUM(result.target.z))}` : "Not calculated"}</strong></div>
+    <div className="metric metric-coupling"><span>Gaussian Mode Coupling η</span><strong data-testid={compact ? "summary-eta" : "eta"}>{result.status === "valid" ? `${number(result.eta * 100, 6)}%${result.underflow ? " (underflow)" : ""}` : "Not calculated"}</strong></div>
+    <div className="metric metric-loss"><span>Gaussian Coupling Loss</span><strong>{result.status === "valid" ? `${number(result.lossDB, 6)} dB` : "Not calculated"}</strong></div>
+    <div className="metric metric-radius"><span>W Beam / Target Radius Y · Z [µm]</span><strong>{result.status === "valid" ? `${number(toUM(result.incident.y.radius))} / ${number(toUM(result.target.y))} · ${number(toUM(result.incident.z.radius))} / ${number(toUM(result.target.z))}` : "Not calculated"}</strong></div>
     {!compact && <p>Gaussian Coupling만 계산합니다. 전체 Connector Insertion Loss가 아닙니다.</p>}
     {compact && result.status !== "valid" && <p>{result.reason}</p>}
   </div>;
@@ -19,8 +19,8 @@ function Trace({ series, label, unit }: { series: { x: number; y: number; z: num
   const point = (p: typeof series[number], axis: "y" | "z") => `${40 + 300 * (p.x - xmin) / (xmax - xmin)},${130 - 110 * (p[axis] - ymin) / (ymax - ymin)}`;
   return <figure className="scientific-plot"><figcaption>{label} · Y — / Z ⋯</figcaption><svg viewBox="0 0 360 165" role="img" aria-label={label}>
     <path d="M40 15 V130 H345" fill="none" stroke="#9db0b8"/>
-    <polyline points={series.map(p => point(p,"y")).join(" ")} fill="none" stroke="#218977" strokeWidth="2"/>
-    <polyline points={series.map(p => point(p,"z")).join(" ")} fill="none" stroke="#7658ab" strokeWidth="2" strokeDasharray="5 3"/>
+    <polyline points={series.map(p => point(p,"y")).join(" ")} fill="none" stroke="var(--mint)" strokeWidth="2"/>
+    <polyline points={series.map(p => point(p,"z")).join(" ")} fill="none" stroke="var(--violet)" strokeWidth="2" strokeDasharray="5 3"/>
     <text x="38" y="12">{number(ymax)} {unit}</text><text x="3" y="134">{number(ymin)}</text>
     <text x="40" y="153">{number(toMM(xmin))}</text><text x="290" y="153">{number(toMM(xmax))} mm</text>
   </svg></figure>;
@@ -32,7 +32,7 @@ function ModeProfile({ result, axis }: { result: Extract<GaussianResult,{status:
   const points=(target:boolean)=>samples.map((u,i)=>`${30+i*300/180},${115-90*Math.exp(-2*((u-(target?offset:0))/(target?wt:wi))**2)}`).join(" ");
   return <figure className="scientific-plot"><figcaption>W · {axis.toUpperCase()} Intensity · Incident — / Target ⋯</figcaption>
     <svg viewBox="0 0 360 150" role="img" aria-label={`W ${axis} mode profile`}><path d="M30 20 V115 H335" fill="none" stroke="#a0b2bb"/>
-      <polyline points={points(false)} fill="none" stroke="#218977" strokeWidth="2"/><polyline points={points(true)} fill="none" stroke="#7658ab" strokeWidth="2" strokeDasharray="5 3"/>
+      <polyline points={points(false)} fill="none" stroke="var(--mint)" strokeWidth="2"/><polyline points={points(true)} fill="none" stroke="var(--violet)" strokeWidth="2" strokeDasharray="5 3"/>
       <text x="30" y="138">{number(toUM(lo))} µm</text><text x="270" y="138">{number(toUM(hi))} µm</text><text x="3" y="25">1</text>
     </svg><small>각 Peak=1로 표시 · Phase Curvature는 아래 1/R에서 확인</small></figure>;
 }
