@@ -35,7 +35,7 @@ test('space/part constraints and invalid numeric drafts have explicit status and
  await page.getByRole('button',{name:'Add Keep-out Box',exact:true}).click();const p=await save(page);expect(p.routing.keepOut).toHaveLength(1);expect(p.routing.parts.mirror).toBe(2);
 });
 test('Design Setup reopens a closed inspector; device choice clears the Fiber shell without losing the mode',async({page})=>{
- await page.getByRole('button',{name:'Close Properties / Analysis',exact:true}).click();await page.getByRole('button',{name:'Design Setup',exact:true}).click();await expect(page.getByTestId('design-setup')).toBeVisible();
+ const before=await save(page);await page.getByRole('button',{name:'Close Properties / Analysis',exact:true}).click();await page.getByRole('button',{name:'Design Setup',exact:true}).click();await expect(page.getByTestId('design-setup')).toBeVisible();expect(await save(page)).toEqual(before);
  await page.getByLabel('Output Device',{exact:true}).selectOption('pic-grating');await expect(page.getByTestId('layout-body-@target')).toHaveCount(0);let p=await save(page);expect(p.authoring.ports.target.device).toBe('pic-grating');expect(p.model.targetMode.mfdX).toBeCloseTo(9.2e-6,14);
  await page.getByLabel('Output Direction preset',{exact:true}).selectOption('+Z');await expect(page.getByTestId('target-direction')).toContainText('0 / 0 / 1');
  await page.getByLabel('Output Device',{exact:true}).selectOption('fiber');await expect(page.getByTestId('layout-body-@target')).toBeVisible();p=await save(page);expect(p.authoring.ports.target.preset).toBe('smf-1310-gaussian');
