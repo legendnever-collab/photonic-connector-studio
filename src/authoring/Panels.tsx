@@ -20,6 +20,7 @@ function read():Session {
 const Context=createContext<{session:Session;setSession:React.Dispatch<React.SetStateAction<Session>>}|null>(null);
 export function PanelProvider({children}:{children:ReactNode}){const [session,setSession]=useState(read);useEffect(()=>{try{localStorage.setItem('pcs-u1-windows',JSON.stringify(session));}catch{/* Session persistence is optional under file://. */}},[session]);return <Context.Provider value={{session,setSession}}>{children}</Context.Provider>;}
 function usePanels(){return useContext(Context)!;}
+export function useOpenInspector(){const {setSession}=usePanels();return ()=>setSession(s=>({...s,panels:{...s.panels,inspector:{...s.panels.inspector,mode:s.panels.inspector.mode==='closed'?'dock':s.panels.inspector.mode}}}));}
 export function WindowControls(){const {setSession}=usePanels();return <div className="window-controls" aria-label="Windows"><button onClick={()=>setSession(s=>({...s,panels:{...s.panels,data:{...s.panels.data,mode:'dock'}}}))}>Surface Data</button><button onClick={()=>setSession(s=>({...s,panels:{...s.panels,inspector:{...s.panels.inspector,mode:'dock'}}}))}>Properties / Analysis</button><button aria-label="Restore Window Layout" onClick={()=>setSession(defaults())}>Restore Layout</button></div>;}
 export function DockPanel({id,title,children}:{id:'data'|'inspector';title:string;children:ReactNode}){
  const {session,setSession}=usePanels(),p=session.panels[id],ref=useRef<HTMLDivElement>(null);

@@ -1,3 +1,4 @@
+import {analyzeRouting} from '../routing/analysis';
 import { physicalGaussianInput, solvePhysicalGaussian } from './physicalGaussian';
 import { fiberLensFiberProject } from '../authoring/starter';
 import { newPhysicalProject } from '../authoring/commands';
@@ -24,8 +25,9 @@ function useProjectStore() {
     const undo = () => { setHistory(h => h.past.length ? { past: h.past.slice(0, -1), present: h.past.at(-1)!, future: [h.present, ...h.future] } : h); setInvalid([]); };
     const redo = () => { setHistory(h => h.future.length ? { past: [...h.past, h.present], present: h.future[0], future: h.future.slice(1) } : h); setInvalid([]); };
     const doc = useMemo(() => prescription(project), [project.model]);
-    const rawTrace = useMemo(() => projectTrace(project), [doc, project.bodies]);
+    const rawTrace = useMemo(() => projectTrace(project), [doc, project.bodies, project.sourceBody, project.targetBody]);
     const trace = useMemo(() => ({ ...rawTrace, fingerprint: projectFingerprint(project) }), [rawTrace, project]);
+    const routing=useMemo(()=>analyzeRouting(project),[project]);
     const gaussian = useMemo(() => gaussianForProject(project), [project.model.kind, project.model.kind === 'ideal' ? project.model.design : null, project.authoring?.ports]);
     const physicalInputJSON = JSON.stringify(physicalGaussianInput(project));
     const physicalGaussian = useMemo(() => solvePhysicalGaussian(project), [physicalInputJSON]);
@@ -35,7 +37,7 @@ function useProjectStore() {
     function open(raw: string) { const next = parseProject(raw); if(serializeProject(project)!==saved){setPending(next);return;} replace(next); setSaved(serializeProject(next)); }
     function requestReplace(next:Project){if(serializeProject(project)!==saved){setPending(next);return;}replace(next);}
     function acceptPending(){if(pending){replace(pending);setPending(null);}}
-    return { project, doc, trace, gaussian, physicalGaussian, history, pending, setPending, requestReplace, acceptPending, commit, replace, updateIdeal, updateSurface, undo, redo, selection, setSelection, revision, save, open, dirty: serializeProject(project) !== saved, invalid, setInvalid };
+    return { project, doc, trace, routing, gaussian, physicalGaussian, history, pending, setPending, requestReplace, acceptPending, commit, replace, updateIdeal, updateSurface, undo, redo, selection, setSelection, revision, save, open, dirty: serializeProject(project) !== saved, invalid, setInvalid };
 }
 const Context = createContext<ReturnType<typeof useProjectStore> | null>(null);
 export function ProjectProvider({ children }: {

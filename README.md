@@ -1,3 +1,17 @@
+## S0 / S1 — Port-to-Port Design Setup (0.6.0-s0-s1)
+
+Specify Input / Output Global position, propagation direction and reference Mode;
+inspect a shared finite 3D center ray through Lens / Mirrors / TIR Prism. Two manual
+Fiber-to-PIC examples show a 60 µm height shift. Design Space / Keep-out diagnostics,
+part limits, world/local editing, Undo and SaveLoad share the existing Project.
+
+Open **Design Setup**, then **Routing Example**. **Focus Folds** shows the micro-scale
+fold in XZ. No automatic solution search or PIC coupling efficiency is claimed.
+See [S0/S1 contract and review steps](docs/S0_S1_PORT_ROUTING.md).
+
+This checkpoint is stacked on F1.1 Draft PR #11. Both await user Play Review; main
+has not been merged automatically.
+
 # Photonic Connector Studio — F1.1 Conic / Even Asphere
 
 Desktop design workflow for **Input Mode → Optical Train → Output Reference Mode**.

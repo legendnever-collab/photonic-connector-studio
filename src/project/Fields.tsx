@@ -1,3 +1,4 @@
+import {portDevice} from '../routing/model';
 import { applySmfReference, isNominalSmf } from '../authoring/smf';
 import { ModePreview, PortContractFields } from '../authoring/Ports';
 import { NumberField } from '../Fields';
@@ -19,7 +20,7 @@ export function ModeFields({which}:{which:'source'|'target'}) {
   if(e.target.value==='smf'){const next=applySmfReference(p,which);shared.commit({...next,[which==='source'?'sourceBody':'targetBody']:body??{radius:62.5e-6,length:.001}});}
   else {const a=p.authoring??unknownAuthoring(),port={...a.ports[which]};delete port.preset;shared.commit({...p,authoring:{...a,ports:{...a.ports,[which]:port}}});}
  }}><option value="custom">Custom Mode / Port</option><option value="smf">SMF Fiber · 1310 nm / MFD 9.2 µm</option></select></label>
- <ModePreview which={which}/><strong>{p.authoring?.ports[which].preset?(isNominalSmf(p,which)?'SMF Fiber · Gaussian Reference':'SMF-derived · Custom Mode'):`${label} Reference`}</strong>
+ <ModePreview which={which}/>{portDevice(p,which).startsWith('pic-')&&<p className="surface-reason">PIC Port · User Gaussian Reference. Receiving Field / Coupler response 미정의.</p>}<strong>{p.authoring?.ports[which].preset?(isNominalSmf(p,which)?'SMF Fiber · Gaussian Reference':'SMF-derived · Custom Mode'):`${label} Reference`}</strong>
  <p className="surface-note">Fiber Facet = Mode Reference Plane. MFD는 Intensity 1/e² diameter이며 Fiber 외경과 독립적입니다.</p>
  <div className="fields-two">{(['mfdX','mfdY'] as const).map((k,i)=><NumberField key={k} disabled={locked} label={`${label} MFD ${i?'Y':'X'}`} value={value[k]===null?null:value[k]!*1e6} unit="µm" min={.001} max={1e6} nullable onChange={v=>{shared.commit(withMode(p,which,{...value,[k]:v===null?null:v*1e-6}));return true;}}/>)}</div>
  <button disabled={locked} onClick={()=>{const next=applySmfReference(p,which);shared.commit({...next,[which==='source'?'sourceBody':'targetBody']:body??{radius:62.5e-6,length:.001}});}}>Apply {label} SMF 1310 Reference</button>

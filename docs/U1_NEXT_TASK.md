@@ -1,22 +1,25 @@
-# Current checkpoint — F1.1 Conic / Even Asphere
+# Current checkpoint — S0 / S1 Port Routing
 
-Read `docs/F1_1_CONIC_ASPHERIC.md` and preserve the merged B1 Gaussian bridge plus
-10 mm Fiber–BK7 Lens–Fiber starter. The user authorized the next development after
-merging PR #10 (main `a154dd359fa4946583e61e97cd6f7165ba1e86cf`).
+Read `docs/S0_S1_PORT_ROUTING.md`. The user approved the staged Port-to-Port
+solution-synthesis plan and authorized S0 / S1 implementation. F1.1 source and
+Draft PR #11 are preserved; no merge was authorized.
 
-Branch: `feature/f1-1-conic-aspheric`. PC first. Keep the new PR Draft for user
-Play Review; no automatic main merge or next feature. Exact source/HTML identity
-is in `artifacts/build-info-u1.json` / `artifacts/SHA256SUMS-u1.txt`.
+Branch: `feature/s0-s1-port-routing`, stacked on `feature/f1-1-conic-aspheric`.
+PC first. Deliver a Draft PR and standalone HTML for Play Review. Do not merge
+main, PR #11, or this checkpoint; do not automatically begin S2.
 
-New type `even-asphere` uses Conic K and SI A4/A6/A8, edited in mm-based units.
-Shared evaluator: `src/surface/evaluator.ts`; bounded nearest-root search:
-`src/surface/asphereIntersection.ts`. Keep finite-disk and numerical-failure
-semantics, full-radius body thickness check, the existing IDs/frames, one Project,
-SaveLoad, Undo and templates. Old files do not gain new optional fields.
+One canonical Project: optional routing constraints, optional Port device metadata,
+Input Source frame and Output last-probe frame. World Output edits must transform
+back through the existing parent hierarchy. Mode definitions and mechanical bodies
+remain separate. Reuse finite 3D Surface rays / geometry, never World-X sorting.
 
-Nonzero K/A terms show a Gaussian vertex-curvature reference and no Mode Overlap.
-Higher-order Field transport, XY/Control Point/CAD Freeform, coupled-axis beams,
-Fresnel/Transmission and Total Coupling remain separate future checkpoints.
-Do not fit imported/confined fields to a Gaussian or treat Ray reach as efficiency.
-Alignment ΔPose remains a saved, unapplied draft. Do not begin another checkpoint
-until the user reviews this one.
+Center reference ray diagnostics report target-local position, directional incidence
+error and OPL. They never imply mode coupling. PIC Gaussian values are user
+references; receiving Field / device response and folded Gaussian propagation are
+unavailable. Space sampling / conservative AABB Keep-out checks are labeled limits.
+
+Manual examples: Fiber z −10 µm → Lens → two Mirrors → PIC z +50 µm (+X),
+and Fiber → Lens → BK7 TIR Prism → PIC (+Z). They are explicit manual prescriptions,
+not solver-generated solutions. Preserve the 10 mm Fiber–Lens–Fiber starter.
+
+Future: S2 topology / pose search, S3 Beam / Mode matching, S4 Field / Coupling.
