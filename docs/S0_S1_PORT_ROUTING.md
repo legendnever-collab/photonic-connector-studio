@@ -118,3 +118,14 @@ supported local Beam / Mode matching, followed by S4 Field / Coupling and tolera
 No Auto Solve, global optimum claim, reflected Gaussian transport, PIC receiving
 Field, Fresnel / coating / absorption, or Total Coupling is implemented here.
 Stop for user Play Review. Do not merge PR #11 or this checkpoint automatically.
+
+
+## Delivered build identity
+
+Implementation source: `87a358a856a23fae9da85468b2039f1ed61c2a6e`.
+Standalone HTML: `photonic-connector-studio-u1.html`, 604,769 bytes.
+SHA256: `9dc11076c265fb379fc3ef94d337a690f0591bb1fdee46546c414b048d026320`.
+Source fingerprint: `6e8443e5c938dce666b294f6c8de194086091aab80b5c63723a532488a92653d`.
+See `artifacts/build-info-u1.json` / `artifacts/SHA256SUMS-u1.txt`.
+Subsequent provenance-only commits do not change the delivered HTML; CI uses
+its PR head as the build source label and must reproduce the HTML SHA and fingerprint.
