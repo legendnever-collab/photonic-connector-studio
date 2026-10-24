@@ -1,3 +1,5 @@
+import { openProjectExample } from './ui';
+import { acceptProjectReplacement } from './ui';
 import { tab as unifiedTab } from './ui';
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
@@ -24,7 +26,7 @@ async function save(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#ideal");
 });
 test("initial layout has honest analysis, terminal ports and no horizontal overflow", async ({
   page,
@@ -125,8 +127,8 @@ test("add, reorder, disable, remove, undo and redo", async ({ page }) => {
     .fill("7");
   await page.getByRole("button", { name: "Move Component up" }).click();
   let saved = await save(page);
-  expect(saved.components.at(-3).name).toBe("Thin Lens");
-  expect(saved.components.at(-3).frame.origin.x).toBe(0.007);
+  expect(saved.components[1].name).toBe("Thin Lens");
+  expect(saved.components[1].frame.origin.x).toBe(0.007);
   await page.getByLabel("Enabled", { exact: true }).uncheck();
   saved = await save(page);
   expect(
@@ -149,18 +151,18 @@ test("JSON round-trip and bad imports preserve the design", async ({
   await page.getByLabel("MFDx", { exact: true }).fill("3.8");
   const data = await save(page);
   await mobileTab(page, "Layout");
-  await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:initial');
+  await openProjectExample(page,'ideal:initial');await acceptProjectReplacement(page);
   await page.getByTestId("surface-json-input").setInputFiles({
     name: "saved.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(data)),
-  });
+  });await acceptProjectReplacement(page);
   expect(await save(page)).toEqual(data);
   await page.getByTestId("surface-json-input").setInputFiles({
     name: "broken.json",
     mimeType: "application/json",
     buffer: Buffer.from("{bad"),
-  });
+  });await acceptProjectReplacement(page);
   await expect(page.getByRole("alert")).toContainText("기존");
   expect(await save(page)).toEqual(data);
   const future = { ...data, schemaVersion: 99 };
@@ -168,7 +170,7 @@ test("JSON round-trip and bad imports preserve the design", async ({
     name: "future.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(future)),
-  });
+  });await acceptProjectReplacement(page);
   await expect(page.getByRole("alert")).toContainText("기존");
   expect(await save(page)).toEqual(data);
 });
@@ -233,7 +235,7 @@ test("offline single HTML works with networking disabled and no runtime errors",
       : route.abort(),
   );
   await page.context().setOffline(true);
-  await page.goto(pathToFileURL(resolve("dist/index.html")).href);
+  await page.goto(pathToFileURL(resolve("dist/index.html")).href+"#ideal");
   await expect(page.getByTestId("optical-canvas")).toBeVisible();
   await choose(page, "waveguide");
   await page.getByLabel("MFDx", { exact: true }).fill("4");
@@ -244,7 +246,7 @@ test("offline single HTML works with networking disabled and no runtime errors",
     name: "offline.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(exampleDocument())),
-  });
+  });await acceptProjectReplacement(page);
   await expect(page.getByRole("status")).toContainText("offline.json");
   expect(errors).toEqual([]);
   await mobileTab(page, "Layout");

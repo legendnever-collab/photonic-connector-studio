@@ -14,7 +14,7 @@ export type BodyGeometry = {
         faces: Vec[][];
     }[];
 };
-export function bodyGeometry(d: Prescription, surfaces: Compiled[], bodies: Body[], sourceBody: Project['sourceBody'] = null): BodyGeometry {
+export function bodyGeometry(d: Prescription, surfaces: Compiled[], bodies: Body[], sourceBody: Project['sourceBody'] = null, targetBody:Project['targetBody']=null): BodyGeometry {
     const result: BodyGeometry = { faces: [], edges: [], issues: [], solids: [] };
     const addFaces = (points: Vec[][], s: Compiled, material: ReportFace['material']) => { for (const ps of points) {
         result.faces.push({ points: ps, material, surfaceId: s.id, illustrative: false, bodyId: s.assemblyId ?? '@source' });
@@ -87,15 +87,18 @@ export function bodyGeometry(d: Prescription, surfaces: Compiled[], bodies: Body
         addFaces(faces, s, body.kind === 'mirror' ? 'metal' : 'glass');
         result.solids.push({ body, surfaces: ss, faces });
     }
-    if (sourceBody) {
-        const f = frame(d.source.frame), r = sourceBody.radius, ch = d.source.channels;
-        for (let row = 0; row < ch.rows; row++)
-            for (let col = 0; col < ch.cols; col++) {
-                const u = (col - (ch.cols - 1) / 2) * ch.pitch, v = (row - (ch.rows - 1) / 2) * ch.pitch;
-                const ring = (x: number) => Array.from({ length: 48 }, (_, i) => pointToWorld(f, V(x, u + r * Math.cos(i * Math.PI / 24), v + r * Math.sin(i * Math.PI / 24)))), a = ring(-sourceBody.length), b = ring(0);
-                const fake = { id: '@source', assemblyId: '@source' } as Compiled;
-                addFaces([a, b, ...a.map((p, i) => [p, a[(i + 1) % 48], b[(i + 1) % 48], b[i]])], fake, 'glass');
-            }
+    for(const which of ['source','target'] as const){
+        const body=which==='source'?sourceBody:targetBody;if(!body)continue;
+        const f=which==='source'?frame(d.source.frame):surfaces.at(-1)!.world,r=body.radius;
+        const ch=which==='source'?d.source.channels:{rows:1,cols:1,pitch:1};
+        for(let row=0;row<ch.rows;row++)for(let col=0;col<ch.cols;col++){
+            const u=(col-(ch.cols-1)/2)*ch.pitch,v=(row-(ch.rows-1)/2)*ch.pitch;
+            const ring=(x:number)=>Array.from({length:48},(_,i)=>pointToWorld(f,V(x,u+r*Math.cos(i*Math.PI/24),v+r*Math.sin(i*Math.PI/24))));
+            const a=ring(which==='source'?-body.length:0),b=ring(which==='source'?0:body.length);
+            const id=which==='source'?'@source':surfaces.at(-1)!.id,aid=which==='source'?'@source':'@target';
+            const fake={id,assemblyId:aid} as Compiled;
+            addFaces([a,b,...a.map((p,i)=>[p,a[(i+1)%48],b[(i+1)%48],b[i]])],fake,'glass');
+        }
     }
     return result;
 }

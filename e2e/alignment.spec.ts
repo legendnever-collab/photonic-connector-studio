@@ -1,3 +1,5 @@
+import { openProjectExample } from './ui';
+import { acceptProjectReplacement } from './ui';
 import { tab as unifiedTab } from './ui';
 import { expect,test } from "@playwright/test";
 import type { Page } from "@playwright/test";
@@ -5,11 +7,11 @@ import {readFile} from "node:fs/promises";
 import {pathToFileURL} from "node:url";
 import {resolve} from "node:path";
 const tab=unifiedTab;
-async function example(page:Page,id:string){await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:'+id);}
+async function example(page:Page,id:string){await openProjectExample(page,'ideal:'+id);await acceptProjectReplacement(page);}
 async function choose(page:Page,id:string){await tab(page,'Train');await page.getByTestId(`tree-${id}`).click();}
 async function save(page:Page){await tab(page,'Layout');const d=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await d).path())!,'utf8'));}
 async function expand(page:Page){await tab(page,'Analysis');await page.getByRole('button',{name:'Expand Alignment Analysis',exact:true}).click();await expect(page.getByRole('dialog',{name:'Alignment Analysis',exact:true})).toBeVisible();}
-test.beforeEach(async({page})=>{await page.goto('/');});
+test.beforeEach(async({page})=>{await page.goto('/#ideal');});
 test('Source Tilt propagates beam axis and preserves focus/SVG/camera under repeated edits',async({page})=>{
  await example(page,'pointing');await expect(page.getByTestId('beam-axis')).toBeVisible();await page.getByRole('button',{name:'Zoom in',exact:true}).click();
  await page.evaluate(()=>{const w=window as unknown as Record<string,unknown>;w.axis=document.querySelector('[data-testid="beam-axis"]');w.points=document.querySelector('[data-testid="beam-axis"]')?.getAttribute('points');w.svg=document.querySelector('[data-testid="optical-canvas"]');});
@@ -36,11 +38,11 @@ test('map cell inspection, invalid scan drafts and domain edges remain explicit'
  await page.getByRole('button',{name:'Close Alignment Analysis',exact:true}).press('Escape');await expect(page.getByRole('dialog',{name:'Alignment Analysis',exact:true})).toHaveCount(0);
 });
 test('Tilt and sensitivity recompute after Save/Load and Undo/Redo',async({page})=>{
- await example(page,'pointing');const data=await save(page),eta=await page.getByTestId('summary-eta').textContent();await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:matching');await expect(page.getByTestId('summary-eta')).toHaveText('100%');await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await page.getByRole('button',{name:'Redo',exact:true}).click();await expect(page.getByTestId('summary-eta')).toHaveText('100%');
- await page.getByTestId('surface-json-input').setInputFiles({name:'axis.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await tab(page,'Analysis');await expect(page.getByTestId('scan-provenance')).toContainText(eta!);
+ await example(page,'pointing');const data=await save(page),eta=await page.getByTestId('summary-eta').textContent();await openProjectExample(page,'ideal:matching');await acceptProjectReplacement(page);await expect(page.getByTestId('summary-eta')).toHaveText('100%');await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await page.getByRole('button',{name:'Redo',exact:true}).click();await expect(page.getByTestId('summary-eta')).toHaveText('100%');
+ await page.getByTestId('surface-json-input').setInputFiles({name:'axis.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await acceptProjectReplacement(page);await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await tab(page,'Analysis');await expect(page.getByTestId('scan-provenance')).toContainText(eta!);
 });
 test('offline alignment/CSV work and expanded layouts fit mobile/tablet/desktop',async({page},info)=>{
- const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.context().setOffline(true);await page.route('**/*',r=>r.request().url().startsWith('file:')?r.continue():r.abort());await page.goto(pathToFileURL(resolve('dist/index.html')).href);await example(page,'pointing');await expand(page);
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.context().setOffline(true);await page.route('**/*',r=>r.request().url().startsWith('file:')?r.continue():r.abort());await page.goto(pathToFileURL(resolve('dist/index.html')).href+'#ideal');await example(page,'pointing');await expand(page);
  await page.getByLabel('Sensitivity Axis',{exact:true}).selectOption('z');await page.getByTestId('map-cell-220').click();await expect(page.getByTestId('map-inspection')).toContainText('η');
  const d=page.waitForEvent('download');await page.getByRole('button',{name:'Export Sweep CSV',exact:true}).click();expect((await readFile((await(await d).path())!,'utf8')).length).toBeGreaterThan(1000);
  const widths=info.project.name==='desktop'?[360,412,768,1366]:[412];

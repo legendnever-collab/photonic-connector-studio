@@ -5,5 +5,9 @@ export async function tab(page:Page,name:string){
  if(await mobile.isVisible())await mobile.getByRole('button',{name:mapped,exact:true}).click();
  else if(mapped==='Analysis'||mapped==='Inspect')await page.getByRole('navigation',{name:'Surface Inspector tabs'}).getByRole('button',{name:mapped,exact:true}).click();
 }
-export async function idealExample(page:Page,id:string){await tab(page,'Layout');await page.getByLabel('Project Example',{exact:true}).selectOption('ideal:'+id);}
+export async function idealExample(page:Page,id:string){await openProjectExample(page,'ideal:'+id);}
 export async function selectIdeal(page:Page,id:string){await tab(page,'Train');await page.getByTestId('tree-'+id).click();}
+
+export async function acceptProjectReplacement(page:Page){const dialog=page.getByRole('dialog',{name:'Unsaved Project',exact:true});if(await dialog.isVisible())await dialog.getByRole('button',{name:'Discard & Open',exact:true}).click();}
+
+export async function openProjectExample(page:Page,id:string){await tab(page,'Surfaces');await page.getByLabel('Project Example',{exact:true}).selectOption(id);await acceptProjectReplacement(page);await tab(page,'Layout');}

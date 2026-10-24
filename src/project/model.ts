@@ -1,7 +1,9 @@
+import { resolveMaterials } from '../surface/materials';
+import { AuthoringSchema } from '../authoring/contract';
 import { z } from 'zod';
 import { DocumentSchema, exampleDocument } from '../domain';
 import type { DesignDocument } from '../domain';
-import { PrescriptionSchema, pose, V, pointToWorld, frame, pointToLocal } from '../surface/model';
+import { PrescriptionSchema, surfaceSchema, pose, V, pointToWorld, frame, pointToLocal } from '../surface/model';
 import type { Prescription } from '../surface/model';
 import { surfaceExample } from '../surface/examples';
 import type { SurfaceExample } from '../surface/examples';
@@ -18,13 +20,19 @@ export const BodySchema = z.discriminatedUnion('kind', [
     z.object({ ...common, kind: z.literal('array'), width: dim, height: dim }).strict(),
 ]);
 export type Body = z.infer<typeof BodySchema>;
+export const BuildingBlockSchema=z.object({id:z.string().min(1).max(80),name:z.string().min(1).max(80),kind:z.enum(['lens','mirror','prism','array','group']),surfaces:z.array(surfaceSchema).min(1).max(100),body:BodySchema.nullable()}).strict().superRefine((b,ctx)=>{const aid=b.surfaces[0].assemblyId;if(b.surfaces.some(s=>s.assemblyId!==aid)||b.body&&(b.body.assemblyId!==aid||b.body.kind!==b.kind)||new Set(b.surfaces.map(s=>s.id)).size!==b.surfaces.length)ctx.addIssue({code:'custom',message:'Building Block must contain one coherent leaf Component'});});
+export type BuildingBlock=z.infer<typeof BuildingBlockSchema>;
 export const ProjectSchema = z.object({ kind: z.literal('optical-project'), schemaVersion: z.literal(1), units: z.literal('SI'),
+    targetBody:z.object({radius:dim,length:dim}).strict().nullable().optional(),
+    authoring: AuthoringSchema.optional(), buildingBlocks:z.array(BuildingBlockSchema).max(30).optional(),
     model: z.discriminatedUnion('kind', [
         z.object({ kind: z.literal('ideal'), design: DocumentSchema }).strict(),
         z.object({ kind: z.literal('surface'), prescription: PrescriptionSchema, sourceMode: ModeSchema, targetMode: ModeSchema }).strict(),
     ]), bodies: z.array(BodySchema).max(50), sourceBody: z.object({ radius: dim, length: dim }).strict().nullable(),
 }).strict().superRefine((p, ctx) => {
     const doc = prescription(p), ids = new Set(doc.assemblies.map(a => a.id));
+    const moving=p.authoring?.alignment.movingId;if(moving&&moving!=='@source'&&!ids.has(moving))ctx.addIssue({code:'custom',message:'Unknown Alignment moving element'});
+    if(p.buildingBlocks&&new Set(p.buildingBlocks.map(b=>b.id)).size!==p.buildingBlocks.length)ctx.addIssue({code:'custom',message:'Duplicate Building Block ID'});
     if (new Set(p.bodies.map(b => b.assemblyId)).size !== p.bodies.length)
         ctx.addIssue({ code: 'custom', message: 'Duplicate body definition' });
     for (const b of p.bodies)
@@ -61,6 +69,7 @@ export function prescription(p: Project): Prescription {
         surfaces: d.components.slice(1).map(c => ({ id: c.id, name: c.name + (c.kind === 'lens' ? ' · Ideal Thin Lens' : ''), assemblyId: c.id, frame: pose(), shape: 'plane', radius: .005, aperture: c.kind === 'lens' ? c.aperture / 2 : .0005, interaction: 'probe', nBefore: 1, nAfter: 1, outsideIndex: 1, array: null })) };
 }
 export function withPrescription(p: Project, next: Prescription): Project {
+    next=resolveMaterials(prescription(p),next);
     PrescriptionSchema.parse(next);
     if (p.model.kind === 'surface')
         return { ...p, model: { ...p.model, prescription: next }, bodies: p.bodies.filter(b => next.assemblies.some(a => a.id === b.assemblyId && a.kind === b.kind)) };
@@ -110,7 +119,7 @@ export function parseProject(raw: string): Project {
     return idealProject(DocumentSchema.parse(value));
 }
 export function projectFingerprint(p: Project) { return fingerprint(JSON.stringify(p)); }
-export function gaussianForProject(p: Project) { return p.model.kind === 'ideal' ? solveGaussian(p.model.design) : { status: 'out-of-domain' as const, reason: 'Physical Surface / Folded Path의 Gaussian 전파는 다음 Checkpoint에서 검증합니다. 현재 설계의 η는 계산하지 않습니다.' }; }
+export function gaussianForProject(p: Project) { if(p.model.kind==='ideal'&&p.authoring&&Object.values(p.authoring.ports).some(port=>port.fieldModel!=='gaussian'||port.adapter==='near-field-em-required'||port.mediumIndex!==null&&port.mediumIndex!==1))return {...solveGaussian(p.model.design),status:'out-of-domain' as const,reason:'Port Field / Medium은 Legacy Scalar Gaussian Solver의 유효 영역 밖입니다. Mode Bridge 검증이 필요합니다.'}; return p.model.kind === 'ideal' ? solveGaussian(p.model.design) : { status: 'out-of-domain' as const, reason: 'This entry point handles Legacy Ideal Gaussian. Physical projects use the separate coaxial Surface Gaussian Bridge result contract.' }; }
 export function sourceSelection(p: Project) { return p.model.kind === 'ideal' ? p.model.design.components[0].id : '@source'; }
 export function targetSelection(p: Project) { return prescription(p).surfaces.at(-1)!.id; }
 export function sourceLocal(p: Project, point: ReturnType<typeof V>) { return pointToLocal(frame(prescription(p).source.frame), point); }

@@ -38,6 +38,7 @@ export type Trace = {
 };
 export function sourceRays(d: Prescription): Ray[] {
     const src = d.source, f = frame(src.frame), rays: Ray[] = [];
+    if (src.n === null) throw Error("Input Port medium is undefined · Draft");
     const a = src.channels;
     for (let row = 0; row < a.rows; row++)
         for (let col = 0; col < a.cols; col++)
@@ -100,6 +101,7 @@ export function traceRay(input: Ray, surfaces: Compiled[], accepts?: (point: Vec
     const points = [ray.origin], hits: Hit[] = [];
     const blocked = (reason: string): RayPath => ({ channel: ray.channel, points, hits, status: "blocked", reason, opl });
     for (const s of surfaces) {
+        if(s.nBefore === null || s.nAfter === null || (s.interaction === "tir" && s.outsideIndex === null)) return blocked(`${s.id}: undefined medium · Draft`);
         const hit = intersect(ray, s);
         if (!hit)
             return blocked(`${s.id}: missed / parallel / behind`);
@@ -122,7 +124,7 @@ export function traceRay(input: Ray, surfaces: Compiled[], accepts?: (point: Vec
             nextN = s.nAfter;
         }
         if (s.interaction === "tir") {
-            if (refract(ray.direction, hit.normal, ray.n, s.outsideIndex) !== null)
+            if (refract(ray.direction, hit.normal, ray.n, s.outsideIndex!) !== null)
                 return blocked(`${s.id}: TIR condition not met`);
             direction = reflect(ray.direction, hit.normal);
         }
@@ -138,7 +140,9 @@ export function fingerprint(d: Prescription) { let h = 2166136261; for (const c 
 export function tracePrescription(input: Prescription, accepts?: (point: Vec, surface: Compiled) => boolean): Trace {
     const fingerprintValue = fingerprint(input);
     try {
-        const d = PrescriptionSchema.parse(input), surfaces = compile(d), paths = sourceRays(d).map(r => traceRay(r, surfaces, accepts));
+        const d = PrescriptionSchema.parse(input), surfaces = compile(d);
+        if(d.source.n === null || d.surfaces.some(s=>s.nBefore===null||s.nAfter===null||(s.interaction==="tir"&&s.outsideIndex===null))) return {status:"invalid", reason:"Draft: Medium n이 미정의입니다. Surface Data에서 입력하세요.",surfaces,paths:[],reached:0,centroid:null,centroidLocal:null,rms:null,fingerprint:fingerprintValue};
+        const paths = sourceRays(d).map(r => traceRay(r, surfaces, accepts));
         const reached = paths.filter(p => p.status === "reached");
         const centroid = reached.length ? mul(reached.reduce((a, p) => add(a, p.points.at(-1)!), V()), 1 / reached.length) : null;
         const meanU = reached.reduce((sum, p) => sum + p.hits.at(-1)!.local.y, 0) / reached.length, meanV = reached.reduce((sum, p) => sum + p.hits.at(-1)!.local.z, 0) / reached.length;

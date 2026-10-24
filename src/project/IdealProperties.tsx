@@ -1,3 +1,4 @@
+import { PortContractFields } from '../authoring/Ports';
 import { ArrowUp, ArrowDown, Trash2, LockKeyhole, UnlockKeyhole } from 'lucide-react';
 import { NumberField } from '../Fields';
 import { isPort, isTerminal, mm, um, toMM, toUM, degrees, radians, reorderComponent, removeComponent, replaceComponent, DocumentSchema, errorMessage } from '../domain';
@@ -9,7 +10,7 @@ export default function IdealProperties({ component, onError }: { component:Opti
  function change(transform:(d:DesignDocument)=>DesignDocument){try{shared.updateIdeal(DocumentSchema.parse(transform(doc)));onError('');return true;}catch(e){onError(errorMessage(e));return false;}}
  const update=(next:OpticalComponent)=>change(d=>replaceComponent(d,next));
  const remove=()=>{if(change(d=>removeComponent(d,component.id)))shared.setSelection(doc.components[0].id);};
- return <><div className="ideal-selection"><h3>{component.name}</h3><button aria-label={component.locked?'Unlock Component':'Lock Component'} onClick={()=>update({...component,locked:!component.locked})}>{component.locked?<LockKeyhole size={16}/>:<UnlockKeyhole size={16}/>}</button></div>
+ return <>{isPort(component)&&<PortContractFields which={component.kind==='fiber'?'source':'target'}/>}<div className="ideal-selection"><h3>{component.name}</h3><button aria-label={component.locked?'Unlock Component':'Lock Component'} onClick={()=>update({...component,locked:!component.locked})}>{component.locked?<LockKeyhole size={16}/>:<UnlockKeyhole size={16}/>}</button></div>
               <label className="field">
                 <span>Component Name</span>
                 <input
