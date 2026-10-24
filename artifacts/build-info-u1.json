@@ -1,8 +1,8 @@
 {
   "version": "0.6.0-s0-s1",
   "schemaVersion": 1,
-  "sourceCommit": "87a358a856a23fae9da85468b2039f1ed61c2a6e",
-  "sourceFingerprint": "6e8443e5c938dce666b294f6c8de194086091aab80b5c63723a532488a92653d",
+  "sourceCommit": "706b610c647195690619b5fa9fad0ebada3ee709",
+  "sourceFingerprint": "bae2664318ebd9bde39b753f40d60eb6dea80f3cf767b75542c02e1f28e1ca1c",
   "inputs": {
     "index.html": "e6161c8904ef323f394d6a78224d877e1050c4e4a89372f94124f7def406b397",
     "package-lock.json": "ad2ef482e11bdae3b346c820c3ad98370763b2453f6ce085be8f95f0409d3828",
@@ -60,7 +60,7 @@
     "src/routing/DesignSetup.tsx": "13fd1897b070ee3a473c07a9ade178f0f7179d19e6e32ea59e0950d24bb3b375",
     "src/routing/analysis.ts": "4e06ff027d3a77c1f45566250e0c264ec3db537f236698fa4af9fcc0ea01fad3",
     "src/routing/contract.ts": "f13d50142c2ec5655652cef5183dfaaa82bdc28f6ddf4ad9942f08fafc28a00a",
-    "src/routing/examples.ts": "fb0cf2dcaf8f71660f7b5224bcaa7eaface16f5f1d039be12c66cd90c7095c2e",
+    "src/routing/examples.ts": "10d862a7c7916c3b65ab7a29fa45d6df0174d21c0c000376aa855c28e09bde28",
     "src/routing/model.ts": "2fc96a0cafe69c461945138a0b76485367cfd80167aa4205ae6c16030fa12b29",
     "src/routing/routing.css": "582b500eb8fc6cdf36afda949e4466a515331b3b8dfcc239dc2ecaedb3936553",
     "src/sensitivity.ts": "f1997ce0f2f52853a2fc327027b8ccf0912f38763738387cbfbf34f76acf952c",
@@ -84,6 +84,6 @@
     "vite.config.ts": "053836db8e246fabb580d4e5122bad6856a6f5e5a4071cef8e5fd3d188aa7730"
   },
   "artifact": "photonic-connector-studio-u1.html",
-  "artifactSHA256": "9dc11076c265fb379fc3ef94d337a690f0591bb1fdee46546c414b048d026320",
-  "artifactBytes": 604769
+  "artifactSHA256": "f2feca0fb146c61c04c1259c8f60ef48f78e802eb8fccc5ab60406f4063a58d0",
+  "artifactBytes": 604838
 }
