@@ -69,3 +69,15 @@ matrix and acceptance sequence in UNIFIED_WORKSTATION_AND_FREEFORM_PLAN.md.
 
 The complete engineering target requires later numerical checkpoints; see the full plan. Main is
 not merged. Deliver playable HTML and Draft PR, stop for Play Review.
+
+## Delivery checkpoint
+
+Draft PR: https://github.com/legendnever-collab/photonic-connector-studio/pull/8
+Validated source: `6f20dd869ef6283901067ae4e0a6e2547193b89a`.
+Standalone: `artifacts/photonic-connector-studio-p2.4.html` (484787 bytes).
+HTML SHA256: `c2d10c68e00a6ea7df03b22567f1c17b12ea462b8042359ba0f9fd1e415444c5`.
+Source fingerprint: `c8d36a0dfb7b9bf0c70b6f302a59eccea096e1d3c461f9710f028173d5ff371d`.
+Build inputs and SHA256 values: `artifacts/build-info-p2.4.json`.
+Final packaged HTML was opened with networking disabled, switched through all Views without
+changing Project identity, inserted/edited a Prism, saved/reloaded the shared Project and produced
+the linked report without a runtime error. Source CI and packaging-head CI are reported in PR #8.
