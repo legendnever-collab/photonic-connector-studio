@@ -1,3 +1,5 @@
+import {profileDomainIssue} from './evaluator';
+export {sag,evaluateSurface,surfaceGradient,surfaceNormal} from './evaluator';
 import { materialIndex } from './materials';
 import { z } from "zod";
 export type Vec = {
@@ -57,7 +59,7 @@ export const poseSchema = z.object({ origin: vec, rotation: z.object({ roll: fin
 const id = z.string().min(1).max(80), index = finite.min(1).max(5);
 const oddCount = z.number().int().min(1).max(15).refine(n => n % 2 === 1, "Use an odd sample count");
 const arraySchema = z.object({ rows: z.number().int().min(1).max(11), cols: z.number().int().min(1).max(11), pitch: positive }).strict();
-export const surfaceSchema = z.object({ id, name: z.string().min(1).max(80), assemblyId: id, frame: poseSchema, shape: z.enum(["plane", "sphere"]), radius: finite.min(-1).max(1), aperture: positive, interaction: z.enum(["refract", "reflect", "tir", "probe"]), materialBefore:z.enum(['air','N-BK7']).optional(), materialAfter:z.enum(['air','N-BK7']).optional(), nBefore: index.nullable(), nAfter: index.nullable(), outsideIndex: index.nullable(), array: arraySchema.nullable() }).strict();
+export const surfaceSchema = z.object({ id, name: z.string().min(1).max(80), assemblyId: id, frame: poseSchema, shape: z.enum(["plane", "sphere", "even-asphere"]), conic:finite.min(-100).max(100).optional(), aspheric:z.object({a4:finite.min(-1e36).max(1e36),a6:finite.min(-1e36).max(1e36),a8:finite.min(-1e36).max(1e36)}).strict().optional(), radius: finite.min(-1).max(1), aperture: positive, interaction: z.enum(["refract", "reflect", "tir", "probe"]), materialBefore:z.enum(['air','N-BK7']).optional(), materialAfter:z.enum(['air','N-BK7']).optional(), nBefore: index.nullable(), nAfter: index.nullable(), outsideIndex: index.nullable(), array: arraySchema.nullable() }).strict();
 export const PrescriptionSchema = z.object({ kind: z.literal("surface-prescription"), schemaVersion: z.literal(1), units: z.literal("SI"), name: z.string().min(1).max(120), wavelength: finite.min(200e-9).max(20e-6), provenance: z.literal("synthetic-assumptions"), source: z.object({ frame: poseSchema, radius: positive, samples: oddCount, n: index.nullable(), channels: arraySchema }).strict(), assemblies: z.array(z.object({ id, name: z.string().min(1).max(80), kind: z.enum(["lens", "mirror", "prism", "array", "group", "target"]), parentId: id.nullable(), frame: poseSchema }).strict()).min(1).max(50), surfaces: z.array(surfaceSchema).min(1).max(100) }).strict().superRefine((d, ctx) => {
     const fail = (message: string) => ctx.addIssue({ code: "custom", message });
     if (new Set(d.assemblies.map(a => a.id)).size !== d.assemblies.length)
@@ -83,8 +85,8 @@ export const PrescriptionSchema = z.object({ kind: z.literal("surface-prescripti
         for(const [tag,key] of [['materialBefore','nBefore'],['materialAfter','nAfter']] as const){if(s[tag]){try{if(s[key]===null||Math.abs(s[key]!-materialIndex(s[tag]!,d.wavelength))>1e-10)fail(`${s.id}: Material / index mismatch`);}catch(e){fail(String(e));}}}
         if (!ids.has(s.assemblyId))
             fail("Unknown Surface Assembly");
-        if (s.shape === "sphere" && Math.abs(s.radius) <= s.aperture)
-            fail("Sphere clear radius must be smaller than |R|");
+        const domainIssue=profileDomainIssue(s,s.aperture);if(domainIssue)fail(`${s.id}: ${domainIssue}`);
+        if(s.shape!=="even-asphere"&&(s.conic!==undefined||s.aspheric!==undefined))fail(`${s.id}: Conic / coefficients require Even Asphere type`);
         if (s.array && 2 * s.aperture > s.array.pitch)
             fail("Lenslets overlap: 2 × aperture > pitch");
         if (["reflect", "tir", "probe"].includes(s.interaction) && s.nAfter !== s.nBefore)
@@ -107,9 +109,6 @@ export function compile(d: Prescription): Compiled[] {
         return old; const a = d.assemblies.find(a => a.id === id)!; const f = a.parentId ? compose(resolve(a.parentId), frame(a.frame)) : frame(a.frame); cache.set(id, f); return f; }
     return d.surfaces.map(s => ({ ...s, world: compose(resolve(s.assemblyId), frame(s.frame)) }));
 }
-export function sag(s: Pick<Surface, "shape" | "radius">, u: number, v: number) { if (s.shape === "plane")
-    return 0; const r2 = u * u + v * v, R = s.radius; if (r2 > R * R)
-    return NaN; return r2 / (R + Math.sign(R) * Math.sqrt(R * R - r2)); }
 export function cellCenters(s: Surface) { return Array.from({ length: s.array ? s.array.rows * s.array.cols : 1 }, (_, i) => { const a = s.array; return { id: a ? `${Math.floor(i / a.cols)}:${i % a.cols}` : "0:0", u: a ? (i % a.cols - (a.cols - 1) / 2) * a.pitch : 0, v: a ? (Math.floor(i / a.cols) - (a.rows - 1) / 2) * a.pitch : 0 }; }); }
 export function serializePrescription(d: Prescription) { return JSON.stringify(PrescriptionSchema.parse(d), null, 2); }
 export function parsePrescription(raw: string) { if (raw.length > 2000000)

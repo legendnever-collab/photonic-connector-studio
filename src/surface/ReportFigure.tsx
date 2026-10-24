@@ -6,7 +6,7 @@ import type { Prescription, Vec } from './model';
 import type { Trace } from './trace';
 import { sceneBounds, downloadScene } from './Scene';
 import { cross, hullIndices, reportGeometry } from './reportGeometry';
-import { surfaceRing } from './trace';
+import { surfaceRing,SURFACE_SOLVER_ID } from './trace';
 import { useProject } from '../project/Store';
 import { bodyGeometry, clipToBody } from '../project/geometry';
 import { projectFingerprint, modes } from '../project/model';
@@ -30,7 +30,7 @@ export default function ReportFigure({doc,trace,initialSelection,onClose,embedde
     const bounds=useMemo(()=>sceneBounds(doc,trace),[doc,trace]);
     useEffect(()=>{if(embedded)return;const opener=document.activeElement as HTMLElement|null,el=dialog.current;el?.showModal();return ()=>{el?.close();opener?.focus();};},[embedded]);
     const focusSurface=trace.surfaces.find(s=>s.id===selected)??trace.surfaces.at(-1);
-    const metadata={renderer:'report-figure/2.3.0',solver:'surface-sequential-3d/2.1.0',fingerprint:projectFingerprint(opticalProject),wavelengthM:doc.wavelength,units:'SI',mode,camera,selectedSurface:focusSurface?.id,sourceMode:modes(opticalProject).source,targetMode:modes(opticalProject).target,bodies:opticalProject.bodies,sourceBody:opticalProject.sourceBody,targetBody:opticalProject.targetBody,bodyIssues:geometry.issues,modelClass:opticalProject.model.kind,beamScope:opticalProject.model.kind==='ideal'?'validated ideal Gaussian envelope':'sampled geometric bundle; no intensity or Gaussian propagation'};
+    const metadata={renderer:'report-figure/2.3.0',solver:SURFACE_SOLVER_ID,fingerprint:projectFingerprint(opticalProject),wavelengthM:doc.wavelength,units:'SI',prescription:doc,mode,camera,selectedSurface:focusSurface?.id,sourceMode:modes(opticalProject).source,targetMode:modes(opticalProject).target,bodies:opticalProject.bodies,sourceBody:opticalProject.sourceBody,targetBody:opticalProject.targetBody,bodyIssues:geometry.issues,modelClass:opticalProject.model.kind,beamScope:opticalProject.model.kind==='ideal'?'validated ideal Gaussian envelope':'sampled geometric bundle; no intensity or Gaussian propagation'};
     const W=1600,H=1000,sceneWidth=mode==='B'?1480:1090,sceneHeight=610,sceneX=60,sceneY=180;
     const cy=Math.cos(camera.yaw),sy=Math.sin(camera.yaw),cp=Math.cos(camera.pitch),sp=Math.sin(camera.pitch);
     const eye=V(sy*cp,cy*cp,sp),light=unit(V(-.4,-.65,1));

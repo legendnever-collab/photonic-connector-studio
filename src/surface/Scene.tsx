@@ -1,3 +1,4 @@
+import {radialBounds} from './evaluator';
 import type { BodyGeometry } from '../project/geometry';
 import type { Project } from '../project/model';
 import { useEffect, useRef, useState } from 'react';
@@ -13,7 +14,7 @@ export type Camera = {
     zoom: number;
 };
 export const INITIAL_CAMERA: Camera = { yaw: -.6, pitch: .45, zoom: 1 };
-export function sceneBounds(d: Prescription, t: Trace,extraPoints:Vec[]=[]) { const pts = [...extraPoints,d.source.frame.origin, ...t.surfaces.flatMap(s => cellCenters(s).flatMap(c => surfaceRing(s, c.u, c.v, 12))), ...t.paths.flatMap(p => p.points)]; const lo = V(...(['x', 'y', 'z'] as const).map(k => Math.min(...pts.map(p => p[k]))) as [
+export function sceneBounds(d: Prescription, t: Trace,extraPoints:Vec[]=[]) { const pts = [...extraPoints,d.source.frame.origin, ...t.surfaces.flatMap(s => cellCenters(s).flatMap(c => s.shape==='even-asphere'?radialBounds(s,0,s.aperture).flatMap(x=>[-s.aperture,s.aperture].flatMap(y=>[-s.aperture,s.aperture].map(z=>pointToWorld(s.world,V(x,c.u+y,c.v+z))))):surfaceRing(s,c.u,c.v,12))), ...t.paths.flatMap(p => p.points)]; const lo = V(...(['x', 'y', 'z'] as const).map(k => Math.min(...pts.map(p => p[k]))) as [
     number,
     number,
     number

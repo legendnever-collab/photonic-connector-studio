@@ -12,7 +12,7 @@ function usePlotSize(){
 }
 export default function PhysicalGaussianView({result}:{result:PhysicalGaussian}) {
  const [axis,setAxis]=useState<'y'|'z'>('y'),[plot,setPlot]=useState<'propagation'|'output'>('propagation'),[scale,setScale]=useState<'reference'|'beam'>('reference');
- return <section className="physical-gaussian" data-testid="physical-gaussian"><header><div><strong>Gaussian Beam</strong><small>Same Surface prescription · Scalar / Paraxial</small></div><span data-testid="physical-gaussian-status">{result.status==='valid'?'Propagated':result.status}</span></header>
+ return <section className="physical-gaussian" data-testid="physical-gaussian"><header><div><strong>Gaussian Beam</strong><small>Same Surface prescription · Scalar / Paraxial</small></div><span data-testid="physical-gaussian-status">{result.status==='valid'?(result.higherOrder?'Paraxial reference':'Propagated'):result.status}</span></header>
  {result.status!=='valid'?<div className="physical-gaussian-unavailable" data-testid="physical-gaussian-reason"><h3>Gaussian propagation unavailable</h3><p>{result.reason}</p><small>Surface View shows the geometric diagnostic for this Project.</small></div>:<>
  <div className="physical-gaussian-tools"><div>{(['propagation','output'] as const).map(v=><button key={v} aria-pressed={plot===v} onClick={()=>setPlot(v)}>{v==='propagation'?'Beam Propagation':'Output Field'}</button>)}</div><div>{(['y','z'] as const).map(v=><button key={v} aria-label={`Physical Gaussian X${v.toUpperCase()}`} aria-pressed={axis===v} onClick={()=>setAxis(v)}>X–{v.toUpperCase()}</button>)}</div></div>
  <div className="physical-gaussian-plot">{plot==='propagation'?<Envelope result={result} axis={axis}/>:<><div className="field-scale"><span>Output Local {axis.toUpperCase()} · shared coordinates</span><label>Window <select aria-label="Output Field Window" value={scale} onChange={e=>setScale(e.target.value as typeof scale)}><option value="reference">Reference Mode</option><option value="beam">Full Incident Beam</option></select></label></div><OutputProfile result={result} axis={axis} scale={scale}/></>}</div>
@@ -40,7 +40,7 @@ function Envelope({result:r,axis}:{result:Valid;axis:'y'|'z'}) {
 }
 function OutputProfile({result:r,axis,scale}:{result:Valid;axis:'y'|'z';scale:'reference'|'beam'}) {
  const {ref,width,height}=usePlotSize();
- const b=r.incident[axis],o=r.overlap,target=o.status==='valid'?(axis==='y'?o.targetY:o.targetZ):null,center=(axis==='y'?r.incident.heightY-r.targetCenter.y:r.incident.heightZ-r.targetCenter.z),angle=axis==='y'?r.incident.slopeY-r.targetSlope.y:r.incident.slopeZ-r.targetSlope.z;
+ const b=r.incident[axis],target=r.referenceMode?.[axis]??null,center=(axis==='y'?r.incident.heightY-r.targetCenter.y:r.incident.heightZ-r.targetCenter.z),angle=axis==='y'?r.incident.slopeY-r.targetSlope.y:r.incident.slopeZ-r.targetSlope.z;
  const span=scale==='reference'&&target?target*3:Math.max(Math.abs(center)+b.radius*2.5,(target??0)*3),N=300,left=62,right=80,plotWidth=width-left-right;
  const X=(u:number)=>left+(u+span)/(2*span)*plotWidth;
  const intensity=(u:number,w:number,c:number)=>Math.sqrt(2/Math.PI)/w*Math.exp(-2*((u-c)/w)**2);

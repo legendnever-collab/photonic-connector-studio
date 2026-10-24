@@ -1,4 +1,4 @@
-name: P2.4 validation
+name: Optical workstation validation
 on:
   pull_request:
   push:
@@ -21,11 +21,13 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run artifact
+        env:
+          SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/upload-artifact@v4
         with:
-          name: photonic-connector-studio-p2.4
+          name: photonic-connector-studio-checkpoint
           path: |
-            artifacts/photonic-connector-studio-p2.4.html
-            artifacts/build-info-p2.4.json
-            artifacts/SHA256SUMS-p2.4.txt
-            test-results/P2.4-*.png
+            artifacts/photonic-connector-studio-u1.html
+            artifacts/build-info-u1.json
+            artifacts/SHA256SUMS-u1.txt
+            test-results/*.png

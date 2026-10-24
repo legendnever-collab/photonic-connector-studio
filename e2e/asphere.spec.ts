@@ -1,0 +1,30 @@
+import {test,expect} from '@playwright/test';
+import type {Page} from '@playwright/test';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
+import {readFile} from 'node:fs/promises';
+const offline=pathToFileURL(resolve('dist/index.html')).href;
+async function save(page:Page){const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
+async function asphere(page:Page){await page.getByLabel('S1 Type',{exact:true}).selectOption('even-asphere');await page.getByLabel('S1 Conic',{exact:true}).fill('-1');await page.getByLabel('S1 A4',{exact:true}).fill('0.02');}
+test.beforeEach(async({page},info)=>{test.skip(info.project.name!=='desktop','F1.1 targets the desktop Surface Data editor.');await page.context().setOffline(true);await page.goto(offline);});
+test('Conic and A4/A6/A8 update the shared Surface without remounting the canvas or numeric input',async({page})=>{
+ await asphere(page);await expect(page.getByLabel('Conic',{exact:true})).toHaveValue('-1');await expect(page.getByLabel('A4',{exact:true})).toHaveValue('0.02');
+ await page.evaluate(()=>{const w=window as unknown as Record<string,unknown>;w.f1Canvas=document.querySelector('[data-testid="surface-canvas"]');w.f1Input=document.querySelector('[aria-label="S1 A4"]');w.f1Profile=document.querySelector('[data-testid="surface-node-S1-0:0"] polyline')?.getAttribute('points');});
+ for(const value of ['0.021','0.022','0.023']){await page.getByLabel('S1 A4',{exact:true}).fill(value);await expect(page.getByLabel('S1 A4',{exact:true})).toBeFocused();}
+ expect(await page.evaluate(()=>{const w=window as unknown as Record<string,unknown>;return w.f1Canvas===document.querySelector('[data-testid="surface-canvas"]')&&w.f1Input===document.querySelector('[aria-label="S1 A4"]')&&w.f1Profile!==document.querySelector('[data-testid="surface-node-S1-0:0"] polyline')?.getAttribute('points');})).toBe(true);
+ await page.getByLabel('S1 A6',{exact:true}).fill('0.0001');await page.getByLabel('S1 A8',{exact:true}).fill('-0.00001');const p=await save(page),s=p.model.prescription.surfaces[0];expect(s.id).toBe('S1');expect(s.conic).toBe(-1);expect(s.aspheric.a4).toBeCloseTo(.023*1e9,3);expect(s.aspheric.a6).toBeCloseTo(1e11,3);expect(s.aspheric.a8).toBeCloseTo(-1e16,0);expect(p.model.prescription.surfaces[1].id).toBe('S2');
+});
+test('Report uses the changed sag and exports canonical coefficients; Gaussian marks its paraxial boundary',async({page})=>{
+ await asphere(page);const p=await save(page);await page.getByRole('button',{name:'Report View',exact:true}).click();await expect(page.getByTestId('report-figure')).toBeVisible();const dl=page.waitForEvent('download');await page.locator('.report-inline').getByRole('button',{name:'SVG',exact:true}).click();const svg=await readFile((await(await dl).path())!,'utf8');expect(svg).toContain('even-asphere');expect(svg).toContain('aspheric');expect(svg).toContain('surface-sequential-3d/3.0.0');
+ await page.getByRole('button',{name:'Gaussian View',exact:true}).click();await expect(page.getByTestId('physical-gaussian-status')).toHaveText('Paraxial reference');await expect(page.getByTestId('physical-overlap')).toHaveText('Not calculated');await expect(page.getByTestId('physical-gaussian')).toContainText('higher-order phase');expect(await save(page)).toEqual(p);
+ await page.getByRole('button',{name:'Surface View',exact:true}).click();await page.getByLabel('S1 Type',{exact:true}).selectOption('sphere');await page.getByRole('button',{name:'Gaussian View',exact:true}).click();await expect(page.getByTestId('physical-gaussian-status')).toHaveText('Propagated');await expect(page.getByTestId('physical-overlap')).not.toHaveText('Not calculated');
+});
+test('Undo / SaveLoad preserve units and ID; invalid conic drafts restore a valid surface',async({page})=>{
+ await asphere(page);const before=await save(page);await page.getByLabel('S1 A4',{exact:true}).fill('0.03');await page.getByRole('button',{name:'Undo',exact:true}).click();expect(await save(page)).toEqual(before);await page.getByLabel('S1 Conic',{exact:true}).fill('100');await expect(page.getByLabel('S1 Conic',{exact:true})).toHaveAttribute('aria-invalid','true');await page.getByLabel('S1 Conic',{exact:true}).press('Enter');await expect(page.getByLabel('S1 Conic',{exact:true})).toHaveValue('-1');
+ await page.getByTestId('surface-json-input').setInputFiles({name:'asphere.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(before))});expect(await save(page)).toEqual(before);await expect(page.getByLabel('A4',{exact:true})).toHaveValue('0.02');
+});
+test('desktop Surface and Report stay editable with docked or floating parameter windows',async({page})=>{
+ await asphere(page);await page.getByRole('button',{name:'XY',exact:true}).click();await page.getByLabel('S1 Conic',{exact:true}).fill('-2');await page.getByLabel('A4',{exact:true}).fill('0.03');const before=await save(page);await page.getByRole('button',{name:'Float Properties / Analysis',exact:true}).click();await page.getByRole('button',{name:'Report View',exact:true}).click();await page.getByLabel('A6',{exact:true}).fill('0.0001');await page.getByRole('button',{name:'Dock Properties / Analysis',exact:true}).click();const changed=await save(page);expect(changed.model.prescription.surfaces[0].aspheric.a6).toBeCloseTo(1e11,3);expect(before.model.prescription.source.frame).toEqual(changed.model.prescription.source.frame);
+ await page.getByRole('button',{name:'Surface View',exact:true}).click();for(const [width,height]of [[1366,768],[1440,1000]]){await page.setViewportSize({width,height});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await expect(page.getByTestId('panel-data')).toBeVisible();await page.screenshot({path:`test-results/F1.1-surface-${width}.png`,fullPage:true});}
+ await page.getByRole('button',{name:'Report View',exact:true}).click();await page.screenshot({path:'test-results/F1.1-report.png',fullPage:true});
+});

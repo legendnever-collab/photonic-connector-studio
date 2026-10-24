@@ -1,3 +1,4 @@
+import {curvature,coefficients} from '../surface/evaluator';
 import { abcd, axisLogOverlap, beam, fingerprint, MAX_SLOPE, rayleigh } from '../physics';
 import type { Beam, Complex, Matrix } from '../physics';
 import { compile, frame, pointToLocal, vectorToLocal } from '../surface/model';
@@ -6,12 +7,12 @@ import { bodyGeometry } from './geometry';
 import type { Project } from './model';
 import type { PortContract } from '../authoring/contract';
 
-export const PHYSICAL_GAUSSIAN_ID = 'coaxial-surface-gaussian/1.0.0';
+export const PHYSICAL_GAUSSIAN_ID = 'coaxial-surface-gaussian/1.1.0';
 export const APERTURE_TAIL_LIMIT = 1e-3;
 export type PhysicalSample = { x:number; n:number; y:Beam; z:Beam; heightY:number; heightZ:number; slopeY:number; slopeZ:number; side:'before'|'after'; surfaceId?:string };
 export type Overlap = {status:'valid';eta:number;logEta:number;lossDB:number;underflow:boolean;targetY:number;targetZ:number;offsetY:number;offsetZ:number;angleY:number;angleZ:number}
  | {status:'not-calculated';reason:string};
-export type PhysicalGaussian = {status:'valid';id:string;fingerprint:string;wavelength:number;warnings:string[];frame:Frame;samples:PhysicalSample[];incident:PhysicalSample;overlap:Overlap;surfaces:{id:string;x:number;nBefore:number;nAfter:number;aperture:number}[];targetCenter:{y:number;z:number};targetSlope:{y:number;z:number};matrix:Matrix}
+export type PhysicalGaussian = {status:'valid';id:string;fingerprint:string;wavelength:number;warnings:string[];frame:Frame;samples:PhysicalSample[];incident:PhysicalSample;overlap:Overlap;surfaces:{id:string;x:number;nBefore:number;nAfter:number;aperture:number}[];targetCenter:{y:number;z:number};targetSlope:{y:number;z:number};matrix:Matrix;higherOrder:boolean;referenceMode:{y:number;z:number}|null}
  | {status:'invalid'|'out-of-domain';id:string;fingerprint:string;reason:string};
 
 /** Only physics inputs: diagnostic ray radius/sampling/n and mechanical Fiber shells do not enter the field. */
@@ -88,18 +89,21 @@ export function solvePhysicalGaussian(p:Project):PhysicalGaussian {
     const margin=s.aperture-offset,tail=margin<=0?1:Math.exp(-2*(margin/w)**2);
     apertureTailBudget+=tail;
     if(apertureTailBudget>APERTURE_TAIL_LIMIT)return fail(`${s.id}: cumulative aperture tail bound exceeds 0.1%. Clipped fields require diffraction propagation.`);
-    if(s.shape==='sphere'&&(offset+2*w)/Math.abs(s.radius)>.2)return fail(`${s.id}: 2w footprint / |R| exceeds 0.2; spherical aberration is outside the paraxial bridge.`);
+    if(s.shape!=='plane'&&s.radius!==0&&(offset+2*w)/Math.abs(s.radius)>.2)return fail(`${s.id}: 2w footprint / |R| exceeds 0.2; spherical aberration is outside the paraxial bridge.`);
    }
    surfaces.push({id:s.id,x,nBefore:n,nAfter:s.nAfter,aperture:s.aperture});
-   const power=s.interaction==='refract'&&s.shape==='sphere'?(s.nAfter-n)/s.radius:0,m:Matrix=[1,0,-power,1];
+   const power=s.interaction==='refract'?(s.nAfter-n)*curvature(s):0,m:Matrix=[1,0,-power,1];
    qY=abcd(qY,m);qZ=abcd(qZ,m);pY-=power*hY;pZ-=power*hZ;n=s.nAfter;matrix=product(m,matrix);
    if(!paraxial())return fail(`${s.id}: post-surface divergence >0.1 rad or beam-axis slope >50 mrad.`);
    samples.push(snapshot('after',s.id));
   }
+  const higherOrder=ss.some(s=>s.shape==='even-asphere'&&((s.conic??0)!==0||coefficients(s).some(a=>a!==0)));
   const incident=snapshot('after'),warnings=['One analytic Port field; diagnostic ray channels do not define additional Gaussian sources.','Normalized scalar field; Fresnel / coatings / absorption / aberration and aperture diffraction are not modeled. Transmission and total coupling are not calculated.','Port tilt uses a first-order phase ramp; O(tilt²) plane and projection corrections are omitted. Waist locations are local homogeneous-segment extrapolations.'];
   let overlap:Overlap={status:'not-calculated',reason:'Output reference is undefined.'};
+  if(higherOrder)warnings.push('Conic / Even Asphere: beam is a vertex-curvature ABCD reference. Higher-order phase and aberration are not propagated.');
   const targetIssue=contractIssue(ports?.target);
-  if(targetIssue)overlap={status:'not-calculated',reason:`Output: ${targetIssue}`};
+  if(higherOrder)overlap={status:'not-calculated',reason:'Aspheric higher-order phase is outside ABCD. Beam is a vertex-curvature reference; physical mode overlap requires Field propagation.'};
+  else if(targetIssue)overlap={status:'not-calculated',reason:`Output: ${targetIssue}`};
   else if(tm.mfdX===null||tm.mfdY===null)overlap={status:'not-calculated',reason:'Output MFD X / Y is undefined.'};
   else if(Math.abs(ports!.target.mediumIndex!-n)>1e-10)overlap={status:'not-calculated',reason:'Output reference medium does not match the incident field medium.'};
   else if(sm.polarization!=='unspecified'&&tm.polarization!=='unspecified'&&sm.polarization!==tm.polarization)overlap={status:'not-calculated',reason:'TE/TM mismatch: vector polarization coupling is outside the scalar bridge.'};
@@ -110,7 +114,7 @@ export function solvePhysicalGaussian(p:Project):PhysicalGaussian {
    overlap={status:'valid',eta,logEta,lossDB:-10*logEta/Math.LN10,underflow:eta===0,targetY:tm.mfdX/2,targetZ:tm.mfdY/2,offsetY,offsetZ,angleY,angleZ};
    if(sm.polarization==='unspecified'||tm.polarization==='unspecified')warnings.push('Polarization unspecified: mode overlap assumes co-polarized scalar fields.');
   }
-  return {status:'valid',id:PHYSICAL_GAUSSIAN_ID,fingerprint:fp,wavelength:lambda,warnings,frame:reference,samples,incident,overlap,surfaces,targetCenter:{y:target.position.y,z:target.position.z},targetSlope:{y:target.slopeY,z:target.slopeZ},matrix};
+  return {status:'valid',id:PHYSICAL_GAUSSIAN_ID,fingerprint:fp,wavelength:lambda,warnings,frame:reference,samples,incident,overlap,surfaces,targetCenter:{y:target.position.y,z:target.position.z},targetSlope:{y:target.slopeY,z:target.slopeZ},matrix,higherOrder,referenceMode:!targetIssue&&tm.mfdX!==null&&tm.mfdY!==null&&Math.abs(ports!.target.mediumIndex!-n)<1e-10?{y:tm.mfdX/2,z:tm.mfdY/2}:null};
  }catch(e){return fail(e instanceof Error?e.message:String(e),'invalid');}
 }
 

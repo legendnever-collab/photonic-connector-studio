@@ -1,22 +1,22 @@
-# Current checkpoint — B1.0 Physical Gaussian Bridge
+# Current checkpoint — F1.1 Conic / Even Asphere
 
-Read `docs/B1_PHYSICAL_GAUSSIAN.md` and `docs/FIBER_LENS_FIBER_STARTER.md`.
-The user authorized the next Gaussian / Surface development checkpoint after
-reviewing the previous shared-geometry behavior. B1.0 now propagates the same
-coaxial sphere/plane prescription and reports normalized conditional overlap.
-The 10 mm Fiber–BK7 Lens–Fiber starter and both editable Fiber templates remain.
+Read `docs/F1_1_CONIC_ASPHERIC.md` and preserve the merged B1 Gaussian bridge plus
+10 mm Fiber–BK7 Lens–Fiber starter. The user authorized the next development after
+merging PR #10 (main `a154dd359fa4946583e61e97cd6f7165ba1e86cf`).
 
-PR #10 stays Draft: https://github.com/legendnever-collab/photonic-connector-studio/pull/10
-PC first. No main merge before user Play Review. Do not automatically begin the
-next feature. Exact verified source is recorded in `artifacts/build-info-u1.json`.
+Branch: `feature/f1-1-conic-aspheric`. PC first. Keep the new PR Draft for user
+Play Review; no automatic main merge or next feature. Exact source/HTML identity
+is in `artifacts/build-info-u1.json` / `artifacts/SHA256SUMS-u1.txt`.
 
-Resume from the current remote branch `feature/u1-mode-port-authoring`; preserve
-one canonical Surface prescription, Port contract, saved JSON and Undo history.
-`src/project/physicalGaussian.ts` handles B1.0, while the old Ideal solver remains
-separate. Do not infer Transmission or Total Coupling from normalized overlap or
-geometric Ray counts. Do not bypass explicit field eligibility gates.
+New type `even-asphere` uses Conic K and SI A4/A6/A8, edited in mm-based units.
+Shared evaluator: `src/surface/evaluator.ts`; bounded nearest-root search:
+`src/surface/asphereIntersection.ts`. Keep finite-disk and numerical-failure
+semantics, full-radius body thickness check, the existing IDs/frames, one Project,
+SaveLoad, Undo and templates. Old files do not gain new optional fields.
 
-F1.1 Conic / Aspheric and broader Field/Folded work are subsequent scoped tasks.
-Imported/confined fields still require a real adapter. Alignment ΔPose remains a
-saved Draft (`applied=false`); the actual Port/Assembly Pose controls propagation.
-Review B1 before choosing the next checkpoint.
+Nonzero K/A terms show a Gaussian vertex-curvature reference and no Mode Overlap.
+Higher-order Field transport, XY/Control Point/CAD Freeform, coupled-axis beams,
+Fresnel/Transmission and Total Coupling remain separate future checkpoints.
+Do not fit imported/confined fields to a Gaussian or treat Ray reach as efficiency.
+Alignment ΔPose remains a saved, unapplied draft. Do not begin another checkpoint
+until the user reviews this one.

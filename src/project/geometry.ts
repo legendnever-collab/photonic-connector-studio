@@ -1,4 +1,5 @@
-import { V, add, sub, mul, dot, norm, pointToWorld, pointToLocal, cellCenters, sag, frame } from '../surface/model';
+import {profileDomainIssue,positiveThickness} from '../surface/evaluator';
+import { V, add, sub, mul, dot, norm, pointToWorld, pointToLocal, cellCenters, frame } from '../surface/model';
 import type { Compiled, Vec, Prescription } from '../surface/model';
 import type { Body, Project } from './model';
 import type { ReportFace, ReportEdge } from '../surface/reportGeometry';
@@ -34,14 +35,14 @@ export function bodyGeometry(d: Prescription, surfaces: Compiled[], bodies: Body
                 error = 'Body and Surface type mismatch';
             else {
                 const outer = body.kind === 'lens' ? body.outerRadius : s.aperture;
-                if (ss.some(s => s.aperture > outer || s.shape === 'sphere' && Math.abs(s.radius) <= outer))
-                    error = 'Outer radius must cover Clear Radius and remain inside sphere radius';
+                if (ss.some(s => s.aperture > outer || !!profileDomainIssue(s,outer)))
+                    error = 'Outer radius must cover Clear Radius and remain inside the Surface sag domain';
                 const cells = cellCenters(s);
                 if (body.kind === 'array' && cells.some(c => Math.abs(c.u) + s.aperture > body.width / 2 + 1e-12 || Math.abs(c.v) + s.aperture > body.height / 2 + 1e-12))
                     error = 'Array substrate must cover all Lenslet clear apertures';
                 const thickness = pointToLocal(s.world, ss[1].world.origin).x;
-                if (thickness + sag(ss[1], outer, 0) - sag(ss[0], outer, 0) <= 0)
-                    error = 'Lens edge thickness is zero or negative';
+                if (!positiveThickness(ss[0],ss[1],thickness,outer))
+                    error = 'Lens edge thickness or interior thickness is nonpositive / unresolved';
                 if (!error && body.kind === 'lens') {
                     const front = surfaceRing({ ...s, aperture: outer }), back = surfaceRing({ ...ss[1], aperture: outer });
                     faces = front.map((p, i) => [p, front[(i + 1) % 48], back[(i + 1) % 48], back[i]]);

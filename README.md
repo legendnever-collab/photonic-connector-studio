@@ -1,7 +1,7 @@
-# Photonic Connector Studio — B1 Physical Gaussian Bridge
+# Photonic Connector Studio — F1.1 Conic / Even Asphere
 
 Desktop design workflow for **Input Mode → Optical Train → Output Reference Mode**.
-Baseline P2.4 remains preserved; B1 is a Draft Play Review checkpoint, not a merged release.
+Baseline P2.4 remains preserved; F1.1 is a Draft Play Review checkpoint, not a merged release.
 
 Startup now opens **Fiber → BK7 Lens → Fiber**, with 10 mm between Fiber facets.
 S1 / BK7 / S2 form one 1 mm-thick Lens, and both Fiber bodies are visible in 3D.
@@ -14,15 +14,19 @@ share one Project. Float / Dock and the Splitter change session layout only.
 - `npm ci`; `npm run check` for type, model, build and browser checks.
 - `npm run artifact` produces the offline single HTML and source/hash manifest.
 - `npm run test:e2e -- --config=playwright.offline.config.ts` checks packaged B1 behavior offline.
+- [F1.1 Surface scope and verification](docs/F1_1_CONIC_ASPHERIC.md)
 - [B1 physical Gaussian scope and verification](docs/B1_PHYSICAL_GAUSSIAN.md)
 - [U1 contract](docs/U1_MODE_PORT_CONTRACT.md)
 - [U1 verification and review](docs/U1_IMPLEMENTATION_REPORT.md)
 - [Existing development roadmap](docs/DEVELOPMENT_ROADMAP_V1.md)
 
+Surface Data and Properties now edit Even Asphere Conic K and A4/A6/A8 in mm-based
+units. One Sag/Normal evaluator drives geometric rays, finite bodies and Report.
 Surface Ray tracing remains a Geometric Diagnostic. Gaussian View now propagates
 the same coaxial sphere/plane prescription and compares the normalized Output
 field with its Fiber reference. Transmission / Total Coupling, folded / confined
-fields and Conic / Aspheric evaluation remain outside this B1.0 subset. Existing
+fields remain outside the B1.0 subset. Nonzero Aspheric departures show a
+vertex-curvature Gaussian reference with Mode Overlap withheld. Existing
 legacy Ideal Gaussian analysis remains available via Examples.
 
 ## P2.4 — Unified Optical Workstation
