@@ -153,3 +153,11 @@ existing review file. Version, exact source commit and SHA256 live in
 Review: open Gaussian → Beam Propagation / Output Field; edit S1 Radius and
 Thickness; compare Surface; inspect Analysis; Undo and Save/Load. Then decide
 whether to proceed to a separately scoped Aspheric / broader Field checkpoint.
+
+## Verified standalone provenance
+
+Source commit: `d8adf2f0b6dc9311e4fff146aa1acae699809aad`.
+HTML: 576627 bytes.
+SHA256: `8ab607419eaaa6582034ccf34835c1ae7c59f2b34ea1d3453c4cf47b9a5ec973`.
+Source fingerprint: `2f2bb8a35fcf5060b87c9b9ef5709ac43c9e34f842741985795d02bfac7be616`.
+The packaged Desktop tests passed on these exact HTML bytes.
