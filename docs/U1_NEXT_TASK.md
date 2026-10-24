@@ -1,7 +1,8 @@
 # U1 다음 Checkpoint
 
 U1 Draft PR #10: https://github.com/legendnever-collab/photonic-connector-studio/pull/10
-검증 Source: `3adbf66c89691e3f5219b64611522e33a05b3839`.
+검증 Source: `3881889fd68a2ea2e737c04b5d1f885b287c2e35`.
+SMF 기본 Input Reference (1310 nm / MFD 9.2 µm / Gaussian Waist)를 유지한다.
 PC 우선. 사용자 Play Review 전 main 병합 금지. 다음 기능 자동 시작 금지.
 
 재개 시 `docs/U1_IMPLEMENTATION_REPORT.md`, `docs/U1_MODE_PORT_CONTRACT.md`,

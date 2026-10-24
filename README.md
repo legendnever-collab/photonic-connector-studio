@@ -3,7 +3,9 @@
 Desktop design workflow for **Input Mode → Optical Train → Output Reference Mode**.
 Baseline P2.4 remains preserved; U1 is a Play Review checkpoint, not a merged release.
 
-Start with **New Physical Project**, define both Port Modes, then add Lens / Prism
+Startup and **New Physical Project** use an editable SMF Fiber Gaussian Reference
+(1310 nm, MFD 9.2 µm, waist at the fiber facet). Existing project files retain their
+original input definitions. Define the Output Reference Mode, then add Lens / Prism
 from Component Catalog or insert rows in Surface Data. Layout and Surface Data
 share one Project. Float / Dock and the Splitter change session layout only.
 
