@@ -24,7 +24,7 @@ export function reportDetailRegions(doc:Prescription,trace:Trace,geometry:Pick<R
   const ids=new Set(ss.map(s=>s.id)),points=geometry.faces.filter(f=>ids.has(f.surfaceId)&&!f.illustrative).flatMap(f=>f.points);
   if(!points.length)return [];
   const b=project.bodies.find(b=>b.assemblyId===a.id),dimensions:string[]=[],measurements:DetailRegion['measurements']=[];
-  if(a.kind==='lens'&&ss.length===2){dimensions.push(`t = ${mm(norm(sub(ss[1].world.origin,ss[0].world.origin)))}`);dimensions.push(`R1 / R2 = ${ss.map(s=>s.shape==='plane'?'∞':mm(s.radius)).join(' / ')}`);}
+  if(a.kind==='lens'&&ss.length===2){dimensions.push(`t = ${mm(norm(sub(ss[1].world.origin,ss[0].world.origin)))}`);dimensions.push(`R1 / R2 = ${ss.map(s=>s.shape==='plane'||s.radius===0?'∞':mm(s.radius)).join(' / ')}`);}
   if(b?.kind==='lens'){
    dimensions.push(`Body Ø ${mm(2*b.outerRadius)} · Clear Ø ${mm(2*ss[0].aperture)}`);
    const front=ss[0].world.origin,rear=ss[1]?.world.origin??front,u=ss[0].world.axes[1],z=ss[0].world.axes[2],axis=ss[0].world.axes[0];
