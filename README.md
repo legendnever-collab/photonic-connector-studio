@@ -1,3 +1,21 @@
+## S3.2 — Bounded Lens reference design (0.9.0-s3.2)
+
+**Design Setup → Design Lenses** fits one/two physical Lenses to the fixed Output
+Gaussian MFD and flat phase, with actual S1 / glass / S2 surfaces. The explicit
+2-Lens Relay template can add a BK7 Output Lens in read-only Preview. Compare
+beam and geometry, then Apply in one Undo. Fixed Ports / Mirror / Prism, Lens
+material / aperture / Body radius and all Mode conditions remain unchanged.
+
+Only model-valid, aperture-feasible, geometrically checked candidates are kept.
+Reference goals / best tested partial results / no candidate / limited coverage
+are distinct; there is no device-efficiency or global-optimum claim. New optional
+v1 provenance is saved with the canonical physical design. Old JSON is preserved.
+
+Review **S3.2 · Folded Lens design task → Design Lenses → Run Lens Design**,
+or start with the original 10 mm Fiber–Lens–Fiber. Contract and limits:
+[docs/S3_2_LENS_DESIGN.md](docs/S3_2_LENS_DESIGN.md). Draft checkpoint stacked on
+unmerged S3.1 #14 / S2 #13; main is unchanged.
+
 ## S3.1 — Folded Gaussian reference (0.8.0-s3.1)
 
 Gaussian View now follows the actual Mirror / Prism chief path with transported
