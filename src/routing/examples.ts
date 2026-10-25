@@ -1,3 +1,4 @@
+import {lensDesignExample} from '../lens/examples';
 import {framePose} from '../authoring/commands';
 import {withPortWorld,portWorld} from './model';
 import {fiberLensFiberProject} from '../authoring/starter';
@@ -8,9 +9,10 @@ import {pose} from '../surface/model';
 import type {Surface,Assembly} from '../surface/model';
 import {materialIndex} from '../surface/materials';
 import {defaultRouting} from './contract';
-export type RoutingExample='mirrors'|'prism'|'search';
+export type RoutingExample='mirrors'|'prism'|'search'|'lens';
 /** Explicit manual prescriptions, not auto-generated or mode-matched solutions. */
 export function routingExample(which:RoutingExample):Project {
+ if(which==='lens')return lensDesignExample();
  if(which==='search'){let p=routingExample('mirrors');p=withPortWorld(p,'target',{...framePose(portWorld(p,'target')),origin:{x:.01,y:80e-6,z:50e-6}});if(p.model.kind==='surface')p={...p,model:{...p.model,prescription:{...p.model.prescription,name:'Fiber → displaced PIC · S2 routing task'}}};return p;}
  let p=withPortDevice(fiberLensFiberProject(),'target',which==='mirrors'?'pic-edge':'pic-grating');
  if(p.model.kind!=='surface')throw Error('Physical example required');

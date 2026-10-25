@@ -1,3 +1,4 @@
+import {LensSolutionSchema} from '../lens/contract';
 import {z} from 'zod';
 const coordinate=z.number().finite().min(-1).max(1);
 const vector=z.object({x:coordinate,y:coordinate,z:coordinate}).strict();
@@ -12,6 +13,7 @@ export const defaultSearchOptions=():SearchOptions=>({version:1,templates:['dire
 export const BoxSchema=z.object({min:vector,max:vector}).strict().refine(b=>['x','y','z'].every(k=>b.min[k as 'x']<b.max[k as 'x']),'Box minimum must be below maximum');
 export const RoutingSchema=z.object({version:z.literal(1),
  search:SearchOptionsSchema.optional(),
+ lensSolution:LensSolutionSchema.optional(),
  solution:z.object({engine:z.literal('bounded-port-routing/1.0.0'),topology:TopologySchema,baselineFingerprint:z.string(),designFingerprint:z.string(),evaluated:z.number().int().min(1).max(256)}).strict().optional(),
  positionTolerance:z.number().finite().positive().max(1),angleTolerance:z.number().finite().positive().max(Math.PI),
  bounds:BoxSchema.nullable(),keepOut:z.array(BoxSchema).max(8),

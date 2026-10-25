@@ -44,7 +44,7 @@ export function foldedInput(p:Project){return {physics:physicalGaussianInput(p),
  * Flat folds transport both transverse axes, including parity. Curved refraction is centered normal-incidence only.
  * Clipping is diagnosed, never propagated. No TIR/coating phase, delivered power, or mode-overlap claim.
  */
-export function solveFoldedGaussian(p:Project):FoldedResult {
+export function solveFoldedGaussian(p:Project,options:{sampleSegments?:boolean}={}):FoldedResult {
  const fp=fingerprint(JSON.stringify(foldedInput(p))),fail=(reason:string,status:'invalid'|'out-of-domain'='out-of-domain'):FoldedResult=>({status,id:FOLDED_GAUSSIAN_ID,fingerprint:fp,reason});
  if(p.model.kind!=='surface')return fail('Physical Surface Project required.');
  const d=p.model.prescription,ports=p.authoring?.ports,port=ports?.source,sm=p.model.sourceMode,lambda=d.wavelength,ss=compile(d);
@@ -67,7 +67,7 @@ export function solveFoldedGaussian(p:Project):FoldedResult {
   const total=path.points.slice(1).reduce((sum,p,i)=>sum+norm(sub(p,path.points[i])),0);
   for(let index=0;index<ss.length;index++){
    const s=ss[index],hit=path.hits[index],length=norm(sub(hit.point,point)),begin=point,oldQ=q,oldDistance=distance,oldOPL=opl;
-   const count=Math.max(1,Math.ceil(180*length/total));
+   const count=options.sampleSegments===false?1:Math.max(1,Math.ceil(180*length/total));
    for(let i=1;i<=count;i++){const l=length*i/count;point=add(begin,mul(direction,l));distance=oldDistance+l;opl=oldOPL+n*l;q=propagateQ(oldQ,l,n);samples.push(snapshot('before',i===count?s.id:undefined));}
    point=hit.point;const before=snapshot('before',s.id),ci=Math.abs(dot(direction,hit.normal));
    if(ci<.1)return fail(`${s.id}: grazing incidence outside the local Gaussian reference.`);
@@ -117,7 +117,7 @@ export function solveFoldedGaussian(p:Project):FoldedResult {
   const apertureLimited=tailSum>1e-3;
   if(apertureLimited)warnings.unshift('Aperture limited: displayed envelopes are untruncated Gaussian references, not the transmitted field.');
   warnings.push('Scalar paraxial reference about the finite chief ray. Flat mirrors and TIR transport geometry; coating / Fresnel / TIR phase, polarization, Goos–Hänchen shifts and absolute power are omitted.','Distances are geometric arclength; OPL = Σ nL. Waist offsets extrapolate only within the current homogeneous medium; no claim across another surface.');
-  const overlapReason=ports?.target.device==='pic-edge'||ports?.target.device==='pic-grating'?'PIC receiving field is undefined. Target MFD is a user reference; device coupling is not calculated.':'Folded mode overlap is not calculated in S3.1; interface phase / polarization and clipping propagation are omitted.';
+  const overlapReason=ports?.target.device==='pic-edge'||ports?.target.device==='pic-grating'?'PIC receiving field is undefined. Target MFD is a user reference; device coupling is not calculated.':'Transported mode overlap is not calculated; interface phase / polarization and clipping propagation are omitted.';
   return {status:'valid',id:FOLDED_GAUSSIAN_ID,fingerprint:fp,wavelength:lambda,samples,surfaces,incident:samples.at(-1)!,warnings,apertureLimited,positionError:Math.hypot(last.local.y,last.local.z),angleError:Math.atan2(Math.hypot(outDir.y,outDir.z),outDir.x),outputOffset:last.local,outputDirection:outDir,outputAxes:[target.axes[1],target.axes[2]],targetMFD:ports?.target.fieldModel==='gaussian'?[p.model.targetMode.mfdX,p.model.targetMode.mfdY]:[null,null],overlapReason};
  }catch(e){return fail(e instanceof Error?e.message:String(e),'invalid');}
 }
