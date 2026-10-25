@@ -166,3 +166,13 @@ Undo must restore the original task with exactly the same Port and Lens values.
 
 Stop for user review. S3 will address supported Beam / Mode matching and Lens design;
 S4 Field / Coupling and tolerance work remain separate checkpoints.
+
+## Delivered build identity
+
+Implementation source: `625bcf72961de150917c93e3f3d8263a8aa12936`.
+Standalone HTML: `photonic-connector-studio-u1.html`, 634,039 bytes.
+SHA256: `27ffbdefdf67c8a6ed795305c8094b232c690a7d8a68aebfea1a06d97f181626`.
+Source fingerprint: `150b808654d6fe9a4e9204a543cc6e8e5d55978ad60709966dadbcaeba09191a`.
+See `artifacts/build-info-u1.json` and `artifacts/SHA256SUMS-u1.txt`.
+Provenance-only commits do not alter the HTML. CI labels its build with the PR head
+and must reproduce the same HTML bytes / SHA and source fingerprint.
