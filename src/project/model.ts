@@ -1,4 +1,5 @@
 import { resolveMaterials } from '../surface/materials';
+import { RoutingSchema } from '../routing/contract';
 import { AuthoringSchema } from '../authoring/contract';
 import { z } from 'zod';
 import { DocumentSchema, exampleDocument } from '../domain';
@@ -23,6 +24,7 @@ export type Body = z.infer<typeof BodySchema>;
 export const BuildingBlockSchema=z.object({id:z.string().min(1).max(80),name:z.string().min(1).max(80),kind:z.enum(['lens','mirror','prism','array','group']),surfaces:z.array(surfaceSchema).min(1).max(100),body:BodySchema.nullable()}).strict().superRefine((b,ctx)=>{const aid=b.surfaces[0].assemblyId;if(b.surfaces.some(s=>s.assemblyId!==aid)||b.body&&(b.body.assemblyId!==aid||b.body.kind!==b.kind)||new Set(b.surfaces.map(s=>s.id)).size!==b.surfaces.length)ctx.addIssue({code:'custom',message:'Building Block must contain one coherent leaf Component'});});
 export type BuildingBlock=z.infer<typeof BuildingBlockSchema>;
 export const ProjectSchema = z.object({ kind: z.literal('optical-project'), schemaVersion: z.literal(1), units: z.literal('SI'),
+    routing:RoutingSchema.optional(),
     targetBody:z.object({radius:dim,length:dim}).strict().nullable().optional(),
     authoring: AuthoringSchema.optional(), buildingBlocks:z.array(BuildingBlockSchema).max(30).optional(),
     model: z.discriminatedUnion('kind', [

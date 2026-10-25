@@ -23,6 +23,7 @@ export function physicalGaussianInput(p:Project) {
 }
 function contractIssue(port:PortContract|undefined) {
  if(!port)return 'Port phase / medium / normalization / adapter are undefined. Select a Fiber template or define the Mode Contract.';
+ if(port.device==='pic-edge'||port.device==='pic-grating')return 'PIC receiving Field / device response is not defined. The stored Gaussian is a user reference, not a Coupler efficiency model.';
  if(port.fieldModel!=='gaussian'||port.imported)return 'Imported complex fields require the F2 field adapter.';
  if(port.adapter!=='homogeneous-paraxial')return 'A homogeneous paraxial Port adapter is required; confined near fields require an EM solver.';
  if(port.phase!=='waist-plane')return 'Port phase is undefined. This solver requires a waist (flat phase) at the Port plane.';

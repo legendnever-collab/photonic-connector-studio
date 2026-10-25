@@ -3,6 +3,7 @@ import { poseSchema } from '../surface/model';
 const finite = z.number().finite();
 // Optional extension: v1 projects are read without filling in unknown physics.
 export const PortContractSchema = z.object({
+ device:z.enum(['fiber','pic-edge','pic-grating','custom']).optional(),
  preset:z.literal('smf-1310-gaussian').optional(),
  fieldModel:z.enum(['gaussian','imported-complex']),
  referencePlane:z.literal('port-frame'),
