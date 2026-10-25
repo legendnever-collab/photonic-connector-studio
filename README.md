@@ -1,3 +1,10 @@
+## Linked 3D Report details
+
+Report → **D · Detail Insets** connects overview regions to enlarged 3D Lens /
+Prism views with dimensions, vertex spacing, ray direction and available
+Gaussian 1/e² Beam size. **Expand Report** opens a large view; SVG / PNG include
+the current detail sheet. [Scope and validation](docs/REPORT_DETAIL_INSETS.md).
+
 ## S3.2 — Bounded Lens reference design (0.9.0-s3.2)
 
 **Design Setup → Design Lenses** fits one/two physical Lenses to the fixed Output
