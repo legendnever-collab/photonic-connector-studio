@@ -1,6 +1,6 @@
-import {add,sub,mul,norm,V,pointToWorld} from './model';
+import {add,sub,mul,norm,V,pointToWorld,frame,compile} from './model';
 import type {Prescription,Vec} from './model';
-import type {Trace} from './trace';
+import type {Trace,RayPath} from './trace';
 import type {Project} from '../project/model';
 import type {ReportGeometry} from './reportGeometry';
 import type {PhysicalGaussian} from '../project/physicalGaussian';
@@ -16,10 +16,17 @@ export const mm=(v:number)=>`${(v*1e3).toPrecision(4)} mm`;
 export const diameterText=(s:ReportBeamSample)=>s.radii.map(r=>(2*r*1e6).toPrecision(4)).join(' × ')+' µm';
 function box(ps:Vec[]){return {lo:V(...(['x','y','z'] as const).map(k=>Math.min(...ps.map(p=>p[k]))) as [number,number,number]),hi:V(...(['x','y','z'] as const).map(k=>Math.max(...ps.map(p=>p[k]))) as [number,number,number])};}
 export type DetailRegion={ids:string[];surfaceIds:string[];name:string;points:Vec[];dimensions:string[];gap:string|null;measurements:{a:Vec;b:Vec;label:string}[]};
+/** Fold annotations come from the independent traced center ray, never a drawn elbow. */
+export function reportFolds(doc:Prescription,path:RayPath|null){
+ const ss=compile(doc);return (path?.hits??[]).flatMap((hit,i)=>{
+  const s=ss.find(s=>s.id===hit.surfaceId);if(!s||!['reflect','tir'].includes(s.interaction))return [];
+  return [{surfaceId:s.id,assemblyId:s.assemblyId,kind:s.interaction==='tir'?'TIR Prism':'Mirror',point:hit.point,incoming:i?path!.hits[i-1].direction:frame(doc.source.frame).axes[0],outgoing:hit.direction}];
+ });
+}
 /** Read-only world geometry; connected nearby components share a region. No inferred solids. */
 export function reportDetailRegions(doc:Prescription,trace:Trace,geometry:Pick<ReportGeometry,'faces'>,project:Project):DetailRegion[]{
  if(project.model.kind!=='surface')return [];
- const parts=doc.assemblies.filter(a=>a.kind==='lens'||a.kind==='prism').flatMap(a=>{
+ const parts=doc.assemblies.filter(a=>['lens','prism','mirror'].includes(a.kind)).flatMap(a=>{
   const ss=trace.surfaces.filter(s=>s.assemblyId===a.id);if(!ss.length)return [];
   const ids=new Set(ss.map(s=>s.id)),points=geometry.faces.filter(f=>ids.has(f.surfaceId)&&!f.illustrative).flatMap(f=>f.points);
   if(!points.length)return [];
@@ -32,6 +39,10 @@ export function reportDetailRegions(doc:Prescription,trace:Trace,geometry:Pick<R
    const center=sub(front,mul(axis,b.outerRadius*.3));measurements.push({a:sub(center,mul(u,b.outerRadius)),b:add(center,mul(u,b.outerRadius)),label:`Ø ${mm(2*b.outerRadius)}`});
   }
   if(b?.kind==='prism'){dimensions.push(`Prism depth = ${mm(b.depth)}`);const z=ss[0].world.axes[2],center=ss[0].world.origin;measurements.push({a:sub(center,mul(z,b.depth/2)),b:add(center,mul(z,b.depth/2)),label:`depth ${mm(b.depth)}`});}
+  if(b?.kind==='mirror'){
+   dimensions.push(`Mirror ${b.outline==='disc'?'Ø':'width'} ${mm(b.width)} · backing ${mm(b.thickness)}`,`Clear Ø ${mm(2*ss[0].aperture)}`);
+   const center=ss[0].world.origin,u=ss[0].world.axes[1];measurements.push({a:sub(center,mul(u,b.width/2)),b:add(center,mul(u,b.width/2)),label:`width ${mm(b.width)}`});
+  }
   if(!b)dimensions.push('Body undefined · optical Surfaces only');
   return [{ids:[a.id],surfaceIds:ss.map(s=>s.id),name:a.name,points,dimensions,gap:null as string|null,measurements}];
  });

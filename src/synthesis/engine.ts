@@ -111,7 +111,13 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  const feasible:{recipe:Extract<Recipe,{kind:'generated'}>;domain:RouteDomain;proposal:RouteProposal}[]=[];
  for(const seed of seeds){if(out.geometryEvaluated>=Math.max(1,Math.floor(o.geometryBudget*.75))){limited=true;break;}const {q,domain,clear}=seed,key=JSON.stringify([q,clear]);if(seen.has(key))continue;seen.add(key);out.geometryEvaluated++;out.families[q.topology]=(out.families[q.topology]??0)+1;
   try{const opts=routeOptions(problem,o,clear),built=buildRouteProposal(domain,opts,q);validateRouteProposal(built.project,built.ids,opts,domain.box);
-   for(const count of [2,1,0] as const){if(count>p.routing!.parts.lens||q.blocks.length+count>problem.maxParts||q.blocks.length+count>problem.maxGenerated)continue;for(const side of count===1?['first','last'] as const:['first'] as const){const recipe:Extract<Recipe,{kind:'generated'}>={kind:'generated',route:q,clear,count,side};feasible.push({recipe,domain,proposal:q});}}
+   for(const count of [2,1,0] as const){
+    const parts=q.blocks.length+count,structure=`${count} Lens + ${q.blocks.length} fold (${q.topology})`;
+    if(count>p.routing!.parts.lens){reject(`Lens limit excludes ${structure}: ${count} > ${p.routing!.parts.lens}`);continue;}
+    if(parts>problem.maxParts){reject(`Total component limit excludes ${structure}: ${parts} > ${problem.maxParts}`);continue;}
+    if(parts>problem.maxGenerated){reject(`New / replacement component limit excludes ${structure}: ${parts} > ${problem.maxGenerated}`);continue;}
+    for(const side of count===1?['first','last'] as const:['first'] as const){const recipe:Extract<Recipe,{kind:'generated'}>={kind:'generated',route:q,clear,count,side};feasible.push({recipe,domain,proposal:q});}
+   }
   }catch(e){reject(message(e));}yield `Geometry ${out.geometryEvaluated}/${o.geometryBudget}`;
  }
  // Fit representatives first, then use optical merit to revisit placement rather than geometry rank.
