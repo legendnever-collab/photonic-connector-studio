@@ -33,8 +33,8 @@ function construct(p:Project,problem:DesignProblem,o:SynthesisOptions,recipe:Rec
  if(!o.families.includes(recipe.route.topology)||![o.clearRadius[0],o.clearRadius[1]].includes(recipe.clear))throw Error('Recipe family / size is outside the declared finite set.');
  const shapes:Record<Topology,string[]>={direct:[],mirror1:['mirror'],mirror2:['mirror','mirror'],prism1:['prism'],'mirror-prism':['mirror','prism']};
  if(!eq(recipe.route.blocks.map(b=>b.kind),shapes[recipe.route.topology]))throw Error('Recipe topology changed.');
- const route=buildRouteProposal(domain,opts,recipe.route).project;prescription(route).name=prescription(p).name;
- return addLenses(route,recipe.count,recipe.clear,o,recipe.side);
+ const reserved=[...prescription(p).assemblies.map(a=>a.id),...prescription(p).surfaces.map(s=>s.id)],route=buildRouteProposal(domain,opts,recipe.route,reserved).project;prescription(route).name=prescription(p).name;
+ return addLenses(route,recipe.count,recipe.clear,o,recipe.side,reserved);
 }
 function preflight(p:Project,problem:DesignProblem){
  if(p.model.kind!=='surface')throw Error('Physical Project required.');

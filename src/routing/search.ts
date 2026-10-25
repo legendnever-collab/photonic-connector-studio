@@ -92,10 +92,10 @@ function proposals(p:Prepared,o:SearchOptions):Proposal[] {
  }
  return q;
 }
-function build(p:Prepared,o:SearchOptions,q:Proposal):{project:Project;ids:string[];footprint:number} {
+function build(p:Prepared,o:SearchOptions,q:Proposal,reservedIds:string[]=[]):{project:Project;ids:string[];footprint:number} {
  const base=p.base;if(base.model.kind!=='surface')throw Error('Physical model required');
  const d=base.model.prescription,target=d.surfaces.at(-1)!,surfaces=[...d.surfaces.slice(0,-1)],assemblies=[...d.assemblies],bodies=[...base.bodies],ids:string[]=[];
- const existing=new Set([...d.assemblies.map(a=>a.id),...d.surfaces.map(s=>s.id)]);
+ const existing=new Set([...reservedIds,...d.assemblies.map(a=>a.id),...d.surfaces.map(s=>s.id)]);
  function id(name:string){let n=0,v=name;while(existing.has(v))v=`${name}-${++n}`;existing.add(v);return v;}
  const blank=(sid:string,aid:string):Surface=>({id:sid,name:sid,assemblyId:aid,frame:generatedPose(normalFrame(V(),V(1))),shape:'plane',radius:.005,aperture:o.clearRadius,interaction:'reflect',nBefore:1,nAfter:1,outsideIndex:1,materialBefore:'air',materialAfter:'air',array:null});
  let footprint=0;

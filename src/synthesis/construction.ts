@@ -26,15 +26,15 @@ export function emptyTrain(p:Project,o:DesignProblem):Project{
   else if(surfaces.some(s=>s.shape!=='plane')||!p.bodies.some(b=>b.assemblyId===aid&&b.kind===a.kind))throw Error('Initial fold requires finite planar optics.');
  }
  d.surfaces=[d.surfaces.at(-1)!];q.bodies=[];
- // Keep old IDs as inactive anchors, avoiding ID reuse that could conceal replacement counts.
+ // Keep baseline reference anchors here; final constructors reserve all original IDs.
  return ProjectSchema.parse(q);
 }
-export function addLenses(route:Project,count:0|1|2,clear:number,o:SynthesisOptions,side:'first'|'last'='first'):Project{
+export function addLenses(route:Project,count:0|1|2,clear:number,o:SynthesisOptions,side:'first'|'last'='first',reservedIds:string[]=[]):Project{
  const p=structuredClone(route),d=prescription(p),r=analyzeRouting(p);if(!r.withinTolerance||!r.path)throw Error('Construct Lens only on a closed finite route.');
  if(count===0)return p;
  const path=r.path,ss=compile(d),source=frame(d.source.frame),target=ss.at(-1)!.world,first=norm(sub(path.points[1],path.points[0])),last=norm(sub(path.points.at(-1)!,path.points.at(-2)!)),direct=d.surfaces.length===1;
  const t=o.thickness[1];if(t>=Math.min(first,last)*.6)throw Error('Insufficient free-space segment for a Lens within thickness bounds.');
- const used=new Set([...d.assemblies.map(a=>a.id),...d.surfaces.map(s=>s.id)]),id=(s:string)=>{let v=s,n=0;while(used.has(v))v=`${s}-${++n}`;used.add(v);return v;},n=materialIndex(o.material,d.wavelength);
+ const used=new Set([...reservedIds,...d.assemblies.map(a=>a.id),...d.surfaces.map(s=>s.id)]),id=(s:string)=>{let v=s,n=0;while(used.has(v))v=`${s}-${++n}`;used.add(v);return v;},n=materialIndex(o.material,d.wavelength);
  const additions:{index:number;surfaces:typeof d.surfaces}[]=[];
  const sourceMFD=p.model.kind==='surface'?p.model.sourceMode.mfdX:null,divergence=sourceMFD?d.wavelength/(Math.PI*sourceMFD/2):.1;
  const a=Math.min(Math.min(first,last)*(direct?.25:.45),clear*.28/divergence),total=r.path.points.slice(1).reduce((sum,v,i)=>sum+norm(sub(v,r.path!.points[i])),0);

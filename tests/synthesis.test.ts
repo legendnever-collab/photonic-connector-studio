@@ -72,3 +72,10 @@ test('generated folded train agrees with independent physical-q thick-interface 
  }
  expect(beam.status).toBe('valid');if(beam.status==='valid'){expect(beam.incident.q[0].re).toBeCloseTo(re/n,12);expect(beam.incident.q[0].im).toBeCloseTo(im/n,12);}
 });
+test('resynthesis allocates new replacement IDs instead of concealing generated-part counts',async()=>{
+ const {componentIds}=await import('../src/design/engine'),initial=applySynthesis(p,r,r.candidates.find(c=>c.qualified)!.id),old=new Set(componentIds(initial)),pb={...defaultProblem(initial),maxParts:4,maxGenerated:4};
+ pb.tolerance={...pb.tolerance,portPosition:[0,0,0],portAngle:[0,0,0],componentPosition:[0,0,0],componentAngle:[0,0,0]};
+ const batch=searchSynthesis(initial,pb,routing,{...o,families:['mirror2'],clearRadius:[.0005,.0005],budget:512,fitBudget:16,geometryBudget:16}),generated=batch.candidates.filter(c=>c.recipe.kind==='generated');
+ expect(generated.length).toBeGreaterThan(0);for(const c of generated){expect(componentIds(c.project).every(id=>!old.has(id))).toBe(true);expect(()=>applySynthesis(initial,batch,c.id)).not.toThrow();}
+ const blocked=searchSynthesis(initial,{...pb,maxGenerated:0},routing,{...o,families:['mirror2'],clearRadius:[.0005,.0005],budget:64,fitBudget:16,geometryBudget:16});expect(blocked.candidates.every(c=>c.recipe.kind==='existing')).toBe(true);
+});
