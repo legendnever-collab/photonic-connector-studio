@@ -1,3 +1,16 @@
+## S2 — Automatic route candidate search (0.7.0-s2)
+
+Fix Input / Output conditions and existing Lens geometry, then find Direct / Mirror /
+TIR Prism routing candidates. Compare actual 3D geometry, component poses, reference
+position/incidence errors, OPL and separate diagnostic rays before applying one
+undoable candidate. Search respects part limits, bounded space and conservative
+clearance / Keep-out screens. It does not optimize Mode Coupling or Lens shape.
+
+Open **Design Setup → Routing Example → S2 · Displaced PIC routing task**, then
+**Find Solutions… → Run Search → Preview → Apply Candidate**.
+See [S2 contract and review](docs/S2_ROUTE_SEARCH.md). Draft pending user review;
+no automatic main merge or S3 start.
+
 ## S0 / S1 — Port-to-Port Design Setup (0.6.0-s0-s1)
 
 Specify Input / Output Global position, propagation direction and reference Mode;
@@ -9,8 +22,7 @@ Open **Design Setup**, then **Routing Example**. **Focus Folds** shows the micro
 fold in XZ. No automatic solution search or PIC coupling efficiency is claimed.
 See [S0/S1 contract and review steps](docs/S0_S1_PORT_ROUTING.md).
 
-This checkpoint is stacked on F1.1 Draft PR #11. Both await user Play Review; main
-has not been merged automatically.
+F1.1 and S0/S1 were merged as PRs #11/#12 after user approval.
 
 # Photonic Connector Studio — F1.1 Conic / Even Asphere
 
