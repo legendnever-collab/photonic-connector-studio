@@ -1,3 +1,5 @@
+import {useState} from 'react';
+import SearchDialog from './SearchDialog';
 import {NumberField} from '../Fields';
 import {useProject} from '../project/Store';
 import {modes,withMode} from '../project/model';
@@ -13,12 +15,14 @@ const xyz=['x','y','z'] as const;
 const f=(v:number)=>Math.abs(v)<1e-9?'0':Number(v.toPrecision(6)).toString();
 const names={fiber:'SMF Fiber', 'pic-edge':'PIC Edge Coupler','pic-grating':'PIC Grating Coupler',custom:'Custom Port'};
 export default function DesignSetup({onExample,onError}:{onExample:(id:string)=>void;onError:(v:string)=>void}){
+ const [searchOpen,setSearchOpen]=useState(false);
  const shared=useProject(),p=shared.project,r=p.routing??defaultRouting();
  function commit(next:Project){try{shared.commit(next);onError('');return true;}catch(e){onError(e instanceof Error?e.message:String(e));return false;}}
  function put(next:Routing){return commit({...p,routing:next});}
- return <section className="routing-setup" data-testid="design-setup"><h3>Port-to-Port Design Setup</h3><p>두 Port의 위치와 입사 방향을 지정합니다. S0 / S1: 수동 배치와 Geometric 검증 단계입니다.</p>
- <label className="field">Routing Example<select aria-label="Routing Example" value="" onChange={e=>{if(e.target.value)onExample(e.target.value);}}><option value="">Choose…</option><option value="routing:mirrors">Lens + 2 Mirrors · 60 µm height shift</option><option value="routing:prism">Lens + TIR Prism · +Z incidence</option></select></label><p className="surface-note">예제는 직접 정의한 배치입니다. Auto Solve / Mode Matching은 다음 단계입니다.</p>
+ return <section className="routing-setup" data-testid="design-setup"><h3>Port-to-Port Design Setup</h3><p>두 Port의 위치와 입사 방향을 지정합니다. S2: Fixed Lens 뒤의 광로 후보를 찾습니다.</p>
+ <label className="field">Routing Example<select aria-label="Routing Example" value="" onChange={e=>{if(e.target.value)onExample(e.target.value);}}><option value="">Choose…</option><option value="routing:search">S2 · Displaced PIC routing task</option><option value="routing:mirrors">Lens + 2 Mirrors · 60 µm height shift</option><option value="routing:prism">Lens + TIR Prism · +Z incidence</option></select></label><p className="surface-note">예제는 직접 정의한 배치입니다. Find Solutions로 새 후보를 찾고 비교할 수 있습니다. Mode Matching은 다음 단계입니다.</p>
  {p.model.kind!=='surface'?<p>Physical Project에서 사용할 수 있습니다.</p>:<>
+ <button className="routing-find" aria-label="Find Routing Solutions" disabled={!!shared.invalid.length} onClick={()=>setSearchOpen(true)}>Find Solutions…</button>
  <NumberField label="Design Wavelength" value={shared.doc.wavelength*1e9} unit="nm" min={200} max={20000} onChange={v=>{try{shared.updateSurface({...shared.doc,wavelength:v!*1e-9});onError('');return true;}catch(e){onError(String(e));return false;}}}/>
  {(['source','target'] as const).map(which=>{
   const label=which==='source'?'Input':'Output',world=framePose(portWorld(p,which)),device=portDevice(p,which),m=modes(p)[which],direction=portWorld(p,which).axes[0];
@@ -42,6 +46,7 @@ export default function DesignSetup({onExample,onError}:{onExample:(id:string)=>
  {r.keepOut.map((box,i)=><div className="routing-keepout" key={i}><h4>Keep-out {i+1}</h4><BoxFields box={box} prefix={`Keep-out ${i+1}`} onChange={b=>put({...r,keepOut:r.keepOut.map((x,j)=>i===j?b:x)})}/><button onClick={()=>put({...r,keepOut:r.keepOut.filter((_,j)=>i!==j)})}>Remove Keep-out {i+1}</button></div>)}
  <button disabled={r.keepOut.length>=8} onClick={()=>put({...r,keepOut:[...r.keepOut,{min:{x:.006,y:-.0001,z:-.0001},max:{x:.007,y:.0001,z:.0001}}]})}>Add Keep-out Box</button>
  </details><RoutingDiagnostics/></>}
+ {searchOpen&&<SearchDialog onClose={()=>setSearchOpen(false)}/>}
  </section>;
 }
 function BoxFields({box,prefix,onChange}:{box:Box;prefix:string;onChange:(b:Box)=>boolean}){return <>{(['min','max'] as const).map(side=><div className="fields-three" key={side}>{xyz.map(k=><NumberField key={k} label={`${prefix} ${side} ${k.toUpperCase()}`} value={box[side][k]*1e3} unit="mm" min={-1000} max={1000} onChange={v=>onChange({...box,[side]:{...box[side],[k]:v!*1e-3}})}/>)}</div>)}</>;}

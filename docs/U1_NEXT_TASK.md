@@ -1,25 +1,23 @@
-# Current checkpoint — S0 / S1 Port Routing
+# Current checkpoint — S2 Bounded Port Routing Search
 
-Read `docs/S0_S1_PORT_ROUTING.md`. The user approved the staged Port-to-Port
-solution-synthesis plan and authorized S0 / S1 implementation. F1.1 source and
-Draft PR #11 are preserved; no merge was authorized.
+The user merged F1.1 PR #11 and S0/S1 PR #12, then explicitly authorized S2.
+Main baseline: c246bb6e00242ba189a23edb3451db59dbc505f5.
+Branch: feature/s2-route-search. Read docs/S2_ROUTE_SEARCH.md.
 
-Branch: `feature/s0-s1-port-routing`, stacked on `feature/f1-1-conic-aspheric`.
-PC first. Deliver a Draft PR and standalone HTML for Play Review. Do not merge
-main, PR #11, or this checkpoint; do not automatically begin S2.
+Preserve the existing canonical Project, strict v1 SaveLoad, Source/Target Mode
+contracts, frames, BK7 material dispersion, Surface/Report evaluators and 10 mm
+Fiber–Lens–Fiber startup. The added displaced PIC routing task is an extra example.
 
-One canonical Project: optional routing constraints, optional Port device metadata,
-Input Source frame and Output last-probe frame. World Output edits must transform
-back through the existing parent hierarchy. Mode definitions and mechanical bodies
-remain separate. Reuse finite 3D Surface rays / geometry, never World-X sorting.
+S2 fixes the existing Lens prefix and both Ports, enumerates Direct / one or two
+Mirrors / right-angle BK7 TIR Prism / Mirror+Prism, analytically closes geometric
+paths and samples/refines bounded placements. Revalidate actual finite rays,
+component/space/clearance constraints, not just construction lines. Preview never
+writes the Project; Apply is one Undo and checks the exact baseline signature.
 
-Center reference ray diagnostics report target-local position, directional incidence
-error and OPL. They never imply mode coupling. PIC Gaussian values are user
-references; receiving Field / device response and folded Gaussian propagation are
-unavailable. Space sampling / conservative AABB Keep-out checks are labeled limits.
+No arrays, non-air Ports, or Lens-after-fold search. Lens shapes / Modes / physical
+Coupling are not optimized. AABB clearance is conservative broad-phase screening,
+not certified solid collision or global infeasibility proof. Budget exhaustion,
+unsupported setups, cancellation and no candidate found are distinct outcomes.
 
-Manual examples: Fiber z −10 µm → Lens → two Mirrors → PIC z +50 µm (+X),
-and Fiber → Lens → BK7 TIR Prism → PIC (+Z). They are explicit manual prescriptions,
-not solver-generated solutions. Preserve the 10 mm Fiber–Lens–Fiber starter.
-
-Future: S2 topology / pose search, S3 Beam / Mode matching, S4 Field / Coupling.
+PC first. Deliver Draft PR and standalone HTML, then stop for Play Review.
+Do not automatically merge main or start S3.
