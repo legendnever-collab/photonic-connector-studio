@@ -39,3 +39,15 @@ test('nearby Lens components group, separated regions remain independently addre
  const r=regions(p);expect(r).toHaveLength(2);expect(r[0].ids).toHaveLength(2);expect(r[0].measurements).toHaveLength(4);expect(r[1].ids).toEqual(['copy2']);
  p.bodies=[];expect(regions(p).flatMap(r=>r.dimensions).join(' ')).toContain('Body undefined');
 });
+
+test('direction heads stay bounded in paper units at 1×, 17× and 128× crop zoom',async()=>{
+ const {directionGlyph}=await import('../src/surface/reportGlyph');
+ for(const scale of [1,17,128]){
+  const g=directionGlyph({x:12,y:31},{x:112,y:131},scale)!;
+  expect(g.size).toBe(5);const points=g.head.map(p=>({x:p.x*scale,y:p.y*scale}));
+  const diagonal=Math.hypot(Math.max(...points.map(p=>p.x))-Math.min(...points.map(p=>p.x)),Math.max(...points.map(p=>p.y))-Math.min(...points.map(p=>p.y)));
+  expect(diagonal).toBeLessThan(8);expect(g.tip).toEqual({x:80,y:99});
+ }
+ expect(directionGlyph({x:0,y:0},{x:1,y:0},17)!.head).toEqual([]);
+ expect(directionGlyph({x:0,y:0},{x:0,y:0})).toBeNull();expect(directionGlyph({x:0,y:0},{x:1,y:1},0)).toBeNull();
+});

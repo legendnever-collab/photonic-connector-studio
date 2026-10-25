@@ -11,3 +11,9 @@ changes. Preserve B/C, editing windows, exact SaveLoad and Undo.
 
 Deliver validated standalone HTML and a Draft PR stacked on S3.2, then stop.
 No main merge or next development without user authorization.
+
+Current review follow-up: v0.9.2-report fixes magnified arrows / pen strokes
+covering Prism geometry. Update existing Draft PR #16 and standalone HTML.
+See docs/DESIGN_WORKFLOW_FEEDBACK.md for the requested move to direct design
+and constrained synthesis. Clarify the open intent questions before implementing
+the next solver stage; no Example expansion and no main merge are authorized.

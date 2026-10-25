@@ -32,3 +32,15 @@ test('all separated regions are available on paged sheets and modal SVG referenc
  await page.getByTestId('surface-json-input').setInputFiles({name:'regions.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});await report(page);await expect(page.getByTestId('report-detail-viewport')).toHaveCount(2);await expect(page.getByRole('button',{name:'Next detail page',exact:true})).toBeEnabled();await page.getByRole('button',{name:'Next detail page',exact:true}).click();await expect(page.getByTestId('report-detail-viewport')).toHaveCount(1);
  const before=await page.getByTestId('report-detail-viewport').locator('use').getAttribute('href');await page.getByRole('button',{name:'Expand Report',exact:true}).click();const modal=page.getByRole('dialog');expect(await modal.getByTestId('report-detail-viewport').first().locator('use').getAttribute('href')).not.toEqual(before);await modal.getByRole('button',{name:'Top oblique',exact:true}).click();await modal.getByRole('button',{name:'Close Report Figure',exact:true}).click();expect(await page.getByTestId('report-detail-viewport').locator('use').getAttribute('href')).toEqual(before);
 });
+
+test('high magnification Prism stays visible under thin rays and bounded arrowheads in the exported Report',async({page})=>{
+ await page.getByLabel('Project Example',{exact:true}).selectOption('routing:prism');const p=await save(page),lens=p.bodies.find((b:{kind:string})=>b.kind==='lens');lens.outerRadius=.0012;
+ p.model.prescription.surfaces.filter((s:{assemblyId:string})=>s.assemblyId===lens.assemblyId).forEach((s:{aperture:number})=>s.aperture=.001);
+ await page.getByTestId('surface-json-input').setInputFiles({name:'prism-magnification.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});await report(page);const before=await save(page);
+ await page.getByRole('button',{name:'Expand Report',exact:true}).click();const modal=page.getByRole('dialog'),inset=modal.locator('[data-detail-inset]').filter({hasText:'BK7 TIR Prism'}),view=inset.getByTestId('report-detail-viewport');
+ expect(Number(await view.getAttribute('data-zoom'))).toBeGreaterThan(10);
+ const sizes=await view.getByTestId('report-direction-head').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return Math.hypot(r.width,r.height);}));expect(sizes.length).toBeGreaterThan(0);expect(Math.max(...sizes)).toBeLessThan(9);
+ await expect(modal.getByTestId('report-figure').locator('[data-defined-body="Fold-Prism"]').first()).toBeVisible();
+ const dl=page.waitForEvent('download');await modal.getByRole('button',{name:'SVG',exact:true}).click();const svg=await readFile((await(await dl).path())!,'utf8');expect(svg).toContain('non-scaling-stroke');expect(svg).not.toMatch(/marker-end=|<marker\b/);expect(svg).toContain('report-figure/2.4.1');
+ await page.screenshot({path:'test-results/Report-Prism-high-magnification-fixed.png',fullPage:true});await modal.getByRole('button',{name:'Close Report Figure',exact:true}).click();expect(await save(page)).toEqual(before);
+});

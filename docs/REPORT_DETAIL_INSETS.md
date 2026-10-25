@@ -44,3 +44,18 @@ shared data, Lens edits + Undo, Prism/TIR geometry, invalid Mode suppression,
 expanded modal + focus return, complete SVG/PNG and laptop export controls.
 Deliver standalone HTML and a Draft PR stacked on S3.2; stop for review. Do not
 merge the dependency stack without the user's explicit merge instruction.
+
+## v0.9.2-report · Prism visibility correction
+
+At large crop zoom the previous shared scene also magnified ray stroke widths
+and SVG marker heads. Those annotations covered tiny Prism bodies, most
+noticeably on Mirror + TIR Prism routes. Keep the actual geometry and envelope
+fills, but use non-scaling pen strokes. Rebuild direction glyphs separately for
+each view, capped at 5 Report paper units, and suppress heads on tiny internal
+segments. No marker is cloned into enlarged insets. Exact traced positions,
+physical dimensions, Beam radii and Project JSON remain unchanged. Tests cover
+17× / 128× glyph sizes, a >10× Prism crop, SVG and existing PNG exports.
+
+Next-development feedback is recorded in DESIGN_WORKFLOW_FEEDBACK.md. Await
+user answers about locks, allowed combinations and selection criteria; no
+broader optimization implementation or Example expansion is part of this fix.
