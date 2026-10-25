@@ -87,3 +87,15 @@ test('nonseparable cross phase suppresses misleading independent waist extrapola
  const q:QTensor=[{re:.003,im:.001},{re:.001,im:0},{re:.001,im:0},{re:.007,im:.002}];expect(section(q,L,1).waistOffsets).toBeNull();
  const inv=inverseQ(inverseQ(q));inv.forEach((z,i)=>{expectClose(z.re,q[i].re);expect(z.im).toBeCloseTo(q[i].im,13);});
 });
+test('a centered normal Lens after a 90° fold agrees with an independent scalar matrix chain',()=>{
+ const p=unfoldedFixture(),doc=d(p),base=doc.surfaces[0],glass=1.5;
+ doc.assemblies=[{id:'G',name:'G',kind:'group',parentId:null,frame:pose()}];p.bodies=[];
+ const make=(id:string,x:number,y:number,yaw:number,kind:'plane'|'sphere',interaction:'reflect'|'refract'|'probe',n1:number,n2:number,radius=.005)=>({...base,id,assemblyId:'G',frame:pose(x,y,-10e-6,yaw),shape:kind,interaction,nBefore:n1,nAfter:n2,materialBefore:undefined,materialAfter:undefined,aperture:.001,radius});
+ doc.surfaces=[make('fold',.002,0,-Math.PI/4,'plane','reflect',1,1),make('front',.002,.002,Math.PI/2,'sphere','refract',1,glass),make('rear',.002,.0025,Math.PI/2,'sphere','refract',glass,1,-.005),make('output',.002,.006,Math.PI/2,'plane','probe',1,1)];
+ const r=valid(solveFoldedGaussian(p)),expected=[40e-6,50e-6].map(w=>{let q={re:.004,im:rayleigh(w,L)};q=abcd(q,[1,0,-100,1]);q={...q,re:q.re+.0005/glass};q=abcd(q,[1,0,-100,1]);q={...q,re:q.re+.0035};return beam(q,L,0).radius;}).sort((a,b)=>b-a);
+ r.incident.beam.radii.forEach((w,i)=>expectClose(w,expected[i]));expect(r.angleError).toBeLessThan(1e-12);
+});
+test('Output roll and transverse offset retain the beam-normal field and separate the Port reference coordinates',()=>{
+ const p=unfoldedFixture(),r=valid(solveFoldedGaussian(p)),target=d(p).assemblies.at(-1)!;target.frame.rotation.roll=.7;target.frame.origin.y+=3e-6;const next=valid(solveFoldedGaussian(p));
+ expect(next.incident.beam.radii).toEqual(r.incident.beam.radii);expectClose(next.positionError,3e-6);expect(next.outputAxes).not.toEqual(r.outputAxes);expect(next.overlapReason).toContain('PIC');
+});
