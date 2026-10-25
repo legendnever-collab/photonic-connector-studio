@@ -1,3 +1,16 @@
+## S3.1 — Folded Gaussian reference (0.8.0-s3.1)
+
+Gaussian View now follows the actual Mirror / Prism chief path with transported
+transverse frames and a full 2×2 complex Gaussian tensor. Inspect beam radii vs
+geometric arclength, Global section rings, Output local contour and before/after
+Surface data. Export analysis as SI JSON. Oversized beams stay explicitly labeled
+**Aperture-limited reference**; clipping, TIR phase and folded Coupling are not
+calculated. Existing straight Fiber–Lens–Fiber B1 behavior is preserved.
+
+Open **Example Projects → Lens + 2 Mirrors / Lens + TIR Prism → Gaussian View**.
+See [S3.1 physical contract and review](docs/S3_1_FOLDED_GAUSSIAN.md).
+Draft checkpoint based on unmerged S2 PR #13; no main merge or Lens optimization.
+
 ## S2 — Automatic route candidate search (0.7.0-s2)
 
 Fix Input / Output conditions and existing Lens geometry, then find Direct / Mirror /
