@@ -1,3 +1,4 @@
+import {ProblemSchema} from '../design/contract';
 import { resolveMaterials } from '../surface/materials';
 import { RoutingSchema } from '../routing/contract';
 import { AuthoringSchema } from '../authoring/contract';
@@ -25,6 +26,7 @@ export const BuildingBlockSchema=z.object({id:z.string().min(1).max(80),name:z.s
 export type BuildingBlock=z.infer<typeof BuildingBlockSchema>;
 export const ProjectSchema = z.object({ kind: z.literal('optical-project'), schemaVersion: z.literal(1), units: z.literal('SI'),
     routing:RoutingSchema.optional(),
+    designProblem:ProblemSchema.optional(),
     targetBody:z.object({radius:dim,length:dim}).strict().nullable().optional(),
     authoring: AuthoringSchema.optional(), buildingBlocks:z.array(BuildingBlockSchema).max(30).optional(),
     model: z.discriminatedUnion('kind', [

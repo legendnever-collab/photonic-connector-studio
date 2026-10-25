@@ -14,7 +14,7 @@ Freeform, curved reflection, array fields or actual PIC receiving-field
 coupling. Broader geometric / field evaluators and constraint search are
 required before those candidates can be ranked as optical Mode solutions.
 
-Questions to resolve with user before next solver work:
+Original clarification questions (answered below):
 1. Do the four authored Surfaces mean entirely fixed prescription values,
    per-parameter locks, or a starting layout whose count/type may also change?
 2. Which shape / manufacturing families may be proposed, and what bounds apply
@@ -31,4 +31,8 @@ geometric ray arrival alone never qualifies as Mode coupling. Exhausted search
 reports its best tested candidates and remaining errors, not proof of global
 infeasibility or a guaranteed answer for every arbitrary configuration.
 
-Do not implement the broader solver until these intent questions are answered.
+Accepted user answers: four Surfaces are a starting layout whose type/count may
+change; user supplies additional component limits and allowed volume; alignment
+and assembly robustness is the first priority. User authorized development of
+the first Design Problem checkpoint. See D1_DESIGN_PROBLEM.md for its implemented
+bounded scope and explicit later extensions.

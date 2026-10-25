@@ -1,3 +1,12 @@
+## D1 · Design Problem
+
+Open **Design Problem** from the top bar or Surface Data. Set current Surface
+locks / Lens bounds, component count, Design Space / Keep-out and tolerances.
+Assess the current Project or search supported Lens / fold candidates directly;
+compare nominal reference goals and conditional scalar overlap under OAT
+boundary stresses. Save settings / Apply each make one Undo step. Partial field
+coverage stays explicit. [Scope and validation](docs/D1_DESIGN_PROBLEM.md).
+
 ## Linked 3D Report details
 
 Report → **D · Detail Insets** connects overview regions to enlarged 3D Lens /
