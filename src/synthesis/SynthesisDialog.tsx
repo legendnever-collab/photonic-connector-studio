@@ -1,0 +1,61 @@
+import {useEffect,useMemo,useRef,useState} from 'react';
+import {useProject} from '../project/Store';
+import {prescription,serializeProject} from '../project/model';
+import {defaultProblem} from '../design/engine';
+import type {DesignProblem} from '../design/contract';
+import {defaultRouting} from '../routing/contract';
+import type {Routing,Topology} from '../routing/contract';
+import {TOPOLOGY_NAMES} from '../routing/search';
+import {defaultSynthesis,SynthesisSchema} from './contract';
+import {synthesisProject,searchSynthesisAsync,applySynthesis} from './engine';
+import type {SynthesisResult,SynthesisCandidate} from './engine';
+import {NumberField} from '../Fields';
+import {applySmfReference} from '../authoring/smf';
+import {projectTrace} from '../project/compute';
+import {bodyGeometry} from '../project/geometry';
+import {SurfaceScene,sceneBounds,INITIAL_CAMERA} from '../surface/Scene';
+import {solveFoldedGaussian} from '../project/foldedGaussian';
+import {tensorOverlap} from '../project/tensorOverlap';
+import FoldedGaussianView from '../project/FoldedGaussianView';
+import '../design/problem.css';
+const pct=(v:number|null)=>v===null?'Not calculated':`${(100*v).toFixed(5)}%`;
+export default function SynthesisDialog({onClose,initial}:{onClose:()=>void;initial?:{problem:DesignProblem;routing:Routing}}){
+ const store=useProject(),p=store.project,dialog=useRef<HTMLDialogElement>(null),cancel=useRef(false),mounted=useRef(true),opener=useRef<HTMLElement|null>(null);
+ const [problem,setProblem]=useState(()=>structuredClone(initial?.problem??p.designProblem??{...defaultProblem(p),maxParts:4,maxGenerated:4})),[routing,setRouting]=useState(()=>structuredClone(initial?.routing??p.routing??defaultRouting())),[o,setO]=useState(()=>{const a=structuredClone(p.synthesis??defaultSynthesis());delete a.solution;return a;});
+ const [busy,setBusy]=useState(false),[batch,setBatch]=useState<SynthesisResult|null>(null),[selected,setSelected]=useState(''),[error,setError]=useState(''),[progress,setProgress]=useState(''),[elapsed,setElapsed]=useState(0);
+ const signature=serializeProject(p),settings=JSON.stringify([problem,routing,o]),live=useRef({signature,settings});live.current={signature,settings};
+ useEffect(()=>{mounted.current=true;opener.current=document.activeElement as HTMLElement|null;dialog.current?.showModal();return()=>{mounted.current=false;cancel.current=true;opener.current?.focus();};},[]);
+ const stale=!!batch&&(batch.inputSignature!==signature||batch.settings!==settings),c=batch?.candidates.find(c=>c.id===selected)??batch?.candidates[0];
+ async function run(){cancel.current=false;setBusy(true);setBatch(null);setError('');setProgress('Preparing Mode Ports…');const original={signature,settings},started=performance.now();
+  const timer=setInterval(()=>setElapsed((performance.now()-started)/1000),250);
+  try{const r=await searchSynthesisAsync(p,problem,routing,o,{cancelled:()=>cancel.current||!mounted.current||original.signature!==live.current.signature||original.settings!==live.current.settings,progress:setProgress});if(mounted.current){setBatch(r);setSelected(r.candidates[0]?.id??'');}}catch(e){if(mounted.current)setError(String(e));}finally{clearInterval(timer);if(mounted.current){setBusy(false);setElapsed((performance.now()-started)/1000);}}
+ }
+ function save(){try{store.commit(synthesisProject(p,problem,routing,o));setError('');}catch(e){setError(String(e));}}
+ function apply(){if(!batch||!c||stale)return;try{store.replace(applySynthesis(p,batch,c.id));onClose();}catch(e){setError(String(e));}}
+ const nf=(label:string,value:number,unit:string,put:(v:number)=>void,min=0,max=10000,step:number|'any'='any')=><NumberField label={label} value={value} unit={unit} min={min} max={max} step={step} onChange={v=>{put(v!);return true;}}/>;
+ return <dialog ref={dialog} className="insert-dialog problem-dialog" aria-label="Automatic Synthesis" onCancel={e=>{e.preventDefault();onClose();}}>
+ <header><div><h2>Automatic Synthesis</h2><p>Input Mode → 실제 Lens / Fold → Output Reference Mode · D2.1</p></div><button aria-label="Close Automatic Synthesis" onClick={onClose}>×</button></header>
+ <div className="problem-body"><section className="problem-settings"><div className="problem-summary">현재 Project에서 시작합니다. Preview는 read-only이며 Apply = one Undo.<br/>Lens / ideal planar Mirror: conditional Gaussian overlap. Prism: reference-only.</div>
+ <div className="problem-settings-scroll"><fieldset className="problem-fields" disabled={busy}>
+ <h3>1 · Mode Ports</h3><p>Port 위치와 Mode는 nominal Search에서 고정합니다. Output reference가 없으면 명시적으로 선택하세요.</p><button onClick={()=>store.commit({...applySmfReference(p,'target'),targetBody:p.targetBody??{radius:62.5e-6,length:.001}})}>Apply Output SMF 1310 Reference</button><p>λ=1310 nm / MFD=9.2 µm / air / waist-plane으로 설정합니다. 위치·방향은 유지합니다.</p>
+ <h3>2 · Constraints</h3><div className="fields-two">{nf('Synthesis Max components',problem.maxParts,'total',v=>setProblem({...problem,maxParts:v}),0,50,1)}{nf('Synthesis Max new parts',problem.maxGenerated,'new / replacement',v=>setProblem({...problem,maxGenerated:v}),0,50,1)}</div>
+ <div className="fields-three">{(['lens','mirror','prism'] as const).map(k=><div key={k}>{nf(`Synthesis Max ${k}`,routing.parts[k],k,v=>setRouting({...routing,parts:{...routing.parts,[k]:v}}),0,50,1)}</div>)}</div>
+ <label className="surface-check"><input type="checkbox" aria-label="Synthesis Enable space" checked={!!routing.bounds} onChange={e=>setRouting({...routing,bounds:e.target.checked?{min:{x:0,y:-.003,z:-.002},max:{x:.01,y:.003,z:.007}}:null})}/>Design Space · 부품 전체 extent 검사</label>
+ {routing.bounds&&(['min','max'] as const).map(side=><div className="fields-three" key={side}>{(['x','y','z'] as const).map(axis=><div key={axis}>{nf(`Synthesis Space ${side} ${axis}`,routing.bounds![side][axis]*1e3,'mm',v=>setRouting({...routing,bounds:{...routing.bounds!,[side]:{...routing.bounds![side],[axis]:v*1e-3}}}),-1000,1000)}</div>)}</div>)}
+ <p>Fixed Surfaces: {problem.fixedSurfaces.join(', ')||'없음'} · Keep-out: {routing.keepOut.length}개. Design Problem에서 locks / OAT / Keep-out를 설정한 뒤 Automatic Synthesis…를 선택하세요.</p>
+ <h3>3 · Family / Manufacturing assumptions</h3>{(Object.keys(TOPOLOGY_NAMES) as Topology[]).map(t=><label className="surface-check" key={t}><input type="checkbox" aria-label={`Synthesis family ${t}`} checked={o.families.includes(t)} onChange={e=>setO({...o,families:e.target.checked?[...o.families,t]:o.families.filter(x=>x!==t)})}/>{TOPOLOGY_NAMES[t]}{t.includes('prism')?' · η 미평가':''}</label>)}
+ <p>Input / Output segment에 0/1/2 real BK7 Lens를 구성합니다. 아래 두 Clear Radius seed를 비교합니다. Catalog 보증 부품이 아닌 editable 제조 가정입니다.</p>
+ <div className="fields-two">{(['Min','Max'] as const).map((s,i)=><div key={s}>{nf(`Synthesis Clear radius ${s}`,o.clearRadius[i]*1e3,'mm',v=>{const a=[...o.clearRadius] as [number,number];a[i]=v*1e-3;setO({...o,clearRadius:a});},.01,5)}{nf(`Synthesis Thickness ${s}`,o.thickness[i]*1e3,'mm',v=>{const a=[...o.thickness] as [number,number];a[i]=v*1e-3;setO({...o,thickness:a});},.02,2)}</div>)}</div>
+ <details><summary>Budget / goals / tolerance coverage</summary><div className="fields-two">{nf('Synthesis Optical budget',o.budget,'evaluations',v=>setO({...o,budget:v}),1,8192,1)}{nf('Synthesis Geometry budget',o.geometryBudget,'proposals',v=>setO({...o,geometryBudget:v}),1,128,1)}{nf('Synthesis Local fit budget',o.fitBudget,'trials',v=>setO({...o,fitBudget:v}),1,2048,1)}{nf('Synthesis Nominal overlap goal',o.minimumOverlap*100,'%',v=>setO({...o,minimumOverlap:v/100}),0,100)}{nf('Synthesis Size goal',o.diameterTolerance*100,'%',v=>setO({...o,diameterTolerance:v/100}),.1,100)}{nf('Synthesis Phase goal',o.phaseTolerance,'rad',v=>setO({...o,phaseTolerance:v}),.001,1)}</div><p>OAT cap {problem.tolerance.maxCases}/candidate, total cap 1024. Unsupported Lens decenter/tilt는 partial입니다. 공동 공차 worst case / Yield / robust optimum이 아닙니다.</p></details>
+ </fieldset></div>
+ <div className="problem-actions"><button disabled={busy||!!store.invalid.length} onClick={save}>Save Synthesis Settings</button><button className="primary" disabled={busy||!!store.invalid.length||!SynthesisSchema.safeParse(o).success} onClick={()=>void run()}>Run Automatic Synthesis</button>{busy&&<button onClick={()=>{cancel.current=true;}}>Cancel Automatic Synthesis</button>}</div>
+ <div className="problem-output">{busy&&<p role="status" data-testid="synthesis-progress">{progress} · {elapsed.toFixed(1)} s</p>}{error&&<p role="alert">{error}</p>}{stale&&<p data-testid="synthesis-stale">Stale result · 입력이 변경되었습니다. 다시 실행하세요.</p>}{batch&&<div data-testid="synthesis-result"><strong>{batch.status} · {batch.candidates.length} candidates · {elapsed.toFixed(1)} s</strong><p>{batch.reason}</p><p>Geometry {batch.geometryEvaluated} · Optical {batch.evaluated} · Mode-guided placement refinements {batch.refinements} · OAT {batch.toleranceEvaluated}</p><details><summary>Constraints / domain rejections</summary>{Object.entries(batch.rejected).map(([s,n])=><p key={s}>{n} · {s}</p>)}</details></div>}</div>
+ </section><section className="problem-preview"><div className="problem-candidates" aria-label="Automatic Synthesis candidates">{batch?.candidates.map((v,i)=><button key={v.id} aria-label={`Preview Synthesis Candidate ${i+1}`} aria-pressed={c?.id===v.id} onClick={()=>setSelected(v.id)}><strong>{v.topology} · {v.qualified?'Nominal Mode goals met':v.eta===null?'Reference only':'Partial'}</strong><small>Conditional overlap {pct(v.eta)}</small><small>OAT {v.oat.status} · {v.oat.fieldAssessed}/{v.oat.planned}</small></button>)}</div>{c?<CandidatePreview key={c.id} candidate={c}/>:<div className="problem-empty"><h3>빈 Project에서도 시작</h3><p>Output reference와 공간·부품 상한을 정하고 자동 구성을 실행하세요. Lens를 미리 Add할 필요가 없습니다.</p><p>Parabolic / Asphere departure / Freeform / array는 다음 checkpoint의 별도 검증 대상입니다.</p></div>}</section></div>
+ <footer><p>D2.1 · Conditional scalar Mode shape · Transmission / total coupling 미계산</p><button onClick={onClose}>Close</button><button className="primary" disabled={busy||!c||stale||!!store.invalid.length||batch?.status==='cancelled'} onClick={apply}>Apply Synthesis Candidate</button></footer></dialog>;
+}
+function CandidatePreview({candidate:c}:{candidate:SynthesisCandidate}){
+ const [tab,setTab]=useState<'layout'|'beam'>('layout'),[camera,setCamera]=useState(INITIAL_CAMERA),svg=useRef<SVGSVGElement>(null),doc=prescription(c.project),trace=useMemo(()=>projectTrace(c.project),[c.project]),geometry=useMemo(()=>bodyGeometry(doc,trace.surfaces,c.project.bodies,c.project.sourceBody,c.project.targetBody),[c.project,doc,trace]),bounds=useMemo(()=>sceneBounds(doc,trace,geometry.faces.flatMap(f=>f.points)),[doc,trace,geometry]);
+ const beam=useMemo(()=>solveFoldedGaussian(c.project),[c.project]),overlap=useMemo(()=>tensorOverlap(c.project,beam),[c.project,beam]);
+ return <><div className="problem-tabs"><button aria-pressed={tab==='layout'} onClick={()=>setTab('layout')}>Optical Layout</button><button aria-pressed={tab==='beam'} onClick={()=>setTab('beam')}>Beam / Output Mode</button></div>{tab==='layout'?<div className="problem-layout"><SurfaceScene doc={doc} opticalProject={c.project} trace={trace} geometry={geometry} view="3D" camera={camera} setCamera={setCamera} bounds={bounds} selected="" onSelect={()=>{}} presentation svgRef={svg}/></div>:<FoldedGaussianView result={beam} overlap={overlap}/>}
+ <section className="problem-metrics" data-testid="synthesis-metrics"><h3>{c.qualified?'Nominal Mode goals met':c.eta===null?'Model-limited / reference only':'Partial · nominal goals not met'}</h3><dl><div><dt>Conditional normalized overlap</dt><dd>{pct(c.eta)}</dd></div><div><dt>Size / Phase residual</dt><dd>{c.merit?(c.merit.sizeError*100).toFixed(3)+'% / '+c.merit.phaseError.toFixed(5)+' rad':'Undefined'}</dd></div><div><dt>OAT coverage</dt><dd>{c.oat.fieldAssessed}/{c.oat.planned} · {c.oat.status}</dd></div><div><dt>Observed min overlap</dt><dd>{pct(c.oat.worstEta)}{c.oat.status!=='assessed'?' · incomplete coverage':''}</dd></div></dl><p>{c.reason}</p><details><summary>OAT domain limits</summary>{c.oat.issues.map(s=><p key={s}>{s}</p>)}<p>OAT boundary samples are not combined-error worst case or Yield. Nominal success does not mean robust design is complete.</p></details></section></>;
+}

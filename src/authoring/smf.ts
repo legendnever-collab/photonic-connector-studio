@@ -6,6 +6,8 @@ import { unknownAuthoring, unknownPort } from './contract';
 export const SMF_REFERENCE={wavelength:1310e-9,mfd:9.2e-6} as const;
 export function applySmfReference(project:Project,which:'source'|'target'='source'):Project {
  const doc=prescription(project),next=withMode(withPrescription(project,{...doc,wavelength:SMF_REFERENCE.wavelength}),which,{...modes(project)[which],representation:'gaussian',mfdX:SMF_REFERENCE.mfd,mfdY:SMF_REFERENCE.mfd});
+ // Explicit air reference selection resolves the blank Output probe medium, without moving it.
+ if(which==='target'&&next.model.kind==='surface'){const d=next.model.prescription,t=d.surfaces.at(-1)!;if(t.interaction==='probe')d.surfaces=d.surfaces.map(s=>s.id===t.id?{...s,nBefore:1,nAfter:1,outsideIndex:1,materialBefore:'air',materialAfter:'air'}:s);}
  const authoring=next.authoring??unknownAuthoring();
  return ProjectSchema.parse({...next,authoring:{...authoring,ports:{...authoring.ports,[which]:{...unknownPort(),preset:'smf-1310-gaussian',device:'fiber',phase:'waist-plane',normalization:'unit-power',mediumIndex:1,adapter:'homogeneous-paraxial'}}}});
 }

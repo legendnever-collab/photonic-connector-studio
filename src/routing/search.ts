@@ -92,10 +92,10 @@ function proposals(p:Prepared,o:SearchOptions):Proposal[] {
  }
  return q;
 }
-function build(p:Prepared,o:SearchOptions,q:Proposal):{project:Project;ids:string[];footprint:number} {
+function build(p:Prepared,o:SearchOptions,q:Proposal,reservedIds:string[]=[]):{project:Project;ids:string[];footprint:number} {
  const base=p.base;if(base.model.kind!=='surface')throw Error('Physical model required');
  const d=base.model.prescription,target=d.surfaces.at(-1)!,surfaces=[...d.surfaces.slice(0,-1)],assemblies=[...d.assemblies],bodies=[...base.bodies],ids:string[]=[];
- const existing=new Set([...d.assemblies.map(a=>a.id),...d.surfaces.map(s=>s.id)]);
+ const existing=new Set([...reservedIds,...d.assemblies.map(a=>a.id),...d.surfaces.map(s=>s.id)]);
  function id(name:string){let n=0,v=name;while(existing.has(v))v=`${name}-${++n}`;existing.add(v);return v;}
  const blank=(sid:string,aid:string):Surface=>({id:sid,name:sid,assemblyId:aid,frame:generatedPose(normalFrame(V(),V(1))),shape:'plane',radius:.005,aperture:o.clearRadius,interaction:'reflect',nBefore:1,nAfter:1,outsideIndex:1,materialBefore:'air',materialAfter:'air',array:null});
  let footprint=0;
@@ -178,4 +178,13 @@ export function applyCandidate(current:Project,batch:SearchResult,id:string):Pro
  if(next.routing)delete next.routing.solution;
  next.routing!.solution={engine:SEARCH_ID,topology:c.topology,baselineFingerprint:batch.inputFingerprint,designFingerprint:solutionDesignFingerprint(next),evaluated:batch.evaluated};
  return ProjectSchema.parse(next);
+}
+
+// Shared bounded closure/construction primitives; legacy S2 search remains unchanged.
+export {prepare as prepareRoutingDomain,proposals as routeProposals,build as buildRouteProposal,check as validateRouteProposal};
+export type {Prepared as RouteDomain,Proposal as RouteProposal};
+export function refineRouteProposal(p:Prepared,q:Proposal,step:number):Proposal[]{
+ if(q.topology==='mirror2'&&q.parameters)return [[step,0],[-step,0],[0,step],[0,-step]].flatMap(([dt,du])=>{const r=twoMirrors(p,clamp(q.parameters![0]+dt,...p.rangeA),clamp(q.parameters![1]+du,...p.rangeB));return r?[r]:[];});
+ if(q.topology==='mirror-prism')return [-step,step].flatMap(delta=>{const t=clamp(norm(sub(q.blocks[0].at,p.start))+delta,...p.rangeA),a=add(p.start,mul(p.incoming,t)),v=dot(sub(p.target,a),p.outgoing),center=sub(p.target,mul(p.outgoing,v)),d=sub(center,a);return norm(d)>1e-8?[{topology:'mirror-prism' as const,blocks:[mirror(a,p.incoming,unit(d)),{kind:'prism' as const,at:center,incoming:unit(d),outgoing:p.outgoing}]}]:[];});
+ return [];
 }
