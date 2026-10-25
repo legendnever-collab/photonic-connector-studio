@@ -48,7 +48,7 @@ export function solveFoldedGaussian(p:Project):FoldedResult {
  const fp=fingerprint(JSON.stringify(foldedInput(p))),fail=(reason:string,status:'invalid'|'out-of-domain'='out-of-domain'):FoldedResult=>({status,id:FOLDED_GAUSSIAN_ID,fingerprint:fp,reason});
  if(p.model.kind!=='surface')return fail('Physical Surface Project required.');
  const d=p.model.prescription,ports=p.authoring?.ports,port=ports?.source,sm=p.model.sourceMode,lambda=d.wavelength,ss=compile(d);
- if(!port||port.fieldModel!=='gaussian'||port.imported||port.adapter!=='homogeneous-paraxial'||port.phase!=='waist-plane'||port.mediumIndex===null||port.normalization==='unspecified'||port.normalization==='absolute-power'&&port.powerW===null)return fail('Input requires a defined homogeneous Gaussian waist, medium and normalization.');
+ if(!port||port.fieldModel!=='gaussian'||port.imported||port.adapter!=='homogeneous-paraxial'||port.phase!=='waist-plane'||port.mediumIndex===null||port.normalization==='unspecified'||port.normalization==='absolute-power'&&port.powerW===null)return fail('Input: Port phase / medium / normalization / adapter are undefined or unsupported. Define a homogeneous Gaussian waist.');
  if(port.device==='pic-edge'||port.device==='pic-grating')return fail('Input PIC emitted field is undefined; a stored Gaussian reference cannot replace the device field.');
  if(sm.mfdX===null||sm.mfdY===null)return fail('Input MFD X / Y is undefined.','invalid');
  if(d.source.channels.rows!==1||d.source.channels.cols!==1||ss.some(s=>s.array))return fail('Single-channel Gaussian only; arrays require per-channel fields.');
