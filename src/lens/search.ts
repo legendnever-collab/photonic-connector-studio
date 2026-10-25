@@ -39,13 +39,13 @@ export function beamMerit(r:ValidBeam,p:Project,o:Pick<LensOptions,'diameterTole
  const F=k[0].re*z[0],G=(k[1].re+k[2].re)/2*Math.sqrt(z[0]*z[1]),H=k[3].re*z[1],phaseError=(Math.abs(F+H)+Math.hypot(F-H,2*G))/2;
  return {score:Math.sqrt(Math.max(0,square)/2),diameters:[2*Math.sqrt(c00),2*Math.sqrt(c11)],sizeError,phaseError,outputQ:q,goalsMet:sizeError<=o.diameterTolerance&&phaseError<=o.phaseTolerance};
 }
-function prepare(input:Project,o:LensOptions){
+function prepare(input:Project,o:LensOptions,forward=solveFoldedGaussian){
  const domain=lensDomain(input,o.template),d=physical(domain.base),target=domain.base.authoring!.ports.target,m=domain.base.model.kind==='surface'?domain.base.model.targetMode:null;
  if(target.fieldModel!=='gaussian'||target.imported||target.adapter!=='homogeneous-paraxial'||target.phase!=='waist-plane'||!m?.mfdX||!m.mfdY)throw Error('Define the Output Gaussian reference MFD, homogeneous adapter and waist-plane phase first. PIC MFD remains a user reference.');
  if([m.mfdX,m.mfdY].some(v=>d.wavelength/(Math.PI*v/2)>.1+1e-12))throw Error('Output reference divergence exceeds the paraxial 0.1 rad limit.');
  if(o.variables.length!==domain.slots.length||o.variables.some((v,i)=>v.id!==domain.slots[i].id))throw Error('Lens variable IDs / order do not match the selected template. Reset Lens bounds.');
  o.variables.forEach((v,i)=>{const s=domain.slots[i];if(v.position[0]<s.legal[0]-1e-12||v.position[1]>=s.legal[1]||v.thickness[0]<=0||v.thickness[1]>.1||v.front.some(c=>Math.abs(c)>1e6)||v.rear.some(c=>Math.abs(c)>1e6))throw Error(`${s.id}: variable bounds are outside the fixed free-space segment / supported curvature and thickness.`);});
- const r=solveFoldedGaussian(domain.base,{sampleSegments:false});
+ const r=forward(domain.base,{sampleSegments:false});
  if(r.status!=='valid'){
   if(!domain.slots.some(s=>r.reason.startsWith(`${s.frontId}: 2w`)||r.reason.startsWith(`${s.rearId}: 2w`))&&!r.reason.includes('post-surface waist divergence'))throw Error(r.reason);
  }
@@ -96,16 +96,16 @@ function seeds(domain:LensDomain,o:LensOptions):number[][]{
  }
  return result.filter((x,i)=>result.findIndex(y=>x.every((v,j)=>Math.abs(v-y[j])<1e-9))===i);
 }
-export function* lensSearch(input:Project,raw:LensOptions):Generator<{evaluated:number;retained:number},LensResult,void>{
+export function* lensSearch(input:Project,raw:LensOptions,forward=solveFoldedGaussian):Generator<{evaluated:number;retained:number},LensResult,void>{
  const batch:LensResult={engine:LENS_SEARCH_ID,status:'unsupported',reason:'',inputSignature:serializeProject(input),inputFingerprint:projectFingerprint(input),options:structuredClone(raw),evaluated:0,rejected:{},candidates:[],baseline:null};
  let o:LensOptions,domain:LensDomain;
- try{o=LensOptionsSchema.parse(raw);const p=prepare(input,o);domain=p.domain;batch.baseline=p.baseline;}catch(e){batch.reason=e instanceof Error?e.message:String(e);return batch;}
+ try{o=LensOptionsSchema.parse(raw);const p=prepare(input,o,forward);domain=p.domain;batch.baseline=p.baseline;}catch(e){batch.reason=e instanceof Error?e.message:String(e);return batch;}
  const reject=(reason:string)=>{batch.rejected[reason]=(batch.rejected[reason]??0)+1;},evaluated:{x:number[];f:number}[]=[],seen=new Map<string,number>();
  const evaluate=(x:number[])=>{
   const key=x.map(v=>v.toPrecision(12)).join('|'),known=seen.get(key);if(known!==undefined)return known;
   batch.evaluated++;let cost=1e12;
   try{
-   const values=denormalize(x,o),project=buildLensProject(domain,values),beam=solveFoldedGaussian(project,{sampleSegments:false});if(beam.status!=='valid')throw Error(beam.reason);
+   const values=denormalize(x,o),project=buildLensProject(domain,values),beam=forward(project,{sampleSegments:false});if(beam.status!=='valid')throw Error(beam.reason);
    const merit=beamMerit(beam,project,o),tails=beam.surfaces.reduce((sum,s)=>sum+(s.tailBound??0),0);
    cost=merit.score+10*Math.log1p(tails/.001);
    if(beam.apertureLimited)reject('Aperture / body tail bound exceeds 0.1%');

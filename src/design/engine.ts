@@ -46,7 +46,7 @@ export function nominal(p:Project,o:DesignProblem):Nominal{
  return {routeOK:route.status==='evaluated'&&!!route.withinTolerance&&componentIds(p).length<=o.maxParts&&!screenClearance(p,[],route.path!,o.strategy==='lens'?o.lens?.clearance??0:o.routes.clearance),referenceGoals,score,eta,reason:eta===null?(g.status==='valid'?g.overlap.status==='not-calculated'?g.overlap.reason:'':g.reason):'Normalized scalar Gaussian Mode overlap; no transmission / delivered-power model.'};
 }
 type Stress={label:string;project:Project};
-function* stressCases(p:Project,o:DesignProblem):Generator<Stress>{
+export function* stressCases(p:Project,o:DesignProblem):Generator<Stress>{
  const d=prescription(p),t=o.tolerance,rot=['roll','pitch','yaw'] as const,axes=['x','y','z'] as const;
  for(const which of ['source','target'] as const)for(const kind of ['Position','Angle'] as const)for(let i=0;i<3;i++)for(const sign of [-1,1]){
   const delta=(kind==='Position'?t.portPosition:t.portAngle)[i];if(!delta)continue;
