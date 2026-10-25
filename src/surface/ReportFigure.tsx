@@ -40,8 +40,9 @@ export default function ReportFigure({doc,trace,initialSelection,onClose,embedde
     const beamSamples=shared.invalid.length||trace.status!=='valid'?[]:reportBeamSamples(shared.physicalGaussian,shared.foldedGaussian);
     const beamScope=beamSamples.length?(shared.foldedGaussian?.status==='valid'&&shared.foldedGaussian.apertureLimited?'Aperture-limited, untruncated Gaussian reference':'Gaussian 1/e² reference · true scale'):'Gaussian Beam not calculated';
     const synthesisOverlap=useMemo(()=>opticalProject.synthesis?tensorOverlap(opticalProject):null,[opticalProject]);
-    const chief=shared.invalid.length?null:opticalProject.model.kind==='surface'?shared.routing.path:trace.status==='valid'?trace.paths.find(p=>p.status==='reached')??trace.paths[0]:null;
-    const folds=useMemo(()=>opticalProject.model.kind==='surface'?reportFolds(doc,chief??null):[],[doc,chief,opticalProject.model.kind]);
+    const center=shared.invalid.length||opticalProject.model.kind!=='surface'?null:shared.routing.path;
+    const chief=shared.invalid.length?null:center??(trace.status==='valid'?trace.paths.find(p=>p.status==='reached')??trace.paths[0]:null);
+    const folds=useMemo(()=>reportFolds(doc,center),[doc,center]);
     const metadata={synthesis:opticalProject.synthesis,conditionalModeOverlap:synthesisOverlap,folds,renderer:'report-figure/2.4.2',detailRegions:regions.map(r=>({ids:r.ids,surfaceIds:r.surfaceIds})),detailPage:page,gaussianBeamScope:beamScope,beamDisplayScale:1,annotationScope:'paper-sized arrows / non-scaling pen strokes; true geometry and Beam width',solver:SURFACE_SOLVER_ID,fingerprint:projectFingerprint(opticalProject),wavelengthM:doc.wavelength,units:'SI',prescription:doc,designProblem:opticalProject.designProblem,ports:opticalProject.authoring?.ports,routing:opticalProject.routing,mode,camera,selectedSurface:focusSurface?.id,sourceMode:modes(opticalProject).source,targetMode:modes(opticalProject).target,bodies:opticalProject.bodies,sourceBody:opticalProject.sourceBody,targetBody:opticalProject.targetBody,bodyIssues:geometry.issues,modelClass:opticalProject.model.kind,beamScope:opticalProject.model.kind==='ideal'?'validated ideal Gaussian envelope':'sampled geometric bundle; Gaussian 1/e² reference is separately labelled'};
     const W=1600,H=1000,sceneWidth=mode==='D'?900:mode==='B'?1480:1090,sceneHeight=610,sceneX=60,sceneY=180;
     const cy=Math.cos(camera.yaw),sy=Math.sin(camera.yaw),cp=Math.cos(camera.pitch),sp=Math.sin(camera.pitch);
@@ -117,7 +118,7 @@ export default function ReportFigure({doc,trace,initialSelection,onClose,embedde
             primitives.push({depth:depth(pts)+bounds.span*1e-5,node:<g key={`gb${i}`} data-testid="report-physical-beam"><polygon points={coords(pts)} fill={shared.foldedGaussian?.status==='valid'&&shared.foldedGaussian.apertureLimited?'none':'#24a8af'} fillOpacity=".32" stroke="none"/>{shared.foldedGaussian?.status==='valid'&&shared.foldedGaussian.apertureLimited&&<path d={`M ${project(pts[0]).x} ${project(pts[0]).y} L ${project(pts[1]).x} ${project(pts[1]).y} M ${project(pts[3]).x} ${project(pts[3]).y} L ${project(pts[2]).x} ${project(pts[2]).y}`} stroke="#16858d" strokeOpacity=".7" vectorEffect="non-scaling-stroke" strokeWidth=".7" fill="none"/>}</g>});
         }
     }
-    // The physical center reference ray carries direction arrows, including inside prisms.
+    // Prefer the physical center ray; retain sampled-ray arrows for array/legacy views.
     function directions(viewScale=1){return chief?.points.slice(1).map((end,i)=>{
         const glyph=directionGlyph(project(chief.points[i]),project(end),viewScale);if(!glyph)return null;
         return <g key={i} data-testid="report-direction"><path d={`M ${glyph.from.x} ${glyph.from.y} L ${glyph.tip.x} ${glyph.tip.y}`} fill="none" stroke="#8c5c16" strokeWidth="1" vectorEffect="non-scaling-stroke"/>{glyph.head.length>0&&<polygon data-testid="report-direction-head" data-paper-size={glyph.size} points={glyph.head.map(p=>`${p.x},${p.y}`).join(' ')} fill="#8c5c16"/>}</g>;

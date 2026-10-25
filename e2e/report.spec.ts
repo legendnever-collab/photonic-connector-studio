@@ -9,6 +9,7 @@ test('report B/C, orbit and display envelopes share the current prescription wit
     const ray=await page.getByTestId('surface-ray-0').getAttribute('points');
     await page.getByRole('button',{name:'Report View',exact:true}).click();
     const figure=page.getByTestId('report-figure'),fingerprint=await figure.getAttribute('data-fingerprint');
+    await expect(figure.getByTestId('report-direction').first()).toBeVisible();
     await expect(page.locator('.report-inline')).toBeVisible();
     await expect(figure.locator('[data-defined-body]').first()).toBeVisible();
     const first=await figure.locator('[data-report-face]').first().getAttribute('points');
