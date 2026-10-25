@@ -3,8 +3,8 @@ import type { Compiled, Prescription, Vec } from './model';
 import type { Trace } from './trace';
 import { surfaceRing } from './trace';
 
-export type ReportFace = { points: Vec[]; material: 'glass' | 'metal' | 'probe'; surfaceId: string; illustrative: boolean; bodyId?:string };
-export type ReportEdge = { points: Vec[]; surfaceId: string; illustrative: boolean; bodyId?:string };
+export type ReportFace = { points: Vec[]; material: 'glass' | 'metal' | 'probe'; surfaceId: string; illustrative: boolean; bodyId?:string; role?:'optical-cap'|'paired-rim'|'illustrative' };
+export type ReportEdge = { points: Vec[]; surfaceId: string; illustrative: boolean; bodyId?:string; role?:'optical-cap'|'paired-rim'|'illustrative' };
 export type ReportGeometry = { faces: ReportFace[]; edges: ReportEdge[]; inferred: string[] };
 export const cross = (a: Vec, b: Vec) => V(a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x);
 
@@ -14,7 +14,7 @@ export function reportGeometry(doc: Prescription, trace: Trace, envelopes: boole
     const faces: ReportFace[] = [], edges: ReportEdge[] = [], inferred: string[] = [];
     const cells = trace.surfaces.reduce((n,s) => n+cellCenters(s).length,0);
     const steps = cells > 1000 ? 8 : cells > 100 ? 16 : 48, rings = cells > 100 ? 1 : 4;
-    const face = (points: Vec[], s: Compiled, material: ReportFace['material'], illustrative = false) => faces.push({ points, material, surfaceId:s.id, illustrative });
+    const face = (points: Vec[], s: Compiled, material: ReportFace['material'], illustrative = false,role:ReportFace['role']='optical-cap') => faces.push({ points, material, surfaceId:s.id, illustrative,role });
     const edge = (points: Vec[], s: Compiled, illustrative = false) => edges.push({ points, surfaceId:s.id, illustrative });
     for (const s of trace.surfaces) {
         const material = s.interaction === 'probe' ? 'probe' : s.interaction === 'reflect' ? 'metal' : 'glass';
@@ -29,8 +29,8 @@ export function reportGeometry(doc: Prescription, trace: Trace, envelopes: boole
             // Thin metal backing is an explicitly illustrative thickness.
             if (envelopes && s.interaction === 'reflect') {
                 const back = ring.map(p=>sub(p,mul(s.world.axes[0],s.aperture*.16)));
-                for(let i=0;i<steps;i++)face([ring[i],ring[(i+1)%steps],back[(i+1)%steps],back[i]],s,'metal',true);
-                face([...back].reverse(),s,'metal',true);edge([...back,back[0]],s,true);inferred.push(s.id);
+                for(let i=0;i<steps;i++)face([ring[i],ring[(i+1)%steps],back[(i+1)%steps],back[i]],s,'metal',true,'illustrative');
+                face([...back].reverse(),s,'metal',true,'illustrative');edge([...back,back[0]],s,true);inferred.push(s.id);
             }
         }
     }
@@ -39,12 +39,12 @@ export function reportGeometry(doc: Prescription, trace: Trace, envelopes: boole
         if(['lens','array'].includes(a.kind) && ss.length===2 && compatiblePair(ss[0],ss[1])) {
             for(const c of cellCenters(ss[0])) {
                 const front=surfaceRing(ss[0],c.u,c.v,steps), back=surfaceRing(ss[1],c.u,c.v,steps);
-                for(let i=0;i<steps;i++)face([front[i],front[(i+1)%steps],back[(i+1)%steps],back[i]],ss[0],'glass');
+                for(let i=0;i<steps;i++)face([front[i],front[(i+1)%steps],back[(i+1)%steps],back[i]],ss[0],'glass',false,'paired-rim');
             }
         }
         if(envelopes && a.kind==='prism') {
             const shell=prismEnvelope(ss);
-            if(shell) { shell.forEach(points=>{face(points,ss[0],'glass',true);edge([...points,points[0]],ss[0],true);});inferred.push(a.id); }
+            if(shell) { shell.forEach(points=>{face(points,ss[0],'glass',true,'illustrative');edge([...points,points[0]],ss[0],true);});inferred.push(a.id); }
         }
     }
     return {faces,edges,inferred:[...new Set(inferred)]};

@@ -32,7 +32,7 @@ export function rowCommand(p:Project,id:string,action:RowCommand,token:string){
   const aid=`Manual-${token}`,w=compile(d)[i].world,previous=i?compile(d)[i-1].world.origin:d.source.frame.origin;
   const origin=action==='before'?mul(add(previous,w.origin),.5):mul(add(w.origin,compile(d)[i+1]?.world.origin??w.origin),.5);
   assemblies.push({id:aid,name:'Blank Component',kind:'group',parentId:null,frame:{...pose(),origin}});
-  next={...s,id:`Surface-${token}`,name:'Single Surface',materialBefore:undefined,materialAfter:undefined,assemblyId:aid,frame:pose(),shape:'plane',interaction:'refract',nBefore:null,nAfter:null,outsideIndex:null,array:null};
+  next={...s,id:`Surface-${token}`,name:'Single Surface',conic:undefined,aspheric:undefined,materialBefore:undefined,materialAfter:undefined,assemblyId:aid,frame:pose(),shape:'plane',interaction:'refract',nBefore:null,nAfter:null,outsideIndex:null,array:null};
  }
  surfaces.splice(action==='before'?i:i+1,0,next);
  return {project:ProjectSchema.parse({...p,model:{...model,prescription:{...d,assemblies,surfaces}}}),selection:next.id};
