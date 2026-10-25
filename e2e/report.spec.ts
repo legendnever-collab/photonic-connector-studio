@@ -9,6 +9,7 @@ test('report B/C, orbit and display envelopes share the current prescription wit
     const ray=await page.getByTestId('surface-ray-0').getAttribute('points');
     await page.getByRole('button',{name:'Report View',exact:true}).click();
     const figure=page.getByTestId('report-figure'),fingerprint=await figure.getAttribute('data-fingerprint');
+    await expect(figure.getByTestId('report-direction').first()).toBeVisible();
     await expect(page.locator('.report-inline')).toBeVisible();
     await expect(figure.locator('[data-defined-body]').first()).toBeVisible();
     const first=await figure.locator('[data-report-face]').first().getAttribute('points');
@@ -24,7 +25,7 @@ test('report B/C, orbit and display envelopes share the current prescription wit
     await page.getByLabel('Beam / Ray bundles',{exact:true}).uncheck();await expect(page.getByTestId('report-bundle')).toHaveCount(0);
     await page.getByRole('button',{name:'Surface View',exact:true}).click();
     await expect(page.getByTestId('surface-reached')).toHaveText(count!);
-    expect(await page.getByTestId('surface-ray-0').getAttribute('points')).toEqual(ray);
+    await expect(page.getByTestId('surface-ray-0')).toHaveAttribute('points',ray!);
     await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
     await expect(page.getByRole('button',{name:'Surface View',exact:true})).toBeFocused();
 });
@@ -37,7 +38,7 @@ test('offline report exports complete standalone SVG and 3200 × 2000 PNG',async
     await page.getByLabel('Report selected Surface',{exact:true}).selectOption('Target');
     const download=page.waitForEvent('download');await dialog.getByRole('button',{name:'SVG',exact:true}).click();
     const svg=await readFile((await(await download).path())!,'utf8');
-    expect(svg).toContain('report-figure/2.4.1');expect(svg).toContain('Target');expect(svg).toContain('LINKED SURFACE');
+    expect(svg).toContain('report-figure/2.4.2');expect(svg).toContain('Target');expect(svg).toContain('LINKED SURFACE');
     expect(svg).not.toMatch(/var\(--|file:\/\/\/|<script|<image[^>]+https?:/);
     const pngDownload=page.waitForEvent('download');await dialog.getByRole('button',{name:'PNG 2×',exact:true}).click();
     const png=await readFile((await(await pngDownload).path())!);

@@ -45,7 +45,7 @@ test('physical block thickness, modes, selection and report dimensions persist a
 test('finite prism/mirror body dimensions affect physical acceptance, independently of MFD',async({page})=>{
  await page.goto('/#surfaces');await openProjectExample(page,'prism');await acceptProjectReplacement(page);await assembly(page,'Prism');
  await page.getByLabel('Prism Depth',{exact:true}).fill('0.05');await finish(page);await expect(page.getByTestId('surface-reached')).not.toHaveText('13 / 13');
- await report(page);await expect(page.getByTestId('report-figure')).toContainText('Defined body dimensions');await page.getByRole('button',{name:'Surface View',exact:true}).click();
+ await report(page);await expect(page.getByTestId('report-figure')).toContainText('Defined bodies / optical Surfaces are true scale');await page.getByRole('button',{name:'Surface View',exact:true}).click();
  await openProjectExample(page,'mirror');await acceptProjectReplacement(page);await assembly(page,'Mirror');await page.getByLabel('Body Outline',{exact:true}).selectOption('rectangle');await page.getByLabel('Body Width',{exact:true}).fill('0.1');await page.getByLabel('Body Height',{exact:true}).fill('0.1');await finish(page);await expect(page.getByTestId('surface-reached')).toHaveText('1 / 13');
  const before=await save(page);await tab(page,'Surfaces');await page.getByTestId('shared-source').click();await page.getByLabel('Input MFD X',{exact:true}).fill('40');await finish(page);const after=await save(page);expect(after.bodies).toEqual(before.bodies);expect(after.model.prescription.source.radius).toBe(before.model.prescription.source.radius);await expect(page.getByTestId('surface-reached')).toHaveText('1 / 13');
 });

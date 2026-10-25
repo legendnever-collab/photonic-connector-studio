@@ -8,8 +8,11 @@
 @media(max-width:760px){.report-dialog{width:100vw;height:100dvh;border-radius:0;border:0}.report-toolbar{padding:12px}.report-toolbar h2{font-size:15px}.report-toolbar h2 span{display:none}.report-controls{padding:10px;gap:8px}.report-mode{width:100%}.report-mode button{flex:1;font-size:11px;padding:7px 6px}.report-controls .report-surface-select{margin-left:0}.report-controls select{max-width:155px}.report-exports{margin-left:auto}.report-paper-wrap{padding:12px;align-items:flex-start;justify-content:flex-start}.report-paper{width:100%;min-width:680px;max-width:none}.report-footer{padding:8px 10px;flex-wrap:wrap;gap:6px}.report-footer p{font-size:10px}.report-footer button{font-size:11px;padding:6px 8px}}
 
 .report-pages{display:flex;gap:6px;align-items:center;font-size:12px}.report-pages button:disabled{cursor:default}
+.report-fold-ledger{flex-shrink:0;padding:6px 20px;background:#fff9ee;font-size:12px;max-height:160px;overflow:auto}.report-fold-ledger summary{cursor:pointer;font-weight:650}.report-fold-ledger p{margin:6px 0;overflow-wrap:anywhere}
 @media(min-width:1001px){
 .unified-workstation.report-active .surface-main.design-split{grid-template-rows:minmax(0,1fr)}
 .report-active .design-splitter,.report-active .dock-data.panel-dock,.report-active .design-visual>.starter-path,.report-active .design-visual>.surface-kpis,.report-active .design-visual>.result-summary,.report-active .design-visual>.routing-diagnostics{display:none}
 .report-active .design-visual>.unified-report-view{min-height:0}
 }
+
+.report-route-scope{flex-shrink:0;margin:0;padding:6px 20px;background:#fff9ee;font-size:12px;line-height:1.5}
