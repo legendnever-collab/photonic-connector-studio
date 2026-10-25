@@ -62,7 +62,10 @@ export function lensValues(domain:LensDomain):number[]{return domain.slots.flatM
 export function buildLensProject(domain:LensDomain,values:number[]):Project {
  const p=structuredClone(domain.base),d=physical(p);
  domain.slots.forEach((slot,i)=>{
-  const [position,front,rear,t]=values.slice(4*i,4*i+4);if(position<slot.legal[0]-1e-12||position+t>slot.legal[1]+1e-12||!(t>0))throw Error('Lens outside its fixed free-space segment.');
+  const [position,front,rear,t]=values.slice(4*i,4*i+4);
+  if(position<slot.legal[0]-1e-12||position+t>slot.legal[1]+1e-12||!(t>0))throw Error('Lens outside its fixed free-space segment.');
+  // Preserve exact frozen prescriptions, including local-frame roundoff.
+  if([position,front,rear,t].every((v,j)=>Object.is(v,slot.values[j])))return;
   const assembly=d.assemblies.find(a=>a.id===slot.id)!;assembly.frame.origin=add(assembly.frame.origin,vectorToLocal(slot.parent,mul(slot.axis,position-slot.frontS)));
   const a=d.surfaces.find(s=>s.id===slot.frontId)!,b=d.surfaces.find(s=>s.id===slot.rearId)!;b.frame.origin=pointToWorld(frame(a.frame),V(t));
   [a,b].forEach((s,j)=>{const c=[front,rear][j];s.shape=Math.abs(c)<1?'plane':'sphere';s.radius=Math.abs(c)<1?0:1/c;});

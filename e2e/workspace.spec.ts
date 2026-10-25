@@ -156,7 +156,7 @@ test("JSON round-trip and bad imports preserve the design", async ({
     name: "saved.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(data)),
-  });await acceptProjectReplacement(page);
+  });await expect(page.getByRole("dialog", {name:"Unsaved Project",exact:true})).toBeVisible();await acceptProjectReplacement(page);
   expect(await save(page)).toEqual(data);
   await page.getByTestId("surface-json-input").setInputFiles({
     name: "broken.json",
