@@ -1,8 +1,8 @@
 {
   "version": "0.11.0-d2.1",
   "schemaVersion": 1,
-  "sourceCommit": "67e37235c9af20f7dca0e02a94ac09005bfb679b",
-  "sourceFingerprint": "f0c1a5bcbc972ab2ce33ea610c59bd7b7b4db2ec866961b2daad031c105d0b90",
+  "sourceCommit": "5b49bb4f9a72e51ded0da17fde2047696de246c5",
+  "sourceFingerprint": "2db95b0507553a27111f2180e9db1ae64e4ea8ee8ce2ba4d937b12e805f7b914",
   "inputs": {
     "index.html": "cea742b590b4266564318f5af42c8a27c70e0f62611592933f1d67b18d00817c",
     "package-lock.json": "718697648159a40863eb95aceffeb0ca820c8606a985f540d7acd1c94d58db40",
@@ -79,7 +79,7 @@
     "src/routing/examples.ts": "c152259f60fb375f1f5e11e260eb8f13a05c1a37feaccfc242158f61452b49b5",
     "src/routing/model.ts": "2fc96a0cafe69c461945138a0b76485367cfd80167aa4205ae6c16030fa12b29",
     "src/routing/routing.css": "5c0befcef558615df71a988911a14365428e0f191c66ef81b0a114c5603d0ed3",
-    "src/routing/search.ts": "512d8fcf8cbd79e46ea0d400a156cec4032a7c4c47b9500b77f46c98de2aa59c",
+    "src/routing/search.ts": "0df1721456f0bf8fb5d3633ee579dc2d86bd6119adce5ce0d9ba29895259f295",
     "src/sensitivity.ts": "f1997ce0f2f52853a2fc327027b8ccf0912f38763738387cbfbf34f76acf952c",
     "src/styles.css": "121ec78fbf712b7d52fedbbbc497d13b6b25a3cd9309d6169131066132f703ad",
     "src/surface/ProfileFields.tsx": "a495b61c7467b2ea5d91dbd533b08c143c1db31e6a06053958be56ff5e59fe75",
@@ -99,14 +99,14 @@
     "src/surface/trace.ts": "205b4b1d4a95cf4334d767b014cc16a6b5623624333b8d32582ace43354e1cf2",
     "src/surface/workbench.css": "f99fce70571e45a1d136b4951f51d4491e026ae52357044fe89a5b37d03d64c9",
     "src/synthesis/SynthesisDialog.tsx": "fba5982b8c8dd51c7456d4495c7affb95627f1ad0fb08786b86d1187f8e615be",
-    "src/synthesis/construction.ts": "c7c6befda3a234e7fa80cbdc3b6315a0080e46aa5a3d7feacdc351363403d545",
+    "src/synthesis/construction.ts": "beba19a2b2fd3db03f138abf9e91c066f6f3332ab9c832f7a5d2739a3436c153",
     "src/synthesis/contract.ts": "96e68ddfc5495201df1fd5aae69c2d71487fea5c5749ea28a5a14bdbc8485e95",
-    "src/synthesis/engine.ts": "4ae2493dd8bacdac853c72038bdb1ec9e3be49453478f85ffe3454f85eb2bf02",
+    "src/synthesis/engine.ts": "cf99eff52ae51e035825033c1ff5ad2267de5205a86d0d0216bbb6318d39fae5",
     "src/visual.css": "e9ef980a381503b394fc7a6dabc5d7b8c9331b9684ffa25094093143ecbdcf99",
     "tsconfig.json": "6210a6d05f22c3f5b3030645892b2cd5e568c70ea2a71abd70ace41fadf58634",
     "vite.config.ts": "053836db8e246fabb580d4e5122bad6856a6f5e5a4071cef8e5fd3d188aa7730"
   },
   "artifact": "photonic-connector-studio-u1.html",
-  "artifactSHA256": "f3739cb6d7cd8fb4f3a71cf4006ceb89317e2f7a4f8dca5dbdb9393af018ba16",
-  "artifactBytes": 764355
+  "artifactSHA256": "742347929f90e91f8e7edc38a422421bac86a474085e410a52b65404a9780499",
+  "artifactBytes": 764457
 }
