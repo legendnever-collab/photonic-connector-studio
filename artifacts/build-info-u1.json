@@ -1,12 +1,12 @@
 {
-  "version": "0.13.0-d2.2.2",
+  "version": "0.14.0-d2.3.1",
   "schemaVersion": 1,
-  "sourceCommit": "bc3fc1735e105e338021f128837720845535db44",
-  "sourceFingerprint": "0f5b4ecf8e238b4889251af222b263bf53d4288f3276cc1787c3d3e9e8a88196",
+  "sourceCommit": "4ba3279fba6cd34c47b512272d8a82f4c5bf5d5d",
+  "sourceFingerprint": "427655c1034d4cdfd80b218917a039b14c5cc5acd2e5a0fea5f4cc8773d1a7be",
   "inputs": {
     "index.html": "cea742b590b4266564318f5af42c8a27c70e0f62611592933f1d67b18d00817c",
-    "package-lock.json": "05811182c0b8efc8ca854e39de8a4446fdc582cd014ba129da1adf6fcc7bd4b9",
-    "package.json": "61b1284f7334d59b8f5c819432447e8d8ef4bf7cdc0f0e05eeea7a4508fec5f1",
+    "package-lock.json": "c7d5f319147401f32feab1e2a5525dad1a3a749f6f1666b6ec33fa3afe4fe39b",
+    "package.json": "c612abc05752deb950bb5ce111f81def0ad25ea73b3294f16c225075e0f1499a",
     "scripts/package-artifact.mjs": "cb7326933c36bd5c1360f613e93b25d1700930e93d9384af12d2796e00c98d18",
     "src/Analysis.tsx": "1e7a37e25595b847326503c4af7395e2fc30ce58c2c51fa43932cb15d0f3de00",
     "src/App.tsx": "1f305182e63e2323e27198686f8a69e0bb15c6f40a5306f0101b3ee0c438ba9e",
@@ -38,10 +38,13 @@
     "src/authoring/contract.ts": "3d4bf86a4c9d26852878286deb9d4cd53f18b73d46248f37b44ada73c08b2d79",
     "src/authoring/smf.ts": "e541fe7409ec70371d7fbced9d1b4dc8d23573ae0be8be40576a557deb2ba60b",
     "src/authoring/starter.ts": "cf52dc730f225dde359c4750430b05055e4c3847d02652f8ad85a701a946864a",
-    "src/design/ProblemDialog.tsx": "8d1a5402fb02f2901fab4277fe29d5125c140bf5f1d3abfe40f87d5fef8b9bd6",
-    "src/design/contract.ts": "6ecbc3e37780132d454e96368f477aa5e4ead5649e788e272615dca9aeaf28c6",
+    "src/design/JointTolerancePanel.tsx": "e702f54d02484e109b6087027b3724cc34efdf8787e37623024d1130c0d2033e",
+    "src/design/ProblemDialog.tsx": "57c5fe0c723a12877025277ebfcc55a21a7864a5c83f26f6bd8762278a14459c",
+    "src/design/contract.ts": "6b8fc6508fe60d1aaf13dfb02bedb9b83697a9f9c9d6fe974cdb4ebebadf64f9",
     "src/design/engine.ts": "f717f6de954ed493e9af7e83a7ea5e69ab1de2fcf422d517856994ca6fbcfb64",
-    "src/design/problem.css": "a346fab366dae61b74dc1742c52032aa9ec9a7be7cd664e5a9c561ce552f0904",
+    "src/design/joint.ts": "3e04aac7333cf542b25ba98c62f891397f495fc08fe1becbf66830372cc72b0d",
+    "src/design/jointContract.ts": "b2d1d3413613729996bfe3abeb93a5f4f817df3aed530f9ac7211bed75e2c619",
+    "src/design/problem.css": "47a68dfe5d2f3ec2f5e81269ec11f67ff00a1cf1b940b1c2e1f647e213d13941",
     "src/domain.ts": "bf5465a91123da896e5f775171141a8886ebb097a83792bd2a33bb571cac6ec9",
     "src/examples.ts": "90d00026c2c61fa34741563ac725706348b3e457b7e95b233fd753d4399d10b7",
     "src/lens/LensDialog.tsx": "993f7b3b77141ac4a5e634e7305da898b4539671d40c355419c6d61a60ef37c8",
@@ -87,7 +90,7 @@
     "src/surface/ProfileFields.tsx": "a495b61c7467b2ea5d91dbd533b08c143c1db31e6a06053958be56ff5e59fe75",
     "src/surface/ReportFigure.tsx": "868860fb9cc629adf766caba3e55a126420dc3016b86dae5f771c4c35de53f82",
     "src/surface/Scene.tsx": "d17faf430847e2c30cc0ea835006768aa1dc6006c54136ee2686892e2849fc90",
-    "src/surface/Workbench.tsx": "c8ca2fde200d0a4a2b2e0865cf8c0eec73de80b760f35480ea7aa958e5f99615",
+    "src/surface/Workbench.tsx": "6c8794141a21a48b37a10f8adc19f2fa755e06ae9219d013ab3e2761eac059fa",
     "src/surface/asphereIntersection.ts": "5872920e169cf0807d89a26947f54bd0145eb01388d055724afa98dc358b1e2c",
     "src/surface/evaluator.ts": "6394a99655338086db2d2908af797e6b232ba54c27404dc0f3b8de47c476cfbc",
     "src/surface/examples.ts": "8b3ace8284f735121d2fbcb298c20e0a31c63eedc8d0c85f66a5b128b40c8864",
@@ -109,6 +112,6 @@
     "vite.config.ts": "053836db8e246fabb580d4e5122bad6856a6f5e5a4071cef8e5fd3d188aa7730"
   },
   "artifact": "photonic-connector-studio-u1.html",
-  "artifactSHA256": "58dbac3d18e23acb5ff7a4cd0b6b3aa61dbef969ebf670981363f36031cf9f73",
-  "artifactBytes": 789203
+  "artifactSHA256": "3460ae06b4d2965bf70283c5a8c0501afb4aa5ccfdcaed31af7fe35fa38210c8",
+  "artifactBytes": 802794
 }
