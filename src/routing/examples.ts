@@ -1,3 +1,4 @@
+import {applySmfReference} from '../authoring/smf';
 import {lensDesignExample} from '../lens/examples';
 import {framePose} from '../authoring/commands';
 import {withPortWorld,portWorld} from './model';
@@ -9,9 +10,20 @@ import {pose} from '../surface/model';
 import type {Surface,Assembly} from '../surface/model';
 import {materialIndex} from '../surface/materials';
 import {defaultRouting} from './contract';
-export type RoutingExample='mirrors'|'prism'|'search'|'lens';
+export type RoutingExample='mirrors'|'prism'|'search'|'lens'|'prism-mode';
 /** Explicit manual prescriptions, not auto-generated or mode-matched solutions. */
 export function routingExample(which:RoutingExample):Project {
+ if(which==='prism-mode'){
+  const p=applySmfReference(routingExample('prism'),'target');if(p.model.kind!=='surface')throw Error('Physical');
+  const d=p.model.prescription;d.name='D2.2.1 · Collimated BK7 Prism · TE';
+  d.surfaces=d.surfaces.slice(2);d.assemblies=d.assemblies.filter(a=>a.kind!=='lens');p.bodies=p.bodies.filter(b=>b.kind!=='lens');
+  for(const s of d.surfaces){s.frame.origin.x*=25;s.frame.origin.y*=25;s.aperture=.003;}
+  d.assemblies.find(a=>a.kind==='prism')!.frame=pose(.003,0,0,0,0,Math.PI/2);
+  d.assemblies.find(a=>a.kind==='target')!.frame=pose(.004,0,.004,0,-Math.PI/2);d.source.frame=pose();
+  p.bodies.forEach(b=>{if(b.kind==='prism')b.depth=.006;});p.sourceBody=null;p.targetBody=null;delete p.routing;
+  p.model.sourceMode={representation:'gaussian',mfdX:.0004,mfdY:.0005,polarization:'TE'};p.model.targetMode={...p.model.sourceMode};
+  return ProjectSchema.parse(p);
+ }
  if(which==='lens')return lensDesignExample();
  if(which==='search'){let p=routingExample('mirrors');p=withPortWorld(p,'target',{...framePose(portWorld(p,'target')),origin:{x:.01,y:80e-6,z:50e-6}});if(p.model.kind==='surface')p={...p,model:{...p.model,prescription:{...p.model.prescription,name:'Fiber → displaced PIC · S2 routing task'}}};return p;}
  let p=withPortDevice(fiberLensFiberProject(),'target',which==='mirrors'?'pic-edge':'pic-grating');

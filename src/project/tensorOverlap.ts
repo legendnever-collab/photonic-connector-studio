@@ -1,3 +1,4 @@
+import {prismOverlap,polarizationTransport,MODE_SCOPE} from './prismMode';
 import {inverseQ,transformQ,solveFoldedGaussian} from './foldedGaussian';
 import type {QTensor,FoldedResult} from './foldedGaussian';
 import type {Complex} from '../physics';
@@ -30,18 +31,27 @@ export function gaussianTensorOverlap(q:QTensor,lambda:number,n:number,mfd:[numb
  return {status:'valid',eta,logEta,lossDB:-10*logEta/Math.LN10,underflow:eta===0,targetY:w[0],targetZ:w[1],offsetY:-h[0],offsetZ:-h[1],angleY:slope[0],angleZ:slope[1]};
 }
 export function tensorOverlap(p:Project,r:FoldedResult=solveFoldedGaussian(p,{sampleSegments:false})):Overlap{
- const no=(reason:string):Overlap=>({status:'not-calculated',reason});
+ const no=(reason:string):Overlap=>({status:'not-calculated',reason:/^(Input undefined|Input invalid|Model unsupported|Out of domain):/.test(reason)?reason:`${/undefined|Select an Output/.test(reason)?'Input undefined':/mismatch|medium differs/.test(reason)?'Input invalid':/unsupported|requires|not evaluated|only/.test(reason)?'Model unsupported':'Out of domain'}: ${reason}`});
+ if(p.model.kind!=='surface')return no('Model unsupported: Physical Project required.');
+ for(const which of ['source','target'] as const){
+  const port=p.authoring?.ports[which],mode=which==='source'?p.model.sourceMode:p.model.targetMode;
+  if(port&&(port.fieldModel!=='gaussian'||port.imported||port.adapter==='near-field-em-required'))return no(`Model unsupported: ${which} imported / confined field requires its dedicated field adapter.`);
+  if(port&&(port.device==='pic-edge'||port.device==='pic-grating'))return no(`Input undefined: PIC ${which==='target'?'receiving':'emitted'} field is undefined; Gaussian MFD is a user reference, not device coupling.`);
+  if(!port||port.phase==='unspecified'||port.adapter==='unspecified'||port.mediumIndex===null||port.normalization==='unspecified'||port.normalization==='absolute-power'&&port.powerW===null||mode.mfdX===null||mode.mfdY===null)return no(`Input undefined: ${which} Gaussian Mode / phase / medium / normalization. Select an explicit reference.`);
+ }
  if(r.status!=='valid')return no(r.reason);
- if(p.model.kind!=='surface')return no('Physical Project required.');
  const d=p.model.prescription,port=p.authoring?.ports.target,mode=p.model.targetMode,sm=p.model.sourceMode;
  if(!port||port.fieldModel!=='gaussian'||port.imported||port.adapter!=='homogeneous-paraxial'||port.phase!=='waist-plane'||port.normalization==='unspecified'||port.normalization==='absolute-power'&&port.powerW===null||!mode.mfdX||!mode.mfdY)return no('Output Gaussian Mode / phase / normalization is undefined. Select an Output SMF reference.');
  if(port.device==='pic-edge'||port.device==='pic-grating')return no('PIC receiving field is undefined; Gaussian MFD is a user reference, not device coupling.');
  if(port.mediumIndex!==r.incident.n)return no('Output Mode medium differs from the incident medium.');
- if(d.surfaces.some(s=>s.interaction==='tir'))return no('TIR Prism: geometry / Gaussian reference only. Interface phase and angular-spectrum coupling are not evaluated.');
- if(sm.polarization!=='unspecified'&&mode.polarization!=='unspecified'&&sm.polarization!==mode.polarization)return no('TE/TM mismatch requires a vector polarization solver.');
+ const prism=d.surfaces.some(s=>s.interaction==='tir');
  if(r.apertureLimited)return no('Aperture-limited untruncated reference; clipping propagation is not evaluated.');
  if(r.outputDirection.x<=0||Math.hypot(r.outputDirection.y,r.outputDirection.z)/r.outputDirection.x>.05+1e-12)return no('Output relative slope exceeds the 50 mrad first-order plane domain.');
  if([mode.mfdX,mode.mfdY].some(v=>r.wavelength/(Math.PI*r.incident.n*v/2)>.1+1e-12))return no('Output Mode divergence exceeds 0.1 rad.');
  const a:[number,number,number,number]=[dot(r.outputAxes[0],r.incident.u),dot(r.outputAxes[0],r.incident.v),dot(r.outputAxes[1],r.incident.u),dot(r.outputAxes[1],r.incident.v)];
- try{return gaussianTensorOverlap(transformQ(r.incident.q,a),r.wavelength,r.incident.n,[mode.mfdX,mode.mfdY],[r.outputOffset.y,r.outputOffset.z],[r.outputDirection.y/r.outputDirection.x,r.outputDirection.z/r.outputDirection.x]);}catch(e){return no(e instanceof Error?e.message:String(e));}
+ try{const q=transformQ(r.incident.q,a),base=gaussianTensorOverlap(q,r.wavelength,r.incident.n,[mode.mfdX,mode.mfdY],[r.outputOffset.y,r.outputOffset.z],[r.outputDirection.y/r.outputDirection.x,r.outputDirection.z/r.outputDirection.x]);
+  if(prism){const result=prismOverlap(p,r,q,base);return result.status==='valid'?result:no(result.reason);}
+  let comparisonClass='scalar-assumed-copolarized';
+  if(sm.polarization!=='unspecified'&&mode.polarization!=='unspecified'){polarizationTransport(p,r);comparisonClass='explicit-copolarized-phase-only';}
+  return {...base,scope:MODE_SCOPE,comparisonClass};}catch(e){return no(e instanceof Error?e.message:String(e));}
 }

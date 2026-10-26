@@ -32,11 +32,12 @@ function useProjectStore() {
     const routing=useMemo(()=>analyzeRouting(project),[project]);
     const gaussian = useMemo(() => gaussianForProject(project), [project.model.kind, project.model.kind === 'ideal' ? project.model.design : null, project.authoring?.ports]);
     const physicalInputJSON = JSON.stringify(physicalGaussianInput(project));
-    const physicalGaussian = useMemo(() => solvePhysicalGaussian(project), [physicalInputJSON]);
+    const physicalRaw = useMemo(() => solvePhysicalGaussian(project), [physicalInputJSON]);
     const foldedJSON=JSON.stringify(foldedInput(project));
-    const useTransported=hasFolds(project)||(!!project.routing?.lensSolution&&physicalGaussian.status!=='valid');
+    const useTransported=hasFolds(project)||(!!project.routing?.lensSolution&&physicalRaw.status!=='valid');
     const foldedGaussian=useMemo(()=>useTransported?solveFoldedGaussian(project):null,[foldedJSON,useTransported]);
-    const synthesisOverlap=useMemo(()=>project.synthesis?tensorOverlap(project,foldedGaussian??solveFoldedGaussian(project,{sampleSegments:false})):null,[project.synthesis,foldedJSON,foldedGaussian]);
+    const synthesisOverlap=useMemo(()=>project.model.kind==='surface'?tensorOverlap(project,foldedGaussian??solveFoldedGaussian(project,{sampleSegments:false})):null,[foldedJSON,foldedGaussian]);
+    const physicalGaussian=useMemo(()=>physicalRaw.status==='valid'&&synthesisOverlap?{...physicalRaw,overlap:synthesisOverlap}:physicalRaw,[physicalRaw,synthesisOverlap]);
     function updateIdeal(d: DesignDocument) { commit({ ...project, model: idealProject(d, project.sourceBody).model }); }
     function updateSurface(d: Prescription) { commit(withPrescription(project, d)); }
     function save() { const text = serializeProject(project), url = URL.createObjectURL(new Blob([text], { type: 'application/json' })), a = document.createElement('a'); a.href = url; a.download = 'photonic-optical-project.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); setSaved(text); }
