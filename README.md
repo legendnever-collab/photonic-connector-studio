@@ -1,3 +1,12 @@
+## D2.3.2 · Joint tolerance feedback
+
+Design Problem → Joint Tolerance에서 common mating / individual Assembly 공차를
+정의한 뒤 Automatic Synthesis → Tolerance feedback을 Joint로 선택합니다.
+같은 coverage / evaluator / Mode / geometry criteria의 Group 안에서 관측 최소 η를
+비교하고 route와 Lens 변수를 다시 조정합니다. Partial과 geometry 실패는 unranked입니다.
+OAT가 기본값이며 Yield나 global robust optimum을 의미하지 않습니다.
+[좌표·비교·예산·검증 범위](docs/D2_3_2_JOINT_FEEDBACK.md).
+
 ## D1 · Design Problem
 
 Open **Design Problem** from the top bar or Surface Data. Set current Surface

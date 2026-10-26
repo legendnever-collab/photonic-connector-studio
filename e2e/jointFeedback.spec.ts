@@ -1,0 +1,27 @@
+import {test,expect} from '@playwright/test';
+import type {Page} from '@playwright/test';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
+import {readFile} from 'node:fs/promises';
+import {tab,openProjectExample} from './ui';
+const offline=pathToFileURL(resolve('dist/index.html')).href;
+async function save(page:Page){await tab(page,'Layout');const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
+async function setup(page:Page){await tab(page,'Layout');await page.getByRole('button',{name:'Design Problem',exact:true}).click();await page.getByRole('button',{name:'Joint Tolerance',exact:true}).click();await page.getByLabel('Joint Samples',{exact:true}).fill('8');await page.getByLabel('Joint Case cap',{exact:true}).fill('8');await page.getByLabel('Joint mating position Y',{exact:true}).fill('0.25');await page.getByLabel('Joint mating position Z',{exact:true}).fill('0.25');await page.getByRole('button',{name:'Automatic Synthesis…',exact:true}).click();await page.getByLabel('Synthesis Tolerance feedback',{exact:true}).selectOption('joint');}
+async function run(page:Page){await page.getByRole('button',{name:'Run Automatic Synthesis',exact:true}).click();await expect(page.getByTestId('synthesis-result')).toBeVisible({timeout:60000});}
+test.beforeEach(async({page})=>{await page.context().setOffline(true);await page.goto(offline);await openProjectExample(page,'routing:prism-synthesis');});
+test('joint synthesis has grouped coverage, read-only Preview, replayable Apply and one Undo',async({page},info)=>{
+ test.setTimeout(90000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));const before=await save(page);await setup(page);await run(page);
+ await expect(page.getByTestId('synthesis-joint-feedback')).toContainText('Complete assessments');await expect(page.getByTestId('synthesis-joint-metrics')).toContainText('Joint rank 1');await expect(page.getByTestId('synthesis-joint-metrics')).toContainText('8/8');await expect(page.getByTestId('synthesis-joint-metrics')).toContainText('Prism model tolerance');
+ await page.getByRole('button',{name:'Close',exact:true}).click();expect(await save(page)).toEqual(before);await setup(page);await run(page);
+ await page.getByTestId('synthesis-joint-metrics').scrollIntoViewIfNeeded();await page.screenshot({path:`test-results/D232-joint-${info.project.name}.png`,fullPage:true});
+ await page.getByRole('button',{name:'Apply Synthesis Candidate',exact:true}).click();const after=await save(page);expect(after.synthesis.toleranceMode).toBe('joint');expect(after.designProblem.jointTolerance.samples).toBe(8);expect(after.model.prescription.surfaces.filter((s:{interaction:string})=>s.interaction==='tir')).toHaveLength(2);
+ expect(after.model.sourceMode).toEqual(before.model.sourceMode);expect(after.model.targetMode).toEqual(before.model.targetMode);
+ await page.getByRole('button',{name:'Undo',exact:true}).click();expect(await save(page)).toEqual(before);await page.getByRole('button',{name:'Redo',exact:true}).click();expect(await save(page)).toEqual(after);
+ await page.getByTestId('surface-json-input').setInputFiles({name:'joint-feedback.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(after))});const confirm=page.getByRole('dialog',{name:'Unsaved Project',exact:true});if(await confirm.isVisible())await confirm.getByRole('button',{name:'Discard & Open',exact:true}).click();
+ await tab(page,'Layout');await page.getByRole('button',{name:'Automatic Synthesis',exact:true}).click();await expect(page.getByLabel('Synthesis Tolerance feedback',{exact:true})).toHaveValue('joint');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(errors).toEqual([]);
+});
+test('incomplete joint budget is unranked; changed settings invalidate Apply',async({page})=>{
+ await setup(page);await page.getByLabel('Synthesis Joint budget',{exact:true}).fill('1');await run(page);await expect(page.getByTestId('synthesis-joint-metrics')).toContainText('Unranked');await expect(page.getByTestId('synthesis-joint-metrics')).toContainText('budget');
+ await page.getByLabel('Synthesis Joint budget',{exact:true}).fill('256');await expect(page.getByTestId('synthesis-stale')).toBeVisible();await expect(page.getByRole('button',{name:'Apply Synthesis Candidate',exact:true})).toBeDisabled();
+ await page.getByRole('button',{name:'Save Synthesis Settings',exact:true}).click();await page.getByRole('button',{name:'Close',exact:true}).click();const saved=await save(page);expect(saved.synthesis.jointBudget).toBe(256);expect(saved.synthesis.toleranceMode).toBe('joint');expect(saved.model.prescription.surfaces).toHaveLength(1);
+});

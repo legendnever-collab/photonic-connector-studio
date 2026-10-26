@@ -8,7 +8,8 @@ export const SynthesisSchema=z.object({version:z.literal(1),families:z.array(Top
  lensPlacement:z.enum(['endpoints','all-air']).optional(),
  prismLeg:interval.refine(([a,b])=>a>=4e-6&&b<=.04,'Prism leg outside 4 µm–40 mm').optional(),
  material:z.literal('N-BK7'),minimumOverlap:z.number().finite().min(0).max(1),diameterTolerance:z.number().finite().min(.001).max(1),phaseTolerance:z.number().finite().min(.001).max(1),
- solution:z.object({engine:z.literal(SYNTHESIS_ID),baselineFingerprint:z.string(),designFingerprint:z.string(),evaluated:z.number().int().nonnegative().max(8192),geometryEvaluated:z.number().int().nonnegative().max(128),topology:z.string(),qualified:z.boolean()}).strict().optional()
+ solution:z.object({engine:z.literal(SYNTHESIS_ID),baselineFingerprint:z.string(),designFingerprint:z.string(),evaluated:z.number().int().nonnegative().max(8192),geometryEvaluated:z.number().int().nonnegative().max(128),topology:z.string(),qualified:z.boolean()}).strict().optional(),
+ toleranceMode:z.enum(['oat','joint']).optional(),jointBudget:z.number().int().min(1).max(8192).optional()
 }).strict();
 export type SynthesisOptions=z.infer<typeof SynthesisSchema>;
 export const defaultSynthesis=():SynthesisOptions=>({version:1,families:['direct','mirror1','mirror2','prism1','mirror-prism'],budget:8192,geometryBudget:128,fitBudget:1536,lensPlacement:'endpoints',clearRadius:[.0002,.0005],thickness:[.00005,.0003],material:'N-BK7',minimumOverlap:.9,diameterTolerance:.05,phaseTolerance:.05});

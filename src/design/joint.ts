@@ -69,7 +69,7 @@ export function perturbJoint(p:Project,raw:JointTolerance,sample:JointSample):Pr
  }
  return ProjectSchema.parse(q);
 }
-export type JointObservation={id:string;eta:number|null;comparisonClass:string|null;geometryPassed:boolean;reasons:string[]};
+export type JointObservation={id:string;eta:number|null;comparisonClass:string|null;evaluator:string|null;modelEtaTolerance:number|null;geometryPassed:boolean;reasons:string[]};
 export type JointResult={engine:string;inputSignature:string;settings:string;coverage:string;status:'assessed'|'partial'|'not-assessed'|'cancelled';dimensions:number;planned:number;tested:number;fieldAssessed:number;geometryPassed:number;nominal:JointObservation;observations:JointObservation[];lowestEta:number|null;lowestCase:string|null;meetsSampleGoals:boolean;issues:string[]};
 function observe(p:Project,id:string):JointObservation{
  const reasons:string[]=[],mode=tensorOverlap(p),route=analyzeRouting(p),clearance=p.designProblem?.strategy==='lens'?p.designProblem.lens?.clearance??0:p.designProblem?.routes.clearance??0;
@@ -79,23 +79,30 @@ function observe(p:Project,id:string):JointObservation{
  if(!routeOK)reasons.push(`Geometry: ${route.issues.join(' · ')||(route.status==='evaluated'?'Port position / angle exceeds declared tolerance.':route.reason)}`);if(clearanceIssue)reasons.push(`Geometry: ${clearanceIssue}`);
  if(partLimit)reasons.push('Geometry: total optical component limit exceeded.');
  if(mode.status!=='valid')reasons.push(mode.reason);
- return {id,eta:mode.status==='valid'?mode.eta:null,comparisonClass:mode.status==='valid'?mode.comparisonClass??null:null,geometryPassed:routeOK&&!clearanceIssue&&!partLimit,reasons};
+ return {id,eta:mode.status==='valid'?mode.eta:null,comparisonClass:mode.status==='valid'?mode.comparisonClass??null:null,evaluator:mode.status==='valid'?mode.domain?.evaluator??TENSOR_OVERLAP_ID:null,modelEtaTolerance:mode.status==='valid'?mode.domain?.modelEtaTolerance??1e-10:null,geometryPassed:routeOK&&!clearanceIssue&&!partLimit,reasons};
 }
-export async function assessJoint(p:Project,raw:JointTolerance,hooks:{cancelled?:()=>boolean;progress?:(tested:number,total:number)=>void}={}):Promise<JointResult>{
+export function jointCoverage(p:Project,raw:JointTolerance){const o=JointToleranceSchema.parse(raw);return JSON.stringify({engine:JOINT_ENGINE,evaluator:TENSOR_OVERLAP_ID,settings:o,axes:jointAxes(p,o)});}
+/** Yields before each sample solve, so synthesis shares the exact assessment and can cancel. */
+export function* jointAssessmentSteps(p:Project,raw:JointTolerance):Generator<JointResult,JointResult>{
  const o=JointToleranceSchema.parse(raw),axes=jointAxes(p,o),samples=jointSamples(p,o),nominal=observe(p,'Nominal');
- const coverage=JSON.stringify({engine:JOINT_ENGINE,evaluator:TENSOR_OVERLAP_ID,settings:o,axes});
+ const coverage=jointCoverage(p,o);
  const r:JointResult={engine:JOINT_ENGINE,inputSignature:serializeProject(p),settings:JSON.stringify(o),coverage,status:'not-assessed',dimensions:axes.length,planned:samples.length,tested:0,fieldAssessed:0,geometryPassed:0,nominal,observations:[],lowestEta:nominal.eta,lowestCase:nominal.eta===null?null:'Nominal',meetsSampleGoals:false,issues:[...nominal.reasons]};
  if(!samples.length){r.issues.push('No active nonzero error: joint tolerance is not assessed.');return r;}
  for(const sample of samples.slice(0,o.maxCases)){
-  await new Promise(resolve=>setTimeout(resolve,0));if(hooks.cancelled?.()){r.status='cancelled';r.issues.push('Cancelled; incomplete joint samples.');return r;}
-  let v:JointObservation;try{v=observe(perturbJoint(p,o,sample),sample.id);}catch(e){v={id:sample.id,eta:null,comparisonClass:null,geometryPassed:false,reasons:[e instanceof Error?e.message:String(e)]};}
+  yield r;
+  let v:JointObservation;try{v=observe(perturbJoint(p,o,sample),sample.id);}catch(e){v={id:sample.id,eta:null,comparisonClass:null,evaluator:null,modelEtaTolerance:null,geometryPassed:false,reasons:[e instanceof Error?e.message:String(e)]};}
   r.observations.push(v);r.tested++;if(v.geometryPassed)r.geometryPassed++;if(v.eta!==null){r.fieldAssessed++;if(r.lowestEta===null||v.eta<r.lowestEta){r.lowestEta=v.eta;r.lowestCase=v.id;}}
-  for(const reason of v.reasons)if(!r.issues.includes(reason))r.issues.push(reason);hooks.progress?.(r.tested,r.planned);
+  for(const reason of v.reasons)if(!r.issues.includes(reason))r.issues.push(reason);
  }
- const sameClass=nominal.comparisonClass!==null&&r.observations.every(v=>v.comparisonClass===nominal.comparisonClass);
+ const sameClass=nominal.comparisonClass!==null&&r.observations.every(v=>v.comparisonClass===nominal.comparisonClass&&v.evaluator===nominal.evaluator&&v.modelEtaTolerance===nominal.modelEtaTolerance);
  r.status=r.tested===r.planned&&r.fieldAssessed===r.planned&&nominal.eta!==null&&sameClass?'assessed':'partial';
  r.meetsSampleGoals=r.status==='assessed'&&nominal.geometryPassed&&r.geometryPassed===r.planned&&r.lowestEta!==null&&r.lowestEta>=o.minimumOverlap;
  if(r.tested<r.planned)r.issues.push('Case cap reached; requested joint samples are incomplete.');
  if(!sameClass)r.issues.push('Nominal / sample field domains are missing or not comparable.');
  return r;
+}
+export async function assessJoint(p:Project,raw:JointTolerance,hooks:{cancelled?:()=>boolean;progress?:(tested:number,total:number)=>void}={}):Promise<JointResult>{
+ const it=jointAssessmentSteps(p,raw);let step=it.next();
+ while(!step.done){await new Promise(resolve=>setTimeout(resolve,0));if(hooks.cancelled?.()){const r=step.value;r.status='cancelled';r.issues.push('Cancelled; incomplete joint samples.');it.return(r);return r;}step=it.next();hooks.progress?.(step.value.tested,step.value.planned);}
+ return step.value;
 }
