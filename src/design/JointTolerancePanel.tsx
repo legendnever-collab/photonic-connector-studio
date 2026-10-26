@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {NumberField} from '../Fields';
 import type {Project} from '../project/model';
+import {serializeProject} from '../project/model';
 import type {Routing} from '../routing/contract';
 import type {DesignProblem} from './contract';
 import type {JointTolerance} from './jointContract';
@@ -8,15 +9,19 @@ import {JointToleranceSchema} from './jointContract';
 import {assessJoint,defaultJointTolerance,jointComponents} from './joint';
 import type {JointResult} from './joint';
 import {problemProject} from './engine';
+import {useProject} from '../project/Store';
 const pct=(v:number|null)=>v===null?'Not calculated':`${(v*100).toFixed(4)}%`;
 export default function JointTolerancePanel({project,problem,routing,onChange,busy,onBusy,cancelled,invalid}:{project:Project;problem:DesignProblem;routing:Routing;onChange:(o:JointTolerance)=>void;busy:boolean;onBusy:(busy:boolean)=>void;cancelled:()=>boolean;invalid:boolean}){
- const o=problem.jointTolerance??defaultJointTolerance(project),signature=JSON.stringify({project,problem,routing}),live=useRef(signature),mounted=useRef(true);
+ const shared=useProject();
+ const o=problem.jointTolerance??defaultJointTolerance(project);
+ let signature:string;try{signature=serializeProject(problemProject(project,problem,routing));}catch{signature=JSON.stringify({project,problem,routing});}
+ const live=useRef(signature),mounted=useRef(true);
  live.current=signature;
  const [result,setResult]=useState<{key:string;value:JointResult}|null>(null),[error,setError]=useState(''),[progress,setProgress]=useState('');
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
  const nf=(label:string,value:number,unit:string,min:number,max:number,change:(v:number)=>void,step:number|'any'='any')=><NumberField label={label} value={value} unit={unit} min={min} max={max} step={step} onChange={v=>{change(v!);return true;}}/>;
- async function run(){const key=signature;onBusy(true);setError('');setResult(null);setProgress('Preparing joint samples…');
-  try{const value=await assessJoint(problemProject(project,problem,routing),o,{cancelled:()=>!mounted.current||cancelled()||live.current!==key,progress:(n,total)=>{if(mounted.current)setProgress(`Joint samples ${n} / ${total}`);}});if(mounted.current)setResult({key,value});}
+ async function run(){const key=signature;onBusy(true);setError('');setResult(null);shared.setJointResult(null);setProgress('Preparing joint samples…');
+  try{const value=await assessJoint(problemProject(project,problem,routing),o,{cancelled:()=>!mounted.current||cancelled()||live.current!==key,progress:(n,total)=>{if(mounted.current)setProgress(`Joint samples ${n} / ${total}`);}});if(mounted.current){setResult({key,value});shared.setJointResult(value);}}
   catch(e){if(mounted.current)setError(e instanceof Error?e.message:String(e));}finally{if(mounted.current){onBusy(false);setProgress('');}}
  }
  return <section className="joint-panel"><h3>Joint tolerance · D2.3.1</h3><p>Common mating group에 같은 rigid-body 공차를 적용하고, 각 부품의 Assembly 공차를 함께 적용합니다. 현재 설계만 평가합니다.</p>
@@ -31,7 +36,7 @@ export default function JointTolerancePanel({project,problem,routing,onChange,bu
  {progress&&<p role="status">{progress}</p>}{error&&<p role="alert">{error}</p>}
  {result&&<section data-testid="joint-result" className="problem-metrics"><h3>{result.key!==signature?'Stale joint result · run again':`${result.value.status} · ${result.value.meetsSampleGoals?'Sample goals met':'Review sample coverage / goals'}`}</h3>
  <dl><div><dt>Active error dimensions</dt><dd>{result.value.dimensions}</dd></div><div><dt>Joint field coverage</dt><dd>{result.value.fieldAssessed} / {result.value.planned}</dd></div><div><dt>Evaluated samples</dt><dd>{result.value.tested} / {result.value.planned}</dd></div><div><dt>Geometry passed</dt><dd>{result.value.geometryPassed} / {result.value.tested}</dd></div><div><dt>Nominal Mode overlap</dt><dd>{pct(result.value.nominal.eta)}</dd></div><div><dt>Lowest observed overlap</dt><dd>{pct(result.value.lowestEta)} · {result.value.lowestCase??'None'}{result.value.status!=='assessed'?' · partial / nominal only':''}</dd></div></dl>
- <p>Conditional normalized Mode overlap. 미평가 sample은 0 또는 성공으로 처리하지 않습니다. Joint 결과는 현재 후보 순위를 변경하지 않습니다.</p>
+ <p>Conditional normalized Mode overlap. 미평가 sample은 0 또는 성공으로 처리하지 않습니다. Save Problem Settings 후 같은 Project의 결과를 Analysis / Report에서 확인할 수 있습니다.</p>
  {result.value.issues.map((issue,i)=><p className="surface-reason" key={i}>{issue}</p>)}
  <details><summary>Sample results & domain</summary><table className="problem-locks"><thead><tr><th>Sample</th><th>Mode overlap</th><th>Geometry / domain</th></tr></thead><tbody>{[result.value.nominal,...result.value.observations].map(v=><tr key={v.id}><td>{v.id}</td><td>{pct(v.eta)}</td><td>{v.geometryPassed?'Passed':'Failed'} · {v.reasons.join(' · ')||v.comparisonClass}</td></tr>)}</tbody></table></details></section>}
  </section>;

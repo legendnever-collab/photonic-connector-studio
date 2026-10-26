@@ -1,4 +1,5 @@
 import {tensorOverlap} from './tensorOverlap';
+import type {JointResult} from '../design/joint';
 import {hasFolds,foldedInput,solveFoldedGaussian} from './foldedGaussian';
 import {analyzeRouting} from '../routing/analysis';
 import { physicalGaussianInput, solvePhysicalGaussian } from './physicalGaussian';
@@ -21,6 +22,7 @@ function useProjectStore() {
     const project = history.present, [saved, setSaved] = useState(() => serializeProject(project));
     const [selection, setSelection] = useState(() => project.authoring?.ports.source.preset?'@source':prescription(project).surfaces[0].id), [revision, setRevision] = useState(0);
     const [pending, setPending] = useState<Project|null>(null);
+    const [jointResult,setJointResult]=useState<JointResult|null>(null);
     const [invalid, setInvalid] = useState<string[]>([]);
     function commit(next: Project) { ProjectSchema.parse(next); setHistory(h => JSON.stringify(next) === JSON.stringify(h.present) ? h : { past: [...h.past.slice(-49), h.present], present: next, future: [] }); }
     function replace(next: Project) { commit(next); setSelection(next.authoring?.ports.source.preset?'@source':prescription(next).surfaces[0].id); setRevision(r => r + 1); setInvalid([]); }
@@ -44,7 +46,7 @@ function useProjectStore() {
     function open(raw: string) { const next = parseProject(raw); if(serializeProject(project)!==saved){setPending(next);return;} replace(next); setSaved(serializeProject(next)); }
     function requestReplace(next:Project){if(serializeProject(project)!==saved){setPending(next);return;}replace(next);}
     function acceptPending(){if(pending){replace(pending);setPending(null);}}
-    return { project, doc, trace, routing, gaussian, synthesisOverlap, physicalGaussian, foldedGaussian, history, pending, setPending, requestReplace, acceptPending, commit, replace, updateIdeal, updateSurface, undo, redo, selection, setSelection, revision, save, open, dirty: serializeProject(project) !== saved, invalid, setInvalid };
+    return { project, doc, trace, routing, gaussian, synthesisOverlap, physicalGaussian, foldedGaussian, jointResult, setJointResult, history, pending, setPending, requestReplace, acceptPending, commit, replace, updateIdeal, updateSurface, undo, redo, selection, setSelection, revision, save, open, dirty: serializeProject(project) !== saved, invalid, setInvalid };
 }
 const Context = createContext<ReturnType<typeof useProjectStore> | null>(null);
 export function ProjectProvider({ children }: {

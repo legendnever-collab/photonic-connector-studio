@@ -38,7 +38,7 @@ test('offline report exports complete standalone SVG and 3200 × 2000 PNG',async
     await page.getByLabel('Report selected Surface',{exact:true}).selectOption('Target');
     const download=page.waitForEvent('download');await dialog.getByRole('button',{name:'SVG',exact:true}).click();
     const svg=await readFile((await(await download).path())!,'utf8');
-    expect(svg).toContain('report-figure/2.4.2');expect(svg).toContain('Target');expect(svg).toContain('LINKED SURFACE');
+    expect(svg).toContain('report-figure/2.4.3');expect(svg).toContain('Target');expect(svg).toContain('LINKED SURFACE');
     expect(svg).not.toMatch(/var\(--|file:\/\/\/|<script|<image[^>]+https?:/);
     const pngDownload=page.waitForEvent('download');await dialog.getByRole('button',{name:'PNG 2×',exact:true}).click();
     const png=await readFile((await(await pngDownload).path())!);
