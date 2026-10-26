@@ -1,5 +1,8 @@
 import {applySmfReference} from '../authoring/smf';
 import {lensDesignExample} from '../lens/examples';
+import {defaultSynthesis} from '../synthesis/contract';
+import {defaultProblem} from '../design/engine';
+import {newPhysicalProject} from '../authoring/commands';
 import {framePose} from '../authoring/commands';
 import {withPortWorld,portWorld} from './model';
 import {fiberLensFiberProject} from '../authoring/starter';
@@ -10,9 +13,18 @@ import {pose} from '../surface/model';
 import type {Surface,Assembly} from '../surface/model';
 import {materialIndex} from '../surface/materials';
 import {defaultRouting} from './contract';
-export type RoutingExample='mirrors'|'prism'|'search'|'lens'|'prism-mode';
+export type RoutingExample='mirrors'|'prism'|'search'|'lens'|'prism-mode'|'prism-synthesis';
 /** Explicit manual prescriptions, not auto-generated or mode-matched solutions. */
 export function routingExample(which:RoutingExample):Project {
+ if(which==='prism-synthesis'){
+  const p=withPortWorld(applySmfReference(newPhysicalProject(),'target'),'target',pose(.016,0,.012));if(p.model.kind!=='surface')throw Error('Physical');
+  const d=p.model.prescription;d.name='D2.2.2 · Blank 2 Prism synthesis task';d.surfaces.at(-1)!.aperture=.004;
+  p.model.sourceMode={representation:'gaussian',mfdX:.001,mfdY:.001,polarization:'TE'};p.model.targetMode={...p.model.sourceMode};p.sourceBody=null;p.targetBody=null;
+  p.routing={...defaultRouting(),parts:{lens:0,mirror:0,prism:2}};
+  p.designProblem={...defaultProblem(p),maxParts:2,maxGenerated:2};p.designProblem.tolerance={...p.designProblem.tolerance,portPosition:[0,0,0],portAngle:[0,0,0],componentPosition:[0,0,0],componentAngle:[0,0,0]};
+  p.synthesis={...defaultSynthesis(),families:['prism2'],clearRadius:[.0015,.0015],prismLeg:[.006,.006],budget:128,geometryBudget:32,fitBudget:16};
+  return ProjectSchema.parse(p);
+ }
  if(which==='prism-mode'){
   const p=applySmfReference(routingExample('prism'),'target');if(p.model.kind!=='surface')throw Error('Physical');
   const d=p.model.prescription;d.name='D2.2.1 · Collimated BK7 Prism · TE';

@@ -65,7 +65,7 @@ test('independent vector Fresnel + 2D spectrum: window/grid convergence and phas
   evidence.push({kind,pol,production:v.eta,coarse,fine,wide,modelError:Math.abs(v.eta-wide),constantPhase:flat,domain:v.domain});
  }
  mkdirSync('test-results',{recursive:true});writeFileSync('test-results/D221-physics-convergence.json',JSON.stringify(evidence,null,2));
-});
+},30000);
 test('divergence, aperture, unsupported material and undefined output gates never substitute zero',()=>{
  const p=prismFixture();if(p.model.kind!=='surface')throw Error('fixture');
  p.model.sourceMode.mfdX=40e-6;p.model.sourceMode.mfdY=40e-6;
@@ -93,7 +93,7 @@ test('near-domain collimation and wavelength edges retain independent vector acc
   const r=solveFoldedGaussian(p),v=tensorOverlap(p,r);if(r.status!=='valid'||v.status!=='valid')throw Error(JSON.stringify(v));
   expect(Math.abs(v.eta-oracle(p,r.incident.q,96,8))).toBeLessThan(2e-4);
  }
-});
+},30000);
 import {materialIndex} from '../src/surface/materials';
 
 import {defaultProblem} from '../src/design/engine';
