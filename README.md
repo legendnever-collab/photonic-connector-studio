@@ -1,4 +1,12 @@
-# D2.3.3 · Joint Analysis / Report
+# D2.3.4 · Bounded Lens decenter / tilt
+
+작은 spherical Lens decenter / tilt를 exact chief ray 주변의 full complex Gaussian tensor로
+전달합니다. Chief incidence ≤50 mrad와 footprint / |R| ≤0.2 안에서 tangential / sagittal
+power와 anamorphism을 반영하며, Joint 평가·Gaussian·Analysis·Report가 같은 field를 사용합니다.
+η는 local first-order Gaussian reference입니다. 수치 비교 floor는 실제 광학계의 오차 보증이
+아닙니다. [식·독립 benchmark·범위·사용자 확인](docs/D2_3_4_OBLIQUE_LENS.md).
+
+## D2.3.3 · Joint Analysis / Report
 
 현재 설계의 Joint Tolerance 결과를 Analysis와 Report에서 공유합니다. Exact Project와 설정이 바뀌면 Stale로 표시하며, JSON / SVG provenance와 SVG / PNG 요약을 내보낼 수 있습니다. 설정만 Project에 저장하며 새 세션에서는 재평가합니다. [범위와 사용자 확인](docs/D2_3_3_JOINT_ANALYSIS_REPORT.md).
 

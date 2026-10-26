@@ -1,3 +1,4 @@
+import type {SphericalReference} from './foldedGaussian';
 import {curvature,coefficients} from '../surface/evaluator';
 import { abcd, axisLogOverlap, beam, fingerprint, MAX_SLOPE, rayleigh } from '../physics';
 import type { Beam, Complex, Matrix } from '../physics';
@@ -10,7 +11,7 @@ import type { PortContract } from '../authoring/contract';
 export const PHYSICAL_GAUSSIAN_ID = 'coaxial-surface-gaussian/1.1.0';
 export const APERTURE_TAIL_LIMIT = 1e-3;
 export type PhysicalSample = { x:number; n:number; y:Beam; z:Beam; heightY:number; heightZ:number; slopeY:number; slopeZ:number; side:'before'|'after'; surfaceId?:string };
-export type Overlap = {status:'valid';eta:number;logEta:number;lossDB:number;underflow:boolean;targetY:number;targetZ:number;offsetY:number;offsetZ:number;angleY:number;angleZ:number;scope?:string;comparisonClass?:string;domain?:{evaluator:string;prisms:{id:string;polarization:'s'|'p';phaseRad:number;criticalMarginRad:number;divergenceRad:number}[];quadratureError:number;paraxialPhaseBound:number;modelEtaTolerance:number;transmission:null;totalCoupling:null;assumptions:string}}
+export type Overlap = {status:'valid';eta:number;logEta:number;lossDB:number;underflow:boolean;targetY:number;targetZ:number;offsetY:number;offsetZ:number;angleY:number;angleZ:number;scope?:string;comparisonClass?:string;gaussianReference?:{evaluator:string;surfaces:SphericalReference[];assumptions:string;physicalEtaErrorBound:null;transmission:null;totalCoupling:null};domain?:{evaluator:string;prisms:{id:string;polarization:'s'|'p';phaseRad:number;criticalMarginRad:number;divergenceRad:number}[];quadratureError:number;paraxialPhaseBound:number;modelEtaTolerance:number;transmission:null;totalCoupling:null;assumptions:string}}
  | {status:'not-calculated';reason:string};
 export type PhysicalGaussian = {status:'valid';id:string;fingerprint:string;wavelength:number;warnings:string[];frame:Frame;samples:PhysicalSample[];incident:PhysicalSample;overlap:Overlap;surfaces:{id:string;x:number;nBefore:number;nAfter:number;aperture:number}[];targetCenter:{y:number;z:number};targetSlope:{y:number;z:number};matrix:Matrix;higherOrder:boolean;referenceMode:{y:number;z:number}|null}
  | {status:'invalid'|'out-of-domain';id:string;fingerprint:string;reason:string};

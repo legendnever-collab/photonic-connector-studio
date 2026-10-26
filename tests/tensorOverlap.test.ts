@@ -1,6 +1,6 @@
 import {test,expect} from 'vitest';
 import {gaussianTensorOverlap,tensorOverlap} from '../src/project/tensorOverlap';
-import {transformQ,inverseQ} from '../src/project/foldedGaussian';
+import {transformQ,inverseQ,refractSphericalQ} from '../src/project/foldedGaussian';
 import {axisLogOverlap,rayleigh} from '../src/physics';
 import type {QTensor} from '../src/project/foldedGaussian';
 import {fiberLensFiberProject} from '../src/authoring/starter';
@@ -31,6 +31,14 @@ test('rotated elliptical cross-phase overlap converges against independent compl
  const exact=gaussianTensorOverlap(Q,lambda,1,[2*w,2.6*w],[.8*w,-.5*w],[.01,-.008]).eta;
  expect(quadrature(Q,160,5*w)).toBeCloseTo(exact,8);expect(quadrature(Q,320,7*w)).toBeCloseTo(exact,11);
  const reversed=transformQ(Q,[1,0,0,-1]);expect(gaussianTensorOverlap(reversed,lambda,1,[2*w,2.6*w],[.8*w,.5*w],[.01,.008]).eta).toBeCloseTo(exact,12);
+});
+test('oblique spherical output tensor retains phase and normalization against two-dimensional field integration',()=>{
+ const a=.61,co=Math.cos(a),si=Math.sin(a),incident=transformQ([{re:.4*z,im:1.8*z},{re:0,im:0},{re:0,im:0},{re:-.8*z,im:.8*z}],[co,-si,si,co]);
+ for(const R of [50e-6,-50e-6]){
+  const i=.05,Q=refractSphericalQ(incident,1.5,1,R,Math.cos(i),Math.sqrt(1-(1.5*Math.sin(i))**2));
+  const exact=gaussianTensorOverlap(Q,lambda,1,[2*w,2.6*w],[.8*w,-.5*w],[.01,-.008]).eta;
+  expect(quadrature(Q,160,5*w)).toBeCloseTo(exact,8);expect(quadrature(Q,320,7*w)).toBeCloseTo(exact,11);
+ }
 });
 test('undefined target, TIR, clipping and polarization are not a zero-efficiency substitute',()=>{
  const p=fiberLensFiberProject();p.model.kind==='surface'&&(p.model.targetMode.mfdX=null);expect(tensorOverlap(p).status).toBe('not-calculated');

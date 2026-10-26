@@ -69,7 +69,7 @@ export function perturbJoint(p:Project,raw:JointTolerance,sample:JointSample):Pr
  }
  return ProjectSchema.parse(q);
 }
-export type JointObservation={id:string;eta:number|null;comparisonClass:string|null;evaluator:string|null;modelEtaTolerance:number|null;geometryPassed:boolean;reasons:string[]};
+export type JointObservation={id:string;eta:number|null;comparisonClass:string|null;evaluator:string|null;modelEtaTolerance:number|null;fieldAssumptions?:string;geometryPassed:boolean;reasons:string[]};
 export type JointResult={engine:string;inputSignature:string;settings:string;coverage:string;status:'assessed'|'partial'|'not-assessed'|'cancelled';dimensions:number;planned:number;tested:number;fieldAssessed:number;geometryPassed:number;nominal:JointObservation;observations:JointObservation[];lowestEta:number|null;lowestCase:string|null;meetsSampleGoals:boolean;issues:string[]};
 function observe(p:Project,id:string):JointObservation{
  const reasons:string[]=[],mode=tensorOverlap(p),route=analyzeRouting(p),clearance=p.designProblem?.strategy==='lens'?p.designProblem.lens?.clearance??0:p.designProblem?.routes.clearance??0;
@@ -79,7 +79,7 @@ function observe(p:Project,id:string):JointObservation{
  if(!routeOK)reasons.push(`Geometry: ${route.issues.join(' · ')||(route.status==='evaluated'?'Port position / angle exceeds declared tolerance.':route.reason)}`);if(clearanceIssue)reasons.push(`Geometry: ${clearanceIssue}`);
  if(partLimit)reasons.push('Geometry: total optical component limit exceeded.');
  if(mode.status!=='valid')reasons.push(mode.reason);
- return {id,eta:mode.status==='valid'?mode.eta:null,comparisonClass:mode.status==='valid'?mode.comparisonClass??null:null,evaluator:mode.status==='valid'?mode.domain?.evaluator??TENSOR_OVERLAP_ID:null,modelEtaTolerance:mode.status==='valid'?mode.domain?.modelEtaTolerance??1e-10:null,geometryPassed:routeOK&&!clearanceIssue&&!partLimit,reasons};
+ return {id,eta:mode.status==='valid'?mode.eta:null,comparisonClass:mode.status==='valid'?mode.comparisonClass??null:null,evaluator:mode.status==='valid'?mode.domain?.evaluator??TENSOR_OVERLAP_ID:null,modelEtaTolerance:mode.status==='valid'?mode.domain?.modelEtaTolerance??1e-10:null,...(mode.status==='valid'&&mode.gaussianReference?{fieldAssumptions:mode.gaussianReference.assumptions}:{}),geometryPassed:routeOK&&!clearanceIssue&&!partLimit,reasons};
 }
 export function jointCoverage(p:Project,raw:JointTolerance){const o=JointToleranceSchema.parse(raw);return JSON.stringify({engine:JOINT_ENGINE,evaluator:TENSOR_OVERLAP_ID,settings:o,axes:jointAxes(p,o)});}
 /** Yields before each sample solve, so synthesis shares the exact assessment and can cancel. */

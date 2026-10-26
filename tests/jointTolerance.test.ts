@@ -79,8 +79,8 @@ test('no error, caps, cancellation and unsupported fields cannot be qualified or
  const p=blank(),o=zero(p),empty=await assessJoint(p,o);expect(empty.status).toBe('not-assessed');expect(empty.planned).toBe(0);expect(empty.meetsSampleGoals).toBe(false);
  o.mating.position=[0,1e-6,0];o.maxCases=2;const cap=await assessJoint(p,o);expect(cap.status).toBe('partial');expect(cap.tested).toBe(2);expect(cap.planned).toBe(8);expect(cap.meetsSampleGoals).toBe(false);
  let count=0;const cancelled=await assessJoint(p,{...o,maxCases:8},{cancelled:()=>count++>1});expect(cancelled.status).toBe('cancelled');expect(cancelled.tested).toBe(2);expect(cancelled.meetsSampleGoals).toBe(false);
- const lens=fiberLensFiberProject(),local=zero(lens);local.assembly.position=[0,1e-6,0];const unsupported=await assessJoint(lens,local);expect(unsupported.status).toBe('partial');expect(unsupported.fieldAssessed).toBe(0);expect(unsupported.observations.every(v=>v.eta===null)).toBe(true);expect(unsupported.issues.join(' ')).toContain('centered');
- const tilted=zero(lens);tilted.assembly.angle=[0,.001,0];expect((await assessJoint(lens,tilted)).status).toBe('partial');
+ const lens=fiberLensFiberProject(),local=zero(lens);local.assembly.position=[0,.001,0];const unsupported=await assessJoint(lens,local);expect(unsupported.status).toBe('partial');expect(unsupported.fieldAssessed).toBe(0);expect(unsupported.observations.every(v=>v.eta===null)).toBe(true);expect(unsupported.issues.join(' ')).toMatch(/missed|clipping/);
+ const tilted=zero(lens);tilted.assembly.angle=[0,.001,0];expect((await assessJoint(lens,tilted)).status).toBe('assessed');
  if(p.model.kind==='surface')p.model.targetMode.mfdX=null;expect((await assessJoint(p,o)).nominal.eta).toBeNull();
 });
 test('geometry failures stay separate from a valid field metric and invalidate sample goals',async()=>{

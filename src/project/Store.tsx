@@ -36,9 +36,10 @@ function useProjectStore() {
     const physicalInputJSON = JSON.stringify(physicalGaussianInput(project));
     const physicalRaw = useMemo(() => solvePhysicalGaussian(project), [physicalInputJSON]);
     const foldedJSON=JSON.stringify(foldedInput(project));
-    const useTransported=hasFolds(project)||(!!project.routing?.lensSolution&&physicalRaw.status!=='valid');
+    const transportedReference=useMemo(()=>project.model.kind==='surface'?solveFoldedGaussian(project,{sampleSegments:false}):null,[foldedJSON]);
+    const useTransported=hasFolds(project)||(project.model.kind==='surface'&&physicalRaw.status!=='valid')||(transportedReference?.status==='valid'&&transportedReference.refractions.some(s=>s.incidenceRad>1e-8));
     const foldedGaussian=useMemo(()=>useTransported?solveFoldedGaussian(project):null,[foldedJSON,useTransported]);
-    const synthesisOverlap=useMemo(()=>project.model.kind==='surface'?tensorOverlap(project,foldedGaussian??solveFoldedGaussian(project,{sampleSegments:false})):null,[foldedJSON,foldedGaussian]);
+    const synthesisOverlap=useMemo(()=>project.model.kind==='surface'?tensorOverlap(project,foldedGaussian??transportedReference!):null,[foldedJSON,foldedGaussian,transportedReference]);
     const physicalGaussian=useMemo(()=>physicalRaw.status==='valid'&&synthesisOverlap?{...physicalRaw,overlap:synthesisOverlap}:physicalRaw,[physicalRaw,synthesisOverlap]);
     function updateIdeal(d: DesignDocument) { commit({ ...project, model: idealProject(d, project.sourceBody).model }); }
     function updateSurface(d: Prescription) { commit(withPrescription(project, d)); }
