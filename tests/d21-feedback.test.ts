@@ -22,8 +22,8 @@ beforeAll(()=>{
  failed=searchSynthesis(routed,pb,routed.routing!,defaultSynthesis());
  repaired=searchSynthesis(routed,{...pb,maxParts:4,maxGenerated:4},routed.routing!,defaultSynthesis());
 },120000);
-test('reported 96 geometry / 387 optical / zero candidates reproduces the inherited two-part replacement limit',()=>{
- expect(pb.maxGenerated).toBe(2);expect(failed.geometryEvaluated).toBe(96);expect(failed.evaluated).toBe(387);expect(failed.candidates).toHaveLength(0);
+test('bounded search preserves the inherited two-part replacement limit despite expanded manufacturing seeds',()=>{
+ expect(pb.maxGenerated).toBe(2);expect(failed.geometryEvaluated).toBe(96);expect(failed.evaluated).toBeGreaterThan(0);expect(failed.evaluated).toBeLessThanOrEqual(defaultSynthesis().budget);expect(failed.candidates).toHaveLength(0);
  expect(Object.keys(failed.rejected)).toContain('New / replacement component limit excludes 2 Lens + 2 fold (mirror2): 4 > 2');
  expect(failed.problem.maxGenerated).toBe(2);expect(serializeProject(routed)).toBe(before);
 });

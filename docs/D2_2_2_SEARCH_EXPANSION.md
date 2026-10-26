@@ -53,7 +53,7 @@ PIC receiving-field definition, global optimum, joint worst case or Yield claim.
 The original optical ≤8192, geometry ≤128, fit ≤2048, tolerance ≤1024 caps remain.
 Search is finite and may omit allocations when budget is exhausted. Max Lens
 count is two. Prefix routing requires a physically traceable prefix exiting to
- air. Arbitrary locked-anchor subproblems, post-TIR powered-field support and
+air. Arbitrary locked-anchor subproblems, post-TIR powered-field support and
 D2.3 robustness development are outside this checkpoint.
 
 ## Validation
@@ -73,6 +73,11 @@ physics tolerances and search budgets are unchanged.
 read-only Preview → Apply → common Analysis/Gaussian/Report → one Undo / Redo;
 manufacturing/air-allocation settings persist. Existing full suites preserve
 Mirror, 5 mm Lens relay, locks, SaveLoad, stale/tamper/cancel and old UI behavior.
+
+The historical D2.1.1 rejection fixture still requires zero candidates and the
+exact replacement-limit reason. Its old optical-trial count is no longer a
+contract because manufacturing seed interleaving changed; the hard budget cap
+remains asserted.
 
 Final validation and artifact identity are recorded in the PR and existing
 `artifacts/build-info-u1.json` / `artifacts/SHA256SUMS-u1.txt` manifests.
