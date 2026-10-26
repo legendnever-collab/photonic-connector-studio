@@ -2,6 +2,7 @@ import {test,expect} from 'vitest';
 import {assessJoint,defaultJointTolerance,jointAxes,jointComponents,jointSamples,perturbJoint} from '../src/design/joint';
 import {JointToleranceSchema} from '../src/design/jointContract';
 import type {JointTolerance} from '../src/design/jointContract';
+import {ProblemSchema} from '../src/design/contract';
 import {defaultProblem,problemProject} from '../src/design/engine';
 import {ProjectSchema,prescription,serializeProject,parseProject} from '../src/project/model';
 import {newPhysicalProject,framePose} from '../src/authoring/commands';
@@ -21,6 +22,7 @@ function near(a:Vec,b:Vec){for(const k of ['x','y','z'] as const)expect(a[k]).to
 function rotate(v:Vec,r:number,p:number,y:number):Vec{const c=Math.cos,s=Math.sin;return {x:c(y)*c(p)*v.x+(c(y)*s(p)*s(r)-s(y)*c(r))*v.y+(c(y)*s(p)*c(r)+s(y)*s(r))*v.z,y:s(y)*c(p)*v.x+(s(y)*s(p)*s(r)+c(y)*c(r))*v.y+(s(y)*s(p)*c(r)-c(y)*s(r))*v.z,z:-s(p)*v.x+c(p)*s(r)*v.y+c(p)*c(r)*v.z};}
 test('optional joint contract preserves old files; SI state roundtrips and rejects invalid declarations',()=>{
  const p=blank(),o=zero(p),problem={...defaultProblem(p),jointTolerance:o};expect(parseProject(serializeProject(p)).designProblem).toBeUndefined();
+ expect(JSON.stringify(ProblemSchema.parse(problem))).toBe(JSON.stringify(problem));
  expect(parseProject(serializeProject(problemProject(p,problem,p.routing!))).designProblem?.jointTolerance).toEqual(o);
  for(const change of [{samples:3},{samples:8.5},{seed:-1},{seed:4294967296},{maxCases:0},{extra:true},{mating:{...o.mating,ports:['target','target']}},{assembly:{position:[NaN,0,0],angle:[0,0,0]}}])expect(JointToleranceSchema.safeParse({...o,...change}).success).toBe(false);
  expect(()=>jointAxes(p,{...o,mating:{...o.mating,components:['missing']}})).toThrow('missing');
