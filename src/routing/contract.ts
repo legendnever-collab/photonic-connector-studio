@@ -2,9 +2,9 @@ import {LensSolutionSchema} from '../lens/contract';
 import {z} from 'zod';
 const coordinate=z.number().finite().min(-1).max(1);
 const vector=z.object({x:coordinate,y:coordinate,z:coordinate}).strict();
-export const TopologySchema=z.enum(['direct','mirror1','mirror2','prism1','mirror-prism']);
+export const TopologySchema=z.enum(['direct','mirror1','mirror2','prism1','mirror-prism','prism2']);
 export type Topology=z.infer<typeof TopologySchema>;
-export const SearchOptionsSchema=z.object({version:z.literal(1),templates:z.array(TopologySchema).min(1).max(5).refine(a=>new Set(a).size===a.length,'Duplicate topology'),
+export const SearchOptionsSchema=z.object({version:z.literal(1),templates:z.array(TopologySchema).min(1).max(6).refine(a=>new Set(a).size===a.length,'Duplicate topology'),
  budget:z.number().int().min(1).max(256),clearRadius:z.number().finite().min(1e-6).max(.01),
  prismLeg:z.number().finite().min(4e-6).max(.04),mirrorThickness:z.number().finite().min(1e-7).max(.01),
  clearance:z.number().finite().min(0).max(.01),ranking:z.enum(['fewest-parts','shortest-path'])}).strict();

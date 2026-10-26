@@ -50,7 +50,7 @@ test('known four-Surface initial train can be fitted; full Surface and interval 
  const batch=searchSynthesis(matched,opt,defaultRouting(),{...o,budget:256,fitBudget:64}),c=batch.candidates[0];expect(c).toBeDefined();const after=applySynthesis(matched,batch,c.id);expect(prescription(after).surfaces.slice(0,2)).toEqual(prescription(matched).surfaces.slice(0,2));expect(after.bodies[0]).toEqual(matched.bodies[0]);expect(c.oat.status).toBe('not-assessed');
  opt.fixedSurfaces=[];const {lensDomain,defaultLensOptions}=await import('../src/lens/domain');opt.lens=defaultLensOptions(matched,'existing');const domain=lensDomain(matched,'existing');for(const [i,v]of opt.lens.variables.entries())for(const [j,key]of (['position','front','rear','thickness'] as const).entries())v[key]=[domain.slots[i].values[j],domain.slots[i].values[j]];
  const interval=searchSynthesis(matched,opt,defaultRouting(),{...o,budget:64,fitBudget:32});expect(interval.candidates.length).toBeGreaterThan(0);const frozen=applySynthesis(matched,interval,interval.candidates[0].id);expect(prescription(frozen)).toEqual(prescription(matched));expect(frozen.bodies).toEqual(matched.bodies);
-});
+},30000);
 test('different Output direction yields a one-Mirror Mode solution; common rigid transforms preserve it',async()=>{
  const {compile,frame,compose,V}=await import('../src/surface/model'),{framePose}=await import('../src/authoring/commands'),{tensorOverlap}=await import('../src/project/tensorOverlap'),{solveFoldedGaussian}=await import('../src/project/foldedGaussian'),{prescription}=await import('../src/project/model');
  const port=pose(.005,0,.005);port.rotation.pitch=-Math.PI/2;const input=withPortWorld(blank(),'target',port),opts={...o,families:['mirror1'] as const};

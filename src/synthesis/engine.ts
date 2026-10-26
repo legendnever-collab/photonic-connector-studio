@@ -15,26 +15,29 @@ import {screenClearance} from '../routing/clearance';
 import {lensSearch,beamMerit} from '../lens/search';
 import type {BeamMerit} from '../lens/search';
 import {lensDomain,buildLensProject} from '../lens/domain';
-import {emptyTrain,addLenses,lockedIds,synthesisLensOptions,checkFrozen} from './construction';
+import {emptyTrain,addLenses,lockedIds,synthesisLensOptions,checkFrozen,airLensSegments} from './construction';
 import {SynthesisSchema,SYNTHESIS_ID} from './contract';
 import type {SynthesisOptions} from './contract';
-export type Recipe={kind:'existing'}|{kind:'generated';route:RouteProposal;clear:number;count:0|1|2;side:'first'|'last'};
+export type Recipe={kind:'existing'}|{kind:'generated';route:RouteProposal;clear:number;count:0|1|2;side:'first'|'last';leg?:number;segments?:number[]};
 export type OAT={status:'assessed'|'partial'|'not-assessed';planned:number;tested:number;fieldAssessed:number;geometryPassed:number;worstEta:number|null;issues:string[];coverage:string};
 export type SynthesisCandidate={id:string;topology:string;project:Project;recipe:Recipe;values:number[];seal:string;merit:BeamMerit|null;eta:number|null;comparisonClass:string;reason:string;qualified:boolean;oat:OAT};
-export type SynthesisResult={engine:typeof SYNTHESIS_ID;inputSignature:string;settings:string;problem:DesignProblem;routing:Routing;options:SynthesisOptions;status:'completed'|'budget-exhausted'|'unsupported'|'invalid-input'|'cancelled';reason:string;evaluated:number;geometryEvaluated:number;toleranceEvaluated:number;refinements:number;placementFeedback:{topology:string;tested:number;supported:number;worstEta:number|null}[];rejected:Record<string,number>;families:Record<string,number>;candidates:SynthesisCandidate[]};
+export type SynthesisResult={engine:typeof SYNTHESIS_ID;inputSignature:string;settings:string;problem:DesignProblem;routing:Routing;options:SynthesisOptions;status:'completed'|'budget-exhausted'|'unsupported'|'invalid-input'|'cancelled';reason:string;evaluated:number;geometryEvaluated:number;toleranceEvaluated:number;refinements:number;allocationCoverage:{planned:number;tested:number;interiorTested:number;anchorSurfaces:number};placementFeedback:{topology:string;tested:number;supported:number;worstEta:number|null}[];rejected:Record<string,number>;families:Record<string,number>;candidates:SynthesisCandidate[]};
 const message=(e:unknown)=>e instanceof Error?e.message:String(e),eq=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 const emptyOAT=():OAT=>({status:'not-assessed',planned:0,tested:0,fieldAssessed:0,geometryPassed:0,worstEta:null,issues:[],coverage:''});
 export function synthesisFingerprint(p:Project){const q=structuredClone(p);if(q.synthesis)delete q.synthesis.solution;return projectFingerprint(q);}
 export function synthesisProject(p:Project,problem:DesignProblem,routing:Routing,options:SynthesisOptions){const o=SynthesisSchema.parse(options);delete o.solution;return ProjectSchema.parse({...problemProject(p,problem,routing),synthesis:o});}
-function routeOptions(problem:DesignProblem,o:SynthesisOptions,clear:number):SearchOptions{return {...problem.routes,templates:o.families,budget:o.geometryBudget,clearRadius:clear,prismLeg:Math.max(problem.routes.prismLeg,4*clear),mirrorThickness:Math.max(problem.routes.mirrorThickness,20e-6)};}
+export const manufacturingSeeds=([a,b]:[number,number])=>[...new Set([a,b,Math.sqrt(a*b)])];
+function legSeeds(problem:DesignProblem,o:SynthesisOptions,clear:number){if(!o.prismLeg)return [Math.max(problem.routes.prismLeg,4*clear)];const eligible=manufacturingSeeds(o.prismLeg).filter(v=>v>=4*clear);return eligible.length?eligible:[o.prismLeg[0]];}
+function routeOptions(problem:DesignProblem,o:SynthesisOptions,clear:number,leg=legSeeds(problem,o,clear)[0]):SearchOptions{if(leg===undefined)throw Error('No Prism leg satisfies Clear Radius / manufacturing bounds.');const templates=o.families.filter(f=>!f.includes('prism')||leg>=4*clear);if(!templates.length)throw Error('No Prism leg satisfies Clear Radius / manufacturing bounds.');return {...problem.routes,templates,budget:o.geometryBudget,clearRadius:clear,prismLeg:leg,mirrorThickness:Math.max(problem.routes.mirrorThickness,20e-6)};}
 function construct(p:Project,problem:DesignProblem,o:SynthesisOptions,recipe:Recipe):Project{
  if(recipe.kind==='existing')return structuredClone(p);
- const base=emptyTrain(p,problem),opts=routeOptions(problem,o,recipe.clear),domain=prepareRoutingDomain(base,opts);
- if(!o.families.includes(recipe.route.topology)||![o.clearRadius[0],o.clearRadius[1]].includes(recipe.clear))throw Error('Recipe family / size is outside the declared finite set.');
- const shapes:Record<Topology,string[]>={direct:[],mirror1:['mirror'],mirror2:['mirror','mirror'],prism1:['prism'],'mirror-prism':['mirror','prism']};
+ const base=emptyTrain(p,problem),opts=routeOptions(problem,o,recipe.clear,recipe.leg),domain=prepareRoutingDomain(base,opts,prescription(base).surfaces.length-1);
+ if(!o.families.includes(recipe.route.topology)||!opts.templates.includes(recipe.route.topology)||!manufacturingSeeds(o.clearRadius).includes(recipe.clear)||!legSeeds(problem,o,recipe.clear).includes(opts.prismLeg))throw Error('Recipe family / size is outside the declared finite set.');
+ const shapes:Record<Topology,string[]>={direct:[],mirror1:['mirror'],mirror2:['mirror','mirror'],prism1:['prism'],'mirror-prism':['mirror','prism'],prism2:['prism','prism']};
  if(!eq(recipe.route.blocks.map(b=>b.kind),shapes[recipe.route.topology]))throw Error('Recipe topology changed.');
  const reserved=[...prescription(p).assemblies.map(a=>a.id),...prescription(p).surfaces.map(s=>s.id)],route=buildRouteProposal(domain,opts,recipe.route,reserved).project;prescription(route).name=prescription(p).name;
- return addLenses(route,recipe.count,recipe.clear,o,recipe.side,reserved);
+ if(recipe.segments&&o.lensPlacement!=='all-air'){const air=airLensSegments(route).filter(i=>i>=prescription(base).surfaces.length-1);if(recipe.segments.some(i=>i!==air[0]&&i!==air.at(-1)))throw Error('Interior Lens allocation is not enabled.');}
+ return addLenses(route,recipe.count,recipe.clear,o,recipe.side,reserved,recipe.segments);
 }
 function preflight(p:Project,problem:DesignProblem){
  if(p.model.kind!=='surface')throw Error('Physical Project required.');
@@ -60,7 +63,7 @@ function overlap(p:Project,r:FoldedResult){
 function geometry(base:Project,p:Project,problem:DesignProblem){checkFrozen(base,p,problem);problemLimits(base,p,problem);const r=analyzeRouting(p);const reason=r.path?screenClearance(p,[],r.path,problem.routes.clearance):'No finite chief path';if(reason)throw Error(reason);}
 /** Shared budget covers every nominal transported forward solve, including Lens preflight and final candidate metrics. */
 export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRouting:Routing,rawOptions:SynthesisOptions):Generator<string,SynthesisResult>{
- const out:SynthesisResult={engine:SYNTHESIS_ID,inputSignature:serializeProject(input),settings:JSON.stringify([rawProblem,rawRouting,rawOptions]),problem:structuredClone(rawProblem),routing:structuredClone(rawRouting),options:structuredClone(rawOptions),status:'completed',reason:'',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,refinements:0,placementFeedback:[],rejected:{},families:{},candidates:[]};
+ const out:SynthesisResult={engine:SYNTHESIS_ID,inputSignature:serializeProject(input),settings:JSON.stringify([rawProblem,rawRouting,rawOptions]),problem:structuredClone(rawProblem),routing:structuredClone(rawRouting),options:structuredClone(rawOptions),status:'completed',reason:'',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};
  const reject=(s:string)=>{out.rejected[s]=(out.rejected[s]??0)+1;};
  let p:Project,o:SynthesisOptions,problem:DesignProblem;
  try{problem=ProblemSchema.parse(rawProblem);const routing=RoutingSchema.parse(rawRouting);o=SynthesisSchema.parse(rawOptions);p=synthesisProject(input,problem,routing,o);preflight(p,problem);}catch(e){out.status='invalid-input';out.reason=message(e);return out;}
@@ -77,7 +80,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
   const chosen=[...diverse.values()].sort(compare).slice(0,6);for(const x of out.candidates)if(chosen.length<8&&!chosen.includes(x))chosen.push(x);out.candidates=chosen.sort(compare);
  };
  function* fit(recipe:Recipe,topology:string,allowance:number):Generator<string,number>{
-  const start=out.evaluated;let cost=Infinity;
+  const start=out.evaluated;let cost=Infinity;out.allocationCoverage.tested++;if(recipe.kind==='generated'&&recipe.segments?.some(i=>i>out.allocationCoverage.anchorSurfaces&&i<out.allocationCoverage.anchorSurfaces+recipe.route.blocks.reduce((n,b)=>n+(b.kind==='prism'?3:1),0)))out.allocationCoverage.interiorTested++;
   try{
    const base=construct(p,problem,o,recipe),hasLens=prescription(base).surfaces.some(s=>prescription(base).assemblies.find(a=>a.id===s.assemblyId)?.kind==='lens');
    if(!hasLens){retain(base,recipe,[],topology);return out.candidates.find(c=>eq(c.recipe,recipe))?.merit?.score??Infinity;}
@@ -85,6 +88,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
    const prior=out.candidates.filter(c=>eq(c.recipe,recipe)&&c.values.length).sort(compare)[0],options=synthesisLensOptions(base,problem,o,Math.max(1,Math.min(prior?.qualified?64:o.fitBudget,allowance-3))),domain=lensDomain(base,'existing'),warm=prior?buildLensProject(domain,prior.values):base,it=lensSearch(warm,options,forward);let v=it.next();
    while(!v.done){yield `${topology} · optical ${out.evaluated}/${o.budget}`;if(out.evaluated>=o.budget-1||out.evaluated-start>=allowance){v=it.return({engine:'bounded-lens-reference/1.0.0',status:'budget-exhausted',reason:'Global allocation exhausted',inputSignature:'',inputFingerprint:'',options,evaluated:0,rejected:{},candidates:[],baseline:null});break;}v=it.next();}
    if(!v.done)return cost;
+   if(v.value.status==='unsupported')reject(v.value.reason);
    if(v.value.candidates.length===0)for(const [s,n]of Object.entries(v.value.rejected))out.rejected[s]=(out.rejected[s]??0)+n;
    for(const c of v.value.candidates.slice(0,2)){
     if(out.evaluated>=o.budget)break;
@@ -102,35 +106,49 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  const tasks:{recipe:Recipe;topology:string;domain?:RouteDomain;proposal?:RouteProposal}[]=[];
  if(componentIds(p).length)tasks.push({recipe:{kind:'existing'},topology:'Retained initial train'});
  let base:Project|null=null;try{base=emptyTrain(p,problem);}catch(e){reject(message(e));if(!lockedIds(p,problem).size){out.status='unsupported';out.reason=message(e);return out;}}
- const seeds:{q:RouteProposal;domain:RouteDomain;clear:number}[]=[];
- if(base)for(const clear of [...new Set(o.clearRadius)]){
-  try{const opts=routeOptions(problem,o,clear),domain=prepareRoutingDomain(base,opts),all=routeProposals(domain,opts);
+ if(base)out.allocationCoverage.anchorSurfaces=prescription(base).surfaces.length-1;
+ const seeds:{q:RouteProposal;domain:RouteDomain;clear:number;leg:number}[]=[],pools:typeof seeds[]=[];
+ if(base)for(const clear of manufacturingSeeds(o.clearRadius))for(const leg of legSeeds(problem,o,clear)){
+  try{const opts=routeOptions(problem,o,clear,leg),domain=prepareRoutingDomain(base,opts,prescription(base).surfaces.length-1),all=routeProposals(domain,opts),pool:typeof seeds=[];
    // Round-robin family opportunities; do not consume the geometry pool in one topology.
-   const groups=o.families.map(f=>all.filter(q=>q.topology===f));let i=0;while(groups.some(g=>i<g.length)){for(const g of groups)if(g[i])seeds.push({q:g[i],domain,clear});i++;}
+   const groups=o.families.map(f=>all.filter(q=>q.topology===f));let i=0;while(groups.some(g=>i<g.length)){for(const g of groups)if(g[i])pool.push({q:g[i],domain,clear,leg});i++;}pools.push(pool);
   }catch(e){reject(message(e));}
  }
+ // Interleave every manufacturing size before considering the next placement.
+ for(let i=0;pools.some(p=>i<p.length);i++)for(const pool of pools)if(pool[i])seeds.push(pool[i]);
+ if(!seeds.length&&o.families.some(f=>f.includes('prism')))reject('No eligible Prism geometry / manufacturing seed in the declared bounds.');
  const feasible:{recipe:Extract<Recipe,{kind:'generated'}>;domain:RouteDomain;proposal:RouteProposal}[]=[];
- for(const seed of seeds){if(out.geometryEvaluated>=Math.max(1,Math.floor(o.geometryBudget*.75))){limited=true;break;}const {q,domain,clear}=seed,key=JSON.stringify([q,clear]);if(seen.has(key))continue;seen.add(key);out.geometryEvaluated++;out.families[q.topology]=(out.families[q.topology]??0)+1;
-  try{const opts=routeOptions(problem,o,clear),built=buildRouteProposal(domain,opts,q);validateRouteProposal(built.project,built.ids,opts,domain.box);
+ for(const seed of seeds){if(out.geometryEvaluated>=Math.max(1,Math.floor(o.geometryBudget*.75))){limited=true;break;}const {q,domain,clear,leg}=seed,key=JSON.stringify([q,clear,leg]);if(seen.has(key))continue;seen.add(key);out.geometryEvaluated++;out.families[q.topology]=(out.families[q.topology]??0)+1;
+  try{const opts=routeOptions(problem,o,clear,leg),built=buildRouteProposal(domain,opts,q);validateRouteProposal(built.project,built.ids,opts,domain.box);
    for(const count of [2,1,0] as const){
-    const parts=q.blocks.length+count,structure=`${count} Lens + ${q.blocks.length} fold (${q.topology})`;
-    if(count>p.routing!.parts.lens){reject(`Lens limit excludes ${structure}: ${count} > ${p.routing!.parts.lens}`);continue;}
+    const retained=componentIds(domain.base).length,retainedLens=prescription(domain.base).assemblies.filter(a=>a.kind==='lens'&&componentIds(domain.base).includes(a.id)).length,parts=retained+q.blocks.length+count,structure=`${count} Lens + ${q.blocks.length} fold (${q.topology})`;
+    if(count+retainedLens>Math.min(2,p.routing!.parts.lens)){reject(`Lens limit excludes ${structure}: ${count} > ${p.routing!.parts.lens}`);continue;}
     if(parts>problem.maxParts){reject(`Total component limit excludes ${structure}: ${parts} > ${problem.maxParts}`);continue;}
-    if(parts>problem.maxGenerated){reject(`New / replacement component limit excludes ${structure}: ${parts} > ${problem.maxGenerated}`);continue;}
-    for(const side of count===1?['first','last'] as const:['first'] as const){const recipe:Extract<Recipe,{kind:'generated'}>={kind:'generated',route:q,clear,count,side};feasible.push({recipe,domain,proposal:q});}
+    if(q.blocks.length+count>problem.maxGenerated){reject(`New / replacement component limit excludes ${structure}: ${q.blocks.length+count} > ${problem.maxGenerated}`);continue;}
+    // Endpoints retain the proven relay seed. In anchored problems use explicit
+    // air cells so a new Lens cannot be inserted ahead of a fixed prefix.
+    const air=airLensSegments(built.project),prefix=prescription(domain.base).surfaces.length-1,available=air.filter(i=>i>=prefix);
+    const allocations:(number[]|undefined)[]=prefix?[...(count===0?[[]]:count===1?available.map(i=>[i]):available.flatMap((i,k)=>available.slice(k).map(j=>[i,j])))]:[undefined];
+    if(!prefix&&o.lensPlacement==='all-air'&&count)for(const a of count===1?available.map(i=>[i]):available.flatMap((i,k)=>available.slice(k).map(j=>[i,j])))allocations.push(a);
+    for(const segments of allocations){
+     if(segments&&prefix&&o.lensPlacement!=='all-air'&&segments.some(i=>i!==available[0]&&i!==available.at(-1)))continue;
+     for(const side of !segments&&count===1?['first','last'] as const:['first'] as const){const recipe:Extract<Recipe,{kind:'generated'}>={kind:'generated',route:q,clear,count,side,leg,...(segments?{segments}:{})};feasible.push({recipe,domain,proposal:q});}
+    }
    }
   }catch(e){reject(message(e));}yield `Geometry ${out.geometryEvaluated}/${o.geometryBudget}`;
  }
  // Fit representatives first, then use optical merit to revisit placement rather than geometry rank.
- const groups=new Map<string,typeof feasible>();for(const t of feasible){const key=t.proposal.topology+'-'+t.recipe.count+'-'+t.recipe.side+'-'+t.recipe.clear;const a=groups.get(key)??[];a.push(t);groups.set(key,a);}
- const initial=[...groups.values()].flatMap(g=>g.slice(0,3));
+ const groups=new Map<string,typeof feasible>();for(const t of feasible){const key=t.proposal.topology+'-'+t.recipe.count+'-'+t.recipe.side+'-'+t.recipe.clear+'-'+t.recipe.leg+'-'+JSON.stringify(t.recipe.segments);const a=groups.get(key)??[];a.push(t);groups.set(key,a);}
+ const groupList=[...groups.values()].sort((a,b)=>Number(!!a[0].recipe.segments)-Number(!!b[0].recipe.segments));
+ const initial=groupList.flatMap(g=>g.slice(0,o.lensPlacement==='all-air'||o.prismLeg?1:3));
  for(const t of initial)tasks.push({recipe:t.recipe,topology:t.proposal.topology,domain:t.domain,proposal:t.proposal});
+ out.allocationCoverage.planned=tasks.length;
  const scored:{cost:number;task:typeof tasks[number]}[]=[];
  for(const task of tasks){if(out.evaluated>=o.budget-4)break;const allowance=Math.min(o.fitBudget,Math.max(1,Math.floor((o.budget-out.evaluated)*.6/Math.max(1,tasks.length-scored.length))));const cost=yield* fit(task.recipe,task.topology,allowance);scored.push({cost,task});}
  for(const {task} of scored.filter(s=>Number.isFinite(s.cost)).sort((a,b)=>a.cost-b.cost).slice(0,2)){
   if(!task.domain||!task.proposal||task.recipe.kind!=='generated')continue;
   const step=(task.domain.rangeA[1]-task.domain.rangeA[0])/16;
-  for(const q of refineRouteProposal(task.domain,task.proposal,step)){
+  for(const q of refineRouteProposal(task.domain,task.proposal,step,routeOptions(problem,o,task.recipe.clear,task.recipe.leg))){
    if(out.geometryEvaluated>=o.geometryBudget||out.evaluated>=o.budget-4)break;out.geometryEvaluated++;out.refinements++;
    yield* fit({...task.recipe,route:q},q.topology,Math.min(o.fitBudget,o.budget-out.evaluated-2));
   }
@@ -155,7 +173,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
 export function searchSynthesis(p:Project,problem:DesignProblem,r:Routing,o:SynthesisOptions){const it=synthesisSteps(p,problem,r,o);let v=it.next();while(!v.done)v=it.next();return v.value;}
 export async function searchSynthesisAsync(p:Project,problem:DesignProblem,r:Routing,o:SynthesisOptions,hooks:{cancelled:()=>boolean;progress:(s:string)=>void}){
  const it=synthesisSteps(structuredClone(p),structuredClone(problem),structuredClone(r),structuredClone(o));let v=it.next(),last=performance.now();
- while(!v.done){if(hooks.cancelled()){const empty:SynthesisResult={engine:SYNTHESIS_ID,inputSignature:serializeProject(p),settings:JSON.stringify([problem,r,o]),problem,routing:r,options:o,status:'cancelled',reason:'Cancelled; Preview discarded, Project unchanged.',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,refinements:0,placementFeedback:[],rejected:{},families:{},candidates:[]};it.return(empty);return empty;}
+ while(!v.done){if(hooks.cancelled()){const empty:SynthesisResult={engine:SYNTHESIS_ID,inputSignature:serializeProject(p),settings:JSON.stringify([problem,r,o]),problem,routing:r,options:o,status:'cancelled',reason:'Cancelled; Preview discarded, Project unchanged.',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};it.return(empty);return empty;}
   if(performance.now()-last>8){hooks.progress(v.value);await new Promise(resolve=>setTimeout(resolve,0));last=performance.now();}v=it.next();
  }return v.value;
 }

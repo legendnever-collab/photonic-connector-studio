@@ -14,7 +14,7 @@ import type {SearchOptions,Topology,Box} from './contract';
 import {lineBox,screenClearance} from './clearance';
 
 export const SEARCH_ID='bounded-port-routing/1.0.0' as const;
-export const TOPOLOGY_NAMES:Record<Topology,string>={direct:'Direct',mirror1:'1 Mirror',mirror2:'2 Mirrors',prism1:'TIR Prism','mirror-prism':'Mirror + TIR Prism'};
+export const TOPOLOGY_NAMES:Record<Topology,string>={direct:'Direct',mirror1:'1 Mirror',mirror2:'2 Mirrors',prism1:'TIR Prism','mirror-prism':'Mirror + TIR Prism',prism2:'2 TIR Prisms'};
 export type Candidate={id:string;topology:Topology;project:Project;generatedIds:string[];analysis:RoutingResult;length:number;partCount:number;footprint:number};
 export type SearchResult={engine:typeof SEARCH_ID;status:'completed'|'budget-exhausted'|'cancelled'|'unsupported';reason:string;inputSignature:string;inputFingerprint:string;options:SearchOptions;evaluated:number;rejected:Record<string,number>;candidates:Candidate[]};
 export type SearchProgress={evaluated:number;accepted:number;budget:number};
@@ -31,19 +31,20 @@ function generatedPose(f:Frame){const p=framePose(f);return {origin:V(p.origin.x
 function normalFrame(origin:Vec,x:Vec):Frame {
  const n=unit(x),helper=Math.abs(n.z)<.9?V(0,0,1):V(0,1,0),y=unit(cross(helper,n));return {origin,axes:[n,y,unit(cross(n,y))]};
 }
-function prepare(p:Project,o:SearchOptions):Prepared {
+function prepare(p:Project,o:SearchOptions,fixedPrefix?:number):Prepared {
  if(p.model.kind!=='surface')throw Error('Physical Project required.');
  const d=p.model.prescription,ss=compile(d),target=ss.at(-1)!,r=p.routing??defaultRouting();
  if(d.source.channels.rows!==1||d.source.channels.cols!==1||ss.some(s=>s.array))throw Error('Single-channel, non-array routing only.');
  if(target.shape!=='plane')throw Error('Output must be one planar Port.');
- const firstFold=d.surfaces.slice(0,-1).findIndex(s=>['mirror','prism'].includes(d.assemblies.find(a=>a.id===s.assemblyId)!.kind)),cut=firstFold<0?d.surfaces.length-1:firstFold;
+ const firstFold=d.surfaces.slice(0,-1).findIndex(s=>['mirror','prism'].includes(d.assemblies.find(a=>a.id===s.assemblyId)!.kind)),cut=fixedPrefix??(firstFold<0?d.surfaces.length-1:firstFold);
+ if(!Number.isInteger(cut)||cut<0||cut>d.surfaces.length-1)throw Error('Invalid fixed-prefix boundary.');
  const fixed=d.surfaces.slice(0,cut),suffix=d.surfaces.slice(cut,-1);
  if(suffix.some(s=>!['mirror','prism'].includes(d.assemblies.find(a=>a.id===s.assemblyId)!.kind)))throw Error('Only a trailing Mirror / Prism section can be replaced. Lens after a fold requires another search domain.');
- if(fixed.some(s=>d.assemblies.find(a=>a.id===s.assemblyId)!.kind!=='lens'||s.interaction!=='refract'))throw Error('Fixed prefix supports physical Lens blocks only. Remove draft / array / auxiliary surfaces before searching.');
+ if(fixedPrefix===undefined&&fixed.some(s=>d.assemblies.find(a=>a.id===s.assemblyId)!.kind!=='lens'||s.interaction!=='refract'))throw Error('Fixed prefix supports physical Lens blocks only. Remove draft / array / auxiliary surfaces before searching.');
  const fixedIds=new Set(fixed.map(s=>s.assemblyId));
- if([...fixedIds].some(id=>!p.bodies.some(b=>b.assemblyId===id&&b.kind==='lens')))throw Error('Define the fixed Lens Body before clearance screening.');
- if(fixedIds.size>r.parts.lens)throw Error('Fixed Lens count exceeds the configured limit.');
- if(r.parts.prism>=1&&o.prismLeg<4*o.clearRadius&&o.templates.some(t=>t==='prism1'||t==='mirror-prism'))throw Error('Prism leg must be at least 4 × Clear Radius.');
+ if([...fixedIds].some(id=>!p.bodies.some(b=>b.assemblyId===id&&b.kind===d.assemblies.find(a=>a.id===id)!.kind)))throw Error('Define the fixed Lens Body before clearance screening.');
+ if([...fixedIds].filter(id=>d.assemblies.find(a=>a.id===id)!.kind==='lens').length>r.parts.lens)throw Error('Fixed Lens count exceeds the configured limit.');
+ if(r.parts.prism>=1&&o.prismLeg<4*o.clearRadius&&o.templates.some(t=>t==='prism1'||t==='mirror-prism'||t==='prism2'))throw Error('Prism leg must be at least 4 × Clear Radius.');
  const keep=new Set([...fixedIds,target.assemblyId]);
  // Keep explicit reference / alignment ancestry, but remove obsolete optical route blocks.
  if(p.authoring?.alignment.movingId&&p.authoring.alignment.movingId!=='@source')keep.add(p.authoring.alignment.movingId);
@@ -68,6 +69,25 @@ function twoMirrors(p:Prepared,t:number,u:number,refine=0):Proposal|null {
  const a=add(p.start,mul(p.incoming,t)),b=sub(p.target,mul(p.outgoing,u));if(norm(sub(b,a))<1e-8)return null;
  const middle=unit(sub(b,a));return {topology:'mirror2',blocks:[mirror(a,p.incoming,middle),mirror(b,middle,p.outgoing)],parameters:[t,u],refine};
 }
+/** Two normal-entry right-angle prisms. The middle direction is orthogonal to
+ * both Port axes; parallel displaced axes provide a bounded placement freedom. */
+function twoPrisms(p:Prepared,o:SearchOptions,t:number):Proposal|null {
+ const w=sub(p.target,p.start),c=dot(p.incoming,p.outgoing),h=o.prismLeg/2;
+ let u:number,middle:Vec;
+ if(Math.abs(c)>1-1e-10){
+  const axial=dot(w,p.incoming),lateral=sub(w,mul(p.incoming,axial));
+  if(norm(lateral)<o.prismLeg+o.clearance)return null;
+  middle=unit(lateral);u=c>0?axial-t:t-axial;
+ }else{
+  const den=1-c*c;t=(dot(w,p.incoming)-c*dot(w,p.outgoing))/den;
+  u=(dot(w,p.outgoing)-c*dot(w,p.incoming))/den;
+  const lateral=sub(sub(w,mul(p.incoming,t)),mul(p.outgoing,u));
+  if(norm(lateral)<o.prismLeg+o.clearance)return null;middle=unit(lateral);
+ }
+ if(t<=h||u<=h)return null;
+ const a=add(p.start,mul(p.incoming,t)),b=sub(p.target,mul(p.outgoing,u));
+ return {topology:'prism2',blocks:[{kind:'prism',at:a,incoming:p.incoming,outgoing:middle},{kind:'prism',at:b,incoming:middle,outgoing:p.outgoing}],parameters:[t,u]};
+}
 function proposals(p:Prepared,o:SearchOptions):Proposal[] {
  const q:Proposal[]=[],allowed=new Set(o.templates),r=p.base.routing??defaultRouting(),ts=fractions.map(f=>p.rangeA[0]+f*(p.rangeA[1]-p.rangeA[0])),us=fractions.map(f=>p.rangeB[0]+f*(p.rangeB[1]-p.rangeB[0])),w=sub(p.target,p.start),c=dot(p.incoming,p.outgoing),den=1-c*c;
  if(allowed.has('direct'))q.push({topology:'direct',blocks:[]});
@@ -90,6 +110,7 @@ function proposals(p:Prepared,o:SearchOptions):Proposal[] {
    if(v>o.prismLeg/2&&norm(delta)>o.prismLeg/2+Math.max(o.clearance,1e-7)){const toward=unit(delta);q.push({topology:'mirror-prism',blocks:[mirror(a,p.incoming,toward),{kind:'prism',at:center,incoming:toward,outgoing:p.outgoing}]});}
   }
  }
+ if(allowed.has('prism2')&&r.parts.prism>=2)for(const t of ts){const v=twoPrisms(p,o,t);if(v)q.push(v);}
  return q;
 }
 function build(p:Prepared,o:SearchOptions,q:Proposal,reservedIds:string[]=[]):{project:Project;ids:string[];footprint:number} {
@@ -139,7 +160,7 @@ export function* searchSteps(input:Project,options:SearchOptions=defaultSearchOp
    const candidate:Candidate={id:`${q.topology}-${fingerprint(project)}`,topology:q.topology,project,generatedIds:ids,analysis,length,partCount:q.blocks.length,footprint};
    result.candidates.push(candidate);result.candidates.sort((a,b)=>compare(a,b,options));const diverse=new Map<Topology,Candidate>();for(const c of result.candidates)if(!diverse.has(c.topology))diverse.set(c.topology,c);const keep=[...diverse.values()];for(const c of result.candidates)if(keep.length<8&&!keep.includes(c))keep.push(c);result.candidates=keep.sort((a,b)=>compare(a,b,options));
    // Refine only promising two-mirror seeds, with a hard two-level, four-neighbor limit.
-   if(q.parameters&&(q.refine??0)<2&&result.candidates[0]===candidate){
+   if(q.topology==='mirror2'&&q.parameters&&(q.refine??0)<2&&result.candidates[0]===candidate){
     const [t,u]=q.parameters,step=Math.max(options.clearance*2,(p.rangeA[1]-p.rangeA[0])/(16*2**(q.refine??0)));
     for(const [dt,du]of [[step,0],[-step,0],[0,step],[0,-step]]){const a=clamp(t+dt,...p.rangeA),b=clamp(u+du,...p.rangeB),next=twoMirrors(p,a,b,(q.refine??0)+1);if(next)queue.push(next);}
    }
@@ -183,7 +204,8 @@ export function applyCandidate(current:Project,batch:SearchResult,id:string):Pro
 // Shared bounded closure/construction primitives; legacy S2 search remains unchanged.
 export {prepare as prepareRoutingDomain,proposals as routeProposals,build as buildRouteProposal,check as validateRouteProposal};
 export type {Prepared as RouteDomain,Proposal as RouteProposal};
-export function refineRouteProposal(p:Prepared,q:Proposal,step:number):Proposal[]{
+export function refineRouteProposal(p:Prepared,q:Proposal,step:number,options?:SearchOptions):Proposal[]{
+ if(q.topology==='prism2'&&q.parameters&&options)return [-step,step].flatMap(d=>{const r=twoPrisms(p,options,clamp(q.parameters![0]+d,...p.rangeA));return r?[r]:[];});
  if(q.topology==='mirror2'&&q.parameters)return [[step,0],[-step,0],[0,step],[0,-step]].flatMap(([dt,du])=>{const r=twoMirrors(p,clamp(q.parameters![0]+dt,...p.rangeA),clamp(q.parameters![1]+du,...p.rangeB));return r?[r]:[];});
  if(q.topology==='mirror-prism')return [-step,step].flatMap(delta=>{const t=clamp(norm(sub(q.blocks[0].at,p.start))+delta,...p.rangeA),a=add(p.start,mul(p.incoming,t)),v=dot(sub(p.target,a),p.outgoing),center=sub(p.target,mul(p.outgoing,v)),d=sub(center,a);return norm(d)>1e-8?[{topology:'mirror-prism' as const,blocks:[mirror(a,p.incoming,unit(d)),{kind:'prism' as const,at:center,incoming:unit(d),outgoing:p.outgoing}]}]:[];});
  return [];
