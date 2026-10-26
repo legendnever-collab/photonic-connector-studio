@@ -20,7 +20,7 @@ import {SynthesisSchema,SYNTHESIS_ID} from './contract';
 import type {SynthesisOptions} from './contract';
 export type Recipe={kind:'existing'}|{kind:'generated';route:RouteProposal;clear:number;count:0|1|2;side:'first'|'last'};
 export type OAT={status:'assessed'|'partial'|'not-assessed';planned:number;tested:number;fieldAssessed:number;geometryPassed:number;worstEta:number|null;issues:string[];coverage:string};
-export type SynthesisCandidate={id:string;topology:string;project:Project;recipe:Recipe;values:number[];seal:string;merit:BeamMerit|null;eta:number|null;reason:string;qualified:boolean;oat:OAT};
+export type SynthesisCandidate={id:string;topology:string;project:Project;recipe:Recipe;values:number[];seal:string;merit:BeamMerit|null;eta:number|null;comparisonClass:string;reason:string;qualified:boolean;oat:OAT};
 export type SynthesisResult={engine:typeof SYNTHESIS_ID;inputSignature:string;settings:string;problem:DesignProblem;routing:Routing;options:SynthesisOptions;status:'completed'|'budget-exhausted'|'unsupported'|'invalid-input'|'cancelled';reason:string;evaluated:number;geometryEvaluated:number;toleranceEvaluated:number;refinements:number;placementFeedback:{topology:string;tested:number;supported:number;worstEta:number|null}[];rejected:Record<string,number>;families:Record<string,number>;candidates:SynthesisCandidate[]};
 const message=(e:unknown)=>e instanceof Error?e.message:String(e),eq=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 const emptyOAT=():OAT=>({status:'not-assessed',planned:0,tested:0,fieldAssessed:0,geometryPassed:0,worstEta:null,issues:[],coverage:''});
@@ -49,6 +49,7 @@ function preflight(p:Project,problem:DesignProblem){
 }
 function compare(a:SynthesisCandidate,b:SynthesisCandidate){
  const robust=(c:SynthesisCandidate)=>c.oat.status==='assessed'&&c.oat.geometryPassed===c.oat.planned;
+ if(a.eta!==null&&b.eta!==null&&a.comparisonClass!==b.comparisonClass)return a.comparisonClass.localeCompare(b.comparisonClass);
  return Number(b.qualified)-Number(a.qualified)||Number(b.eta!==null)-Number(a.eta!==null)||
   (a.qualified&&b.qualified&&robust(a)&&robust(b)&&a.oat.coverage===b.oat.coverage?(b.oat.worstEta??-1)-(a.oat.worstEta??-1):0)||
   (a.merit?.score??Infinity)-(b.merit?.score??Infinity)||componentIds(a.project).length-componentIds(b.project).length||a.id.localeCompare(b.id);
@@ -68,7 +69,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  const retain=(project:Project,recipe:Recipe,values:number[],topology:string)=>{
   geometry(p,project,problem);const r=forward(project,{sampleSegments:false});if(r.status!=='valid')throw Error(r.reason);if(r.apertureLimited)throw Error('Aperture tail bound exceeds 0.1%; untruncated reference only.');
   const m=beamMerit(r,project,o),v=overlap(project,r),eta=v.status==='valid'?v.eta:null;
-  const c:SynthesisCandidate={id:`synthesis-${out.evaluated}-${out.geometryEvaluated}`,project,recipe:structuredClone(recipe),values:[...values],seal:JSON.stringify([recipe,values]),topology,merit:m,eta,reason:v.status==='valid'?'Conditional co-polarized scalar Gaussian Mode shape overlap; ideal planar reflection. Transmission / total coupling not calculated.':v.reason,qualified:m.goalsMet&&eta!==null&&eta>=o.minimumOverlap,oat:emptyOAT()};
+  const c:SynthesisCandidate={id:`synthesis-${out.evaluated}-${out.geometryEvaluated}`,project,recipe:structuredClone(recipe),values:[...values],seal:JSON.stringify([recipe,values]),topology,merit:m,eta,comparisonClass:v.status==='valid'?v.comparisonClass??'scalar-assumed-copolarized':'unassessed',reason:v.status==='valid'?v.scope??'Conditional normalized Mode Overlap':v.reason,qualified:m.goalsMet&&eta!==null&&eta>=o.minimumOverlap,oat:emptyOAT()};
   const fp=serializeProject(project);if(out.candidates.some(c=>serializeProject(c.project)===fp))return;
   out.candidates.push(c);out.candidates.sort(compare);
   // Keep diversity by optical family and Lens count before filling with merit-ranked alternatives.
@@ -147,7 +148,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
   a.status=!a.planned?'not-assessed':a.tested===a.planned&&a.fieldAssessed===a.planned&&c.eta!==null?'assessed':'partial';if(a.tested<a.planned)a.issues.push('OAT cap reached; coverage is incomplete.');
  }
  out.candidates.sort(compare);out.status=limited||out.evaluated>=o.budget-4||out.geometryEvaluated>=o.geometryBudget?'budget-exhausted':'completed';
- out.reason=out.candidates.some(c=>c.qualified)?'Nominal Mode goals met in the tested Lens / ideal planar Mirror domain. No global optimum, combined-error or Yield claim.':out.candidates.length?'Best tested partial / model-limited candidates; nominal Mode goals are not met.':'No feasible candidate found in this bounded family / space / budget; not proof of impossibility.';
+ out.reason=out.candidates.some(c=>c.qualified)?'Nominal Mode goals met in the declared conditional Mode domain (Gaussian / validated Prism phase). No global optimum, combined-error or Yield claim.':out.candidates.length?'Best tested partial / model-limited candidates; nominal Mode goals are not met.':'No feasible candidate found in this bounded family / space / budget; not proof of impossibility.';
  if(out.status==='budget-exhausted')out.reason+=' Search coverage is partial; untested placements / refinements may remain.';
  return out;
 }

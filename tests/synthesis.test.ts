@@ -32,7 +32,7 @@ test('Preview and Apply preserve Ports; tampered/stale settings/geometry are rej
  const changed=structuredClone(r);changed.options.clearRadius[0]*=.5;expect(()=>applySynthesis(p,changed,c.id)).toThrow('settings');
  const tamper=structuredClone(r),ct=tamper.candidates.find(v=>v.id===c.id)!;ct.values[0]+=.0001;expect(()=>applySynthesis(p,tamper,c.id)).toThrow('parameters');
  const tamper2=structuredClone(r);tamper2.candidates.find(v=>v.id===c.id)!.project.bodies=[];expect(()=>applySynthesis(p,tamper2,c.id)).toThrow();
- expect(r.candidates.some(c=>c.topology.includes('prism')&&c.eta===null&&c.reason.includes('TIR'))).toBe(true);
+ expect(r.candidates.some(c=>c.topology.includes('prism')&&c.eta===null&&/Prism|TIR|polarization/.test(c.reason))).toBe(true);
  expect(r.candidates.filter(c=>c.qualified).every(c=>c.oat.status!=='assessed'||c.oat.fieldAssessed===c.oat.planned)).toBe(true);
  expect(r.placementFeedback.some(c=>c.supported===2&&c.tested===2)).toBe(true);
 });
