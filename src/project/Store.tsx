@@ -37,7 +37,7 @@ function useProjectStore() {
     const physicalRaw = useMemo(() => solvePhysicalGaussian(project), [physicalInputJSON]);
     const foldedJSON=JSON.stringify(foldedInput(project));
     const transportedReference=useMemo(()=>project.model.kind==='surface'?solveFoldedGaussian(project,{sampleSegments:false}):null,[foldedJSON]);
-    const useTransported=hasFolds(project)||(project.model.kind==='surface'&&physicalRaw.status!=='valid')||(transportedReference?.status==='valid'&&transportedReference.refractions.some(s=>s.incidenceRad>1e-8));
+    const useTransported=hasFolds(project)||(!!project.routing?.lensSolution&&physicalRaw.status!=='valid')||(transportedReference?.status==='valid'&&(transportedReference.refractions.some(s=>s.incidenceRad>1e-8)||(physicalRaw.status!=='valid'&&!transportedReference.apertureLimited)));
     const foldedGaussian=useMemo(()=>useTransported?solveFoldedGaussian(project):null,[foldedJSON,useTransported]);
     const synthesisOverlap=useMemo(()=>project.model.kind==='surface'?tensorOverlap(project,foldedGaussian??transportedReference!):null,[foldedJSON,foldedGaussian,transportedReference]);
     const physicalGaussian=useMemo(()=>physicalRaw.status==='valid'&&synthesisOverlap?{...physicalRaw,overlap:synthesisOverlap}:physicalRaw,[physicalRaw,synthesisOverlap]);
