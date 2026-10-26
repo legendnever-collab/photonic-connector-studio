@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {NumberField} from '../Fields';
 import type {Project} from '../project/model';
+import {serializeProject} from '../project/model';
 import type {Routing} from '../routing/contract';
 import type {DesignProblem} from './contract';
 import type {JointTolerance} from './jointContract';
@@ -12,7 +13,9 @@ import {useProject} from '../project/Store';
 const pct=(v:number|null)=>v===null?'Not calculated':`${(v*100).toFixed(4)}%`;
 export default function JointTolerancePanel({project,problem,routing,onChange,busy,onBusy,cancelled,invalid}:{project:Project;problem:DesignProblem;routing:Routing;onChange:(o:JointTolerance)=>void;busy:boolean;onBusy:(busy:boolean)=>void;cancelled:()=>boolean;invalid:boolean}){
  const shared=useProject();
- const o=problem.jointTolerance??defaultJointTolerance(project),signature=JSON.stringify({project,problem,routing}),live=useRef(signature),mounted=useRef(true);
+ const o=problem.jointTolerance??defaultJointTolerance(project);
+ let signature:string;try{signature=serializeProject(problemProject(project,problem,routing));}catch{signature=JSON.stringify({project,problem,routing});}
+ const live=useRef(signature),mounted=useRef(true);
  live.current=signature;
  const [result,setResult]=useState<{key:string;value:JointResult}|null>(null),[error,setError]=useState(''),[progress,setProgress]=useState('');
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
