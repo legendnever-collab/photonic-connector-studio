@@ -119,3 +119,24 @@ D2.2.1 stops here. Two-Prism automatic generation, additional Lens allocations,
 manufacturing-space expansion, locked-anchor routing, Transmission, Total
 Coupling, PIC receiving fields and D2.3 / Parabolic / Freeform remain outside
 this checkpoint. No main merge before user review.
+
+## Release evidence
+
+- TypeScript / production Build / standalone dependency check passed.
+- Model: 357 tests accounted for (356 in the full run, then the corrected offline
+  font-coverage check passed). The font fix changes only a Korean guidance phrase.
+- Browser: 158 passes accounted for, 50 pre-existing expected mobile skips.
+  The full run passed 157 tests; the remaining legacy Asphere assertion expected
+  contiguous `higher-order phase` while the common evaluator correctly reports
+  `higher-order aspheric phase`. Its semantic assertion was updated and rerun.
+  PC/mobile Prism tests cover all three trains, Mirror parity, view/export
+  consistency, missing polarization, Undo, SaveLoad and no synthesis settings.
+- Source tree at the implementation checkpoint:
+  `675094904b122731991eb6cee9dd7069f9405e51` (remote `1588960bbe3039ca54b2003a2e9e94869194dd06`).
+- Source fingerprint: `307742607a22cb0751c125497a5601619adb497f809cd8ca6ba63476d0997098`.
+- HTML SHA-256: `dc7cde1802ab81e88a0f4e0a36c5013a4b0dbf4eb075fbd21ce7137a72d03769`.
+- `artifacts/build-info-u1.json` and `artifacts/SHA256SUMS-u1.txt` retain existing
+  packaging filenames. The user download is `photonic-connector-studio-d2.2.1.html`;
+  it is byte-identical to the packaged standalone HTML (780838 bytes).
+- Draft PR: https://github.com/legendnever-collab/photonic-connector-studio/pull/21
+  Remote CI results remain authoritative for the final branch head.
