@@ -1,8 +1,8 @@
 {
   "version": "0.14.0-d2.3.1",
   "schemaVersion": 1,
-  "sourceCommit": "4ba3279fba6cd34c47b512272d8a82f4c5bf5d5d",
-  "sourceFingerprint": "427655c1034d4cdfd80b218917a039b14c5cc5acd2e5a0fea5f4cc8773d1a7be",
+  "sourceCommit": "29057d1a2f94a5f3b3226d87a0acc52057ddff17",
+  "sourceFingerprint": "6812c39cb7e75de8497b1a97d0e1d6e2f839f4a9c090147067b5cb2900dc0c94",
   "inputs": {
     "index.html": "cea742b590b4266564318f5af42c8a27c70e0f62611592933f1d67b18d00817c",
     "package-lock.json": "c7d5f319147401f32feab1e2a5525dad1a3a749f6f1666b6ec33fa3afe4fe39b",
@@ -40,7 +40,7 @@
     "src/authoring/starter.ts": "cf52dc730f225dde359c4750430b05055e4c3847d02652f8ad85a701a946864a",
     "src/design/JointTolerancePanel.tsx": "e702f54d02484e109b6087027b3724cc34efdf8787e37623024d1130c0d2033e",
     "src/design/ProblemDialog.tsx": "57c5fe0c723a12877025277ebfcc55a21a7864a5c83f26f6bd8762278a14459c",
-    "src/design/contract.ts": "6b8fc6508fe60d1aaf13dfb02bedb9b83697a9f9c9d6fe974cdb4ebebadf64f9",
+    "src/design/contract.ts": "b467928bc6b8af29d824a2853a90c09521a5d1c0dec74d64182a44ad1c5c9c8e",
     "src/design/engine.ts": "f717f6de954ed493e9af7e83a7ea5e69ab1de2fcf422d517856994ca6fbcfb64",
     "src/design/joint.ts": "3e04aac7333cf542b25ba98c62f891397f495fc08fe1becbf66830372cc72b0d",
     "src/design/jointContract.ts": "b2d1d3413613729996bfe3abeb93a5f4f817df3aed530f9ac7211bed75e2c619",
@@ -112,6 +112,6 @@
     "vite.config.ts": "053836db8e246fabb580d4e5122bad6856a6f5e5a4071cef8e5fd3d188aa7730"
   },
   "artifact": "photonic-connector-studio-u1.html",
-  "artifactSHA256": "3460ae06b4d2965bf70283c5a8c0501afb4aa5ccfdcaed31af7fe35fa38210c8",
+  "artifactSHA256": "ca4f44662baca75d6a15daa8a6f95fe3f23eabd96c48fa76fc6038c51c769a1b",
   "artifactBytes": 802794
 }
