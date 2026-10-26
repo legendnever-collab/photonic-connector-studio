@@ -1,3 +1,7 @@
+# D2.3.3 · Joint Analysis / Report
+
+현재 설계의 Joint Tolerance 결과를 Analysis와 Report에서 공유합니다. Exact Project와 설정이 바뀌면 Stale로 표시하며, JSON / SVG provenance와 SVG / PNG 요약을 내보낼 수 있습니다. 설정만 Project에 저장하며 새 세션에서는 재평가합니다. [범위와 사용자 확인](docs/D2_3_3_JOINT_ANALYSIS_REPORT.md).
+
 ## D2.3.2 · Joint tolerance feedback
 
 Design Problem → Joint Tolerance에서 common mating / individual Assembly 공차를

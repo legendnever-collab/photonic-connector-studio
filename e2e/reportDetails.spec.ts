@@ -41,6 +41,6 @@ test('high magnification Prism stays visible under thin rays and bounded arrowhe
  expect(Number(await view.getAttribute('data-zoom'))).toBeGreaterThan(10);
  const sizes=await view.getByTestId('report-direction-head').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return Math.hypot(r.width,r.height);}));expect(sizes.length).toBeGreaterThan(0);expect(Math.max(...sizes)).toBeLessThan(9);
  await expect(modal.getByTestId('report-figure').locator('[data-defined-body="Fold-Prism"]').first()).toBeVisible();
- const dl=page.waitForEvent('download');await modal.getByRole('button',{name:'SVG',exact:true}).click();const svg=await readFile((await(await dl).path())!,'utf8');expect(svg).toContain('non-scaling-stroke');expect(svg).not.toMatch(/marker-end=|<marker\b/);expect(svg).toContain('report-figure/2.4.2');
+ const dl=page.waitForEvent('download');await modal.getByRole('button',{name:'SVG',exact:true}).click();const svg=await readFile((await(await dl).path())!,'utf8');expect(svg).toContain('non-scaling-stroke');expect(svg).not.toMatch(/marker-end=|<marker\b/);expect(svg).toContain('report-figure/2.4.3');
  await page.screenshot({path:'test-results/Report-Prism-high-magnification-fixed.png',fullPage:true});await modal.getByRole('button',{name:'Close Report Figure',exact:true}).click();expect(await save(page)).toEqual(before);
 });
