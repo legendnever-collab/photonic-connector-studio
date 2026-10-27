@@ -1,8 +1,8 @@
 {
   "version": "0.17.0-d2.3.4",
   "schemaVersion": 1,
-  "sourceCommit": "53c4111abd2a24c24c661b089ce4ad74d51180f9",
-  "sourceFingerprint": "7d514bfd11a6767a35b5b11f49abc6d4b839319da805b0deca433083bffea67f",
+  "sourceCommit": "2869f576693b0d51494436fb9919941a164947c7",
+  "sourceFingerprint": "fb49be2f7cfc35ffb466273155a3ecce07a1ef90909248a6f737712f08d945ec",
   "inputs": {
     "index.html": "cea742b590b4266564318f5af42c8a27c70e0f62611592933f1d67b18d00817c",
     "package-lock.json": "f8d2dd01e060c907ecd82f808082095d32e45bb5612f314523313bb74b3c3af4",
@@ -67,7 +67,7 @@
     "src/project/Materials.tsx": "4a8a4b58c3efd916d2d2165eeb55654516834ddee7781e16a013597443850d95",
     "src/project/ModeDomain.tsx": "5cb8c2d0d2834f6eabd44432c214db6fcee55b07013bb15a1c4e70d62d7b109c",
     "src/project/PhysicalGaussianView.tsx": "dea877984daa12ac5df2156a104c0c2e535c02fdae6a306da972e19013f33e69",
-    "src/project/Store.tsx": "0c849b4a19a55a6b676afe5a44129bb770ca338aa6548c116e7bb9addae7fc9a",
+    "src/project/Store.tsx": "5de4f039e1054c3cd618fddb8e33c13399340063031c01b722185985f7a8bb11",
     "src/project/compute.ts": "ec2a3ce10fc74e206420c2e7fd21f84ca00ffa7b0646195db7c5b08c13a9d6c9",
     "src/project/foldedGaussian.css": "8b03b34650c329a0fad6bc7aa39df24ca4a7e30992958678c36899bdf73c8a71",
     "src/project/foldedGaussian.ts": "c32223087b42a2ebf23ff3fd39e4cd042ffcc1b7897e5b502ac4b38d7e5466e0",
@@ -117,6 +117,6 @@
     "vite.config.ts": "053836db8e246fabb580d4e5122bad6856a6f5e5a4071cef8e5fd3d188aa7730"
   },
   "artifact": "photonic-connector-studio-u1.html",
-  "artifactSHA256": "3546f2885b1619a3e73fd673e0b4363c07e77300692233dcb0aa12627e529cec",
-  "artifactBytes": 823581
+  "artifactSHA256": "7f203d69b5d2d0141860f9f83a8943dcb61aab3ba8a0af73f1ab56af823c8dce",
+  "artifactBytes": 823624
 }
