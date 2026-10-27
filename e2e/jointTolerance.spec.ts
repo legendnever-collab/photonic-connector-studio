@@ -13,8 +13,8 @@ test('joint settings roundtrip with one Undo; read-only assessment, stale covera
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));const before=await save(page);await open(page);
  await expect(page.getByLabel('Joint mating target',{exact:true})).toBeChecked();await page.getByLabel('Joint Samples',{exact:true}).fill('8');await page.getByLabel('Joint Case cap',{exact:true}).fill('8');
  await run(page);await expect(page.getByTestId('joint-result')).toContainText('assessed');await expect(page.getByTestId('joint-result')).toContainText('8 / 8');
- await page.getByLabel('Joint assembly position Y',{exact:true}).fill('1');await expect(page.getByTestId('joint-result')).toContainText('Stale joint result');await run(page);
- await expect(page.getByTestId('joint-result')).toContainText('partial');await expect(page.getByTestId('joint-result')).toContainText('0 / 8');await expect(page.getByTestId('joint-result')).toContainText('centered');
+ await page.getByLabel('Joint assembly position Y',{exact:true}).fill('1000');await expect(page.getByTestId('joint-result')).toContainText('Stale joint result');await run(page);
+ await expect(page.getByTestId('joint-result')).toContainText('partial');await expect(page.getByTestId('joint-result')).toContainText('0 / 8');await expect(page.getByTestId('joint-result')).toContainText(/missed|clipping/);
  await page.getByTestId('joint-result').scrollIntoViewIfNeeded();await page.screenshot({path:`test-results/D231-joint-${info.project.name}.png`,fullPage:true});
  await page.getByRole('button',{name:'Close Design Problem',exact:true}).click();expect(await save(page)).toEqual(before);
  await open(page);await page.getByLabel('Joint Seed',{exact:true}).fill('42');await page.getByLabel('Joint mating component Starter-Lens',{exact:true}).check();await page.getByRole('button',{name:'Save Problem Settings',exact:true}).click();await page.getByRole('button',{name:'Close Design Problem',exact:true}).click();

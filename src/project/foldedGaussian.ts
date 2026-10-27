@@ -7,7 +7,7 @@ import {traceRay,reflect} from '../surface/trace';
 import {bodyGeometry,insideBody} from './geometry';
 import {physicalGaussianInput} from './physicalGaussian';
 import type {Project} from './model';
-export const FOLDED_GAUSSIAN_ID='transported-scalar-gaussian/1.0.0';
+export const FOLDED_GAUSSIAN_ID='transported-scalar-gaussian/1.1.0';
 type M=[number,number,number,number];
 export type QTensor=[Complex,Complex,Complex,Complex];
 const c=(re=0,im=0):Complex=>({re,im});
@@ -23,6 +23,16 @@ export function transformQ(q:QTensor,a:M):QTensor {
 }
 export function propagateQ(q:QTensor,length:number,n:number):QTensor{return [sum(q[0],c(length/n)),q[1],q[2],sum(q[3],c(length/n))];}
 export function powerQ(q:QTensor,power:number):QTensor {const k=inverseQ(q);return inverseQ([sum(k[0],c(-power)),k[1],k[2],sum(k[3],c(-power))]);}
+/** Coddington local spherical refraction in incident/outgoing tangential-sagittal
+ * beam-normal frames; reduced Q=q/n. R is signed along the forward normal.
+ * R=0 denotes the plane limit. This is a first-order Gaussian reference, not
+ * an aberrated-field propagator. */
+export function refractSphericalQ(q:QTensor,n1:number,n2:number,radius:number,ci:number,co:number):QTensor {
+ const a=co/ci,k=inverseQ(transformQ(q,[a,0,0,1])),delta=radius===0?0:(n2*co-n1*ci)/radius;
+ return inverseQ([sum(k[0],c(-delta/(co*co))),k[1],k[2],sum(k[3],c(-delta))]);
+}
+export type SphericalReference={id:string;incidenceRad:number;footprintRatio:number;tangentialPower:number;sagittalPower:number};
+export const SPHERICAL_REFERENCE_SCOPE='Local first-order spherical Gaussian reference: chief incidence <=50 mrad; (chief height + 2w / cos(i)) / |R| <=0.2. Full tangential / sagittal Q and cross phase; higher-order aberration, clipping diffraction and Fresnel throughput omitted. Numerical comparison floor 1e-10 is not a physical eta accuracy bound.';
 function eig(a:number,b:number,d:number){const delta=Math.hypot(a-d,2*b);return [(a+d+delta)/2,(a+d-delta)/2] as const;}
 export type BeamSection={radii:[number,number];curvatures:[number,number];angle:number;waistOffsets:[number,number]|null;waistRadii:[number,number]|null};
 /** Principal intensity axes, ordered major then minor; angle measured from transported U toward V. */
@@ -36,12 +46,12 @@ export function section(q:QTensor,lambda:number,n:number):BeamSection {
  return {radii:[Math.sqrt(lambda/(Math.PI*low)),Math.sqrt(lambda/(Math.PI*high))],curvatures:[ku.re/n,kv.re/n],angle,waistOffsets:separable?[-n*qu.re,-n*qv.re]:null,waistRadii:separable?[Math.sqrt(lambda*qu.im/Math.PI),Math.sqrt(lambda*qv.im/Math.PI)]:null};
 }
 export type FoldedSample={distance:number;opl:number;point:Vec;direction:Vec;u:Vec;v:Vec;n:number;q:QTensor;beam:BeamSection;surfaceId?:string;side:'before'|'after'};
-export type FoldedResult={status:'valid';id:string;fingerprint:string;wavelength:number;samples:FoldedSample[];surfaces:{id:string;interaction:string;before:FoldedSample;after:FoldedSample;tailBound:number|null}[];incident:FoldedSample;warnings:string[];apertureLimited:boolean;positionError:number;angleError:number;outputOffset:Vec;outputDirection:Vec;outputAxes:[Vec,Vec];targetMFD:[number|null,number|null];overlapReason:string}
+export type FoldedResult={status:'valid';id:string;fingerprint:string;wavelength:number;refractions:SphericalReference[];samples:FoldedSample[];surfaces:{id:string;interaction:string;before:FoldedSample;after:FoldedSample;tailBound:number|null}[];incident:FoldedSample;warnings:string[];apertureLimited:boolean;positionError:number;angleError:number;outputOffset:Vec;outputDirection:Vec;outputAxes:[Vec,Vec];targetMFD:[number|null,number|null];overlapReason:string}
  |{status:'invalid'|'out-of-domain';id:string;fingerprint:string;reason:string};
 export function hasFolds(p:Project){return p.model.kind==='surface'&&p.model.prescription.surfaces.some(s=>s.interaction==='reflect'||s.interaction==='tir');}
 export function foldedInput(p:Project){return {physics:physicalGaussianInput(p),sourceGate:p.model.kind==='surface'?{channels:p.model.prescription.source.channels,n:p.model.prescription.source.n}:null};}
 /** Scalar paraxial reference about the exact finite chief ray, with a full complex symmetric 2×2 reduced Q=q/n.
- * Flat folds transport both transverse axes, including parity. Curved refraction is centered normal-incidence only.
+ * Flat folds transport both transverse axes, including parity. Spherical refraction uses bounded local Coddington power and anamorphism.
  * Clipping is diagnosed, never propagated. No TIR/coating phase, delivered power, or mode-overlap claim.
  */
 export function solveFoldedGaussian(p:Project,options:{sampleSegments?:boolean}={}):FoldedResult {
@@ -58,7 +68,7 @@ export function solveFoldedGaussian(p:Project,options:{sampleSegments?:boolean}=
  const source=frame(d.source.frame),path=traceRay({origin:source.origin,direction:source.axes[0],n:port.mediumIndex,channel:'gaussian-chief'},ss,(v,s)=>insideBody(v,s,g));
  if(path.status!=='reached')return fail(`Chief ray blocked: ${path.reason}`,'invalid');
  let q:QTensor=[c(0,rayleigh(sm.mfdX/2,lambda)),c(),c(),c(0,rayleigh(sm.mfdY/2,lambda))],point=source.origin,direction=source.axes[0],u=source.axes[1],v=source.axes[2],n=port.mediumIndex,distance=0,opl=0,tailSum=0;
- const samples:FoldedSample[]=[],surfaces:Extract<FoldedResult,{status:'valid'}>['surfaces']=[],warnings:string[]=[];
+ const samples:FoldedSample[]=[],surfaces:Extract<FoldedResult,{status:'valid'}>['surfaces']=[],warnings:string[]=[],refractions:SphericalReference[]=[];
  const snapshot=(side:'before'|'after',surfaceId?:string):FoldedSample=>({distance,opl,point,direction,u,v,n,q,beam:section(q,lambda,n),surfaceId,side});
  const divergence=()=>{const [,low]=eig(q[0].im,(q[1].im+q[2].im)/2,q[3].im);return Math.sqrt(lambda/(Math.PI*low))/n;};
  try{
@@ -96,17 +106,24 @@ export function solveFoldedGaussian(p:Project,options:{sampleSegments?:boolean}=
     }
    }else if(s.interaction==='refract'){
     const nextN=s.nAfter!;
-    if(s.shape!=='plane'){
+    const curved=s.shape!=='plane';
+    if(curved){
      if(s.shape==='even-asphere'&&((s.conic??0)!==0||Object.values(s.aspheric??{}).some(a=>a!==0)))return fail(`${s.id}: higher-order aspheric phase requires field propagation.`);
-     if(dot(direction,hit.normal)<1-1e-10||Math.hypot(hit.local.y,hit.local.z)>1e-10)return fail(`${s.id}: curved refraction must be centered and normal; oblique curved astigmatism is not supported.`);
-     const radius=s.radius;if(radius!==0&&2*before.beam.radii[0]/Math.abs(radius)>.2)return fail(`${s.id}: 2w / |R| exceeds 0.2; local aberration outside Gaussian reference.`);
-     q=powerQ(q,radius===0?0:(nextN-n)/radius);
-    }else if(ci<1-1e-12){
-     const tangent=unit(sub(hit.normal,mul(direction,dot(hit.normal,direction)))),sagittal=unit(cross(direction,tangent));
-     q=transformQ(q,[dot(tangent,u),dot(tangent,v),dot(sagittal,u),dot(sagittal,v)]);
-     const co=Math.abs(dot(hit.direction,hit.normal));q=transformQ(q,[co/ci,0,0,1]);
-     u=unit(cross(sagittal,hit.direction));v=sagittal;
+     // Only the forward surface branch is validated. Never infer sign from |cos|.
+     if(dot(direction,hit.normal)<Math.cos(.05)-1e-12)return fail(`${s.id}: spherical chief incidence exceeds the forward 50 mrad domain.`);
+     const radius=s.radius,footprintRatio=radius===0?0:(Math.hypot(hit.local.y,hit.local.z)+2*before.beam.radii[0]/ci)/Math.abs(radius);
+     if(footprintRatio>.2+1e-12)return fail(`${s.id}: 2w / |R| plus chief height / oblique footprint exceeds 0.2; local aberration outside Gaussian reference.`);
+     const co=Math.abs(dot(hit.direction,hit.normal)),power=radius===0?0:(nextN*co-n*ci)/radius;
+     refractions.push({id:s.id,incidenceRad:Math.acos(Math.min(1,ci)),footprintRatio,tangentialPower:power/(co*co),sagittalPower:power});
     }
+    // Use a stable incidence frame only away from the normal limit. Rotation
+    // carries the entire complex tensor, including nonseparable cross phase.
+    if(norm(cross(direction,hit.normal))>1e-12){
+     const sagittal=unit(cross(direction,hit.normal)),tangent=unit(cross(sagittal,direction));
+     q=transformQ(q,[dot(tangent,u),dot(tangent,v),dot(sagittal,u),dot(sagittal,v)]);
+     const co=Math.abs(dot(hit.direction,hit.normal));q=refractSphericalQ(q,n,nextN,curved?s.radius:0,ci,co);
+     u=unit(cross(sagittal,hit.direction));v=sagittal;
+    }else if(curved)q=powerQ(q,s.radius===0?0:(nextN-n)/s.radius);
     n=nextN;
    }
    direction=hit.direction;
@@ -116,8 +133,9 @@ export function solveFoldedGaussian(p:Project,options:{sampleSegments?:boolean}=
   const target=ss.at(-1)!.world,last=path.hits.at(-1)!,outDir=V(...target.axes.map(a=>dot(a,direction)) as [number,number,number]);
   const apertureLimited=tailSum>1e-3;
   if(apertureLimited)warnings.unshift('Aperture limited: displayed envelopes are untruncated Gaussian references, not the transmitted field.');
+  if(refractions.length)warnings.push(SPHERICAL_REFERENCE_SCOPE);
   warnings.push('Scalar paraxial reference about the finite chief ray. Envelope transports geometric Q only. The separate Mode evaluator may integrate TIR angular phase within its declared domain; this envelope omits the resulting centroid/profile correction, coatings and absolute power.','Distances are geometric arclength; OPL = Σ nL. Waist offsets extrapolate only within the current homogeneous medium; no claim across another surface.');
   const overlapReason=ports?.target.device==='pic-edge'||ports?.target.device==='pic-grating'?'PIC receiving field is undefined. Target MFD is a user reference; device coupling is not calculated.':'Transported mode overlap is not calculated; interface phase / polarization and clipping propagation are omitted.';
-  return {status:'valid',id:FOLDED_GAUSSIAN_ID,fingerprint:fp,wavelength:lambda,samples,surfaces,incident:samples.at(-1)!,warnings,apertureLimited,positionError:Math.hypot(last.local.y,last.local.z),angleError:Math.atan2(Math.hypot(outDir.y,outDir.z),outDir.x),outputOffset:last.local,outputDirection:outDir,outputAxes:[target.axes[1],target.axes[2]],targetMFD:ports?.target.fieldModel==='gaussian'?[p.model.targetMode.mfdX,p.model.targetMode.mfdY]:[null,null],overlapReason};
+  return {status:'valid',id:FOLDED_GAUSSIAN_ID,fingerprint:fp,wavelength:lambda,refractions,samples,surfaces,incident:samples.at(-1)!,warnings,apertureLimited,positionError:Math.hypot(last.local.y,last.local.z),angleError:Math.atan2(Math.hypot(outDir.y,outDir.z),outDir.x),outputOffset:last.local,outputDirection:outDir,outputAxes:[target.axes[1],target.axes[2]],targetMFD:ports?.target.fieldModel==='gaussian'?[p.model.targetMode.mfdX,p.model.targetMode.mfdY]:[null,null],overlapReason};
  }catch(e){return fail(e instanceof Error?e.message:String(e),'invalid');}
 }

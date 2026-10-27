@@ -1,11 +1,11 @@
 import {prismOverlap,polarizationTransport,MODE_SCOPE} from './prismMode';
-import {inverseQ,transformQ,solveFoldedGaussian} from './foldedGaussian';
+import {inverseQ,transformQ,solveFoldedGaussian,SPHERICAL_REFERENCE_SCOPE} from './foldedGaussian';
 import type {QTensor,FoldedResult} from './foldedGaussian';
 import type {Complex} from '../physics';
 import type {Overlap} from './physicalGaussian';
 import type {Project} from './model';
 import {dot} from '../surface/model';
-export const TENSOR_OVERLAP_ID='conditional-tensor-gaussian-overlap/1.0.0';
+export const TENSOR_OVERLAP_ID='conditional-tensor-gaussian-overlap/1.1.0';
 const c=(re=0,im=0):Complex=>({re,im});
 const add=(a:Complex,b:Complex)=>c(a.re+b.re,a.im+b.im);
 const mul=(a:Complex,b:Complex)=>c(a.re*b.re-a.im*b.im,a.re*b.im+a.im*b.re);
@@ -50,8 +50,10 @@ export function tensorOverlap(p:Project,r:FoldedResult=solveFoldedGaussian(p,{sa
  if([mode.mfdX,mode.mfdY].some(v=>r.wavelength/(Math.PI*r.incident.n*v/2)>.1+1e-12))return no('Output Mode divergence exceeds 0.1 rad.');
  const a:[number,number,number,number]=[dot(r.outputAxes[0],r.incident.u),dot(r.outputAxes[0],r.incident.v),dot(r.outputAxes[1],r.incident.u),dot(r.outputAxes[1],r.incident.v)];
  try{const q=transformQ(r.incident.q,a),base=gaussianTensorOverlap(q,r.wavelength,r.incident.n,[mode.mfdX,mode.mfdY],[r.outputOffset.y,r.outputOffset.z],[r.outputDirection.y/r.outputDirection.x,r.outputDirection.z/r.outputDirection.x]);
+  // The TIR angular-spectrum benchmark does not yet cover oblique powered interfaces.
+  if(prism&&r.refractions.some(s=>s.incidenceRad>1e-5))return no('Model unsupported: oblique spherical Lens combined with TIR requires a combined field benchmark.');
   if(prism){const result=prismOverlap(p,r,q,base);return result.status==='valid'?result:no(result.reason);}
   let comparisonClass='scalar-assumed-copolarized';
   if(sm.polarization!=='unspecified'&&mode.polarization!=='unspecified'){polarizationTransport(p,r);comparisonClass='explicit-copolarized-phase-only';}
-  return {...base,scope:MODE_SCOPE,comparisonClass};}catch(e){return no(e instanceof Error?e.message:String(e));}
+  return {...base,scope:MODE_SCOPE,comparisonClass,...(r.refractions.length?{gaussianReference:{evaluator:TENSOR_OVERLAP_ID,surfaces:r.refractions,assumptions:SPHERICAL_REFERENCE_SCOPE,physicalEtaErrorBound:null,transmission:null,totalCoupling:null}}:{})};}catch(e){return no(e instanceof Error?e.message:String(e));}
 }
