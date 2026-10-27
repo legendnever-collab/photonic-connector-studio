@@ -1,4 +1,13 @@
-# D2.3.4 · Bounded Lens decenter / tilt
+# D2.3.5 · Finite-beam Lens benchmark
+
+Analysis → **Run Lens Field Benchmark**에서 단일 spherical Lens의 exact sag phase와
+quadratic phase를 독립적인 pupil-plane 적분으로 비교합니다. Pupil fraction, conditional
+overlap, residual phase RMS, grid convergence와 screen reference gate를 확인하고
+JSON / Report SVG metadata로 내보냅니다. 이 결과는 thin phase-screen benchmark이며,
+기존 3D Mode Overlap·synthesis 순위 또는 실제 coupling 정확도 보증을 대체하지 않습니다.
+[모델·수치 검증·확인 방법](docs/D2_3_5_FINITE_BEAM_BENCHMARK.md).
+
+## D2.3.4 · Bounded Lens decenter / tilt
 
 작은 spherical Lens decenter / tilt를 exact chief ray 주변의 full complex Gaussian tensor로
 전달합니다. Chief incidence ≤50 mrad와 footprint / |R| ≤0.2 안에서 tangential / sagittal
