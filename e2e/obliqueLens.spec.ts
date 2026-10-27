@@ -4,7 +4,7 @@ import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
 import {tab} from './ui';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){await tab(page,'Layout');const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
 async function load(page:Page,p:unknown){await page.getByTestId('surface-json-input').setInputFiles({name:'oblique-lens.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});}
 test('offline Lens decenter/tilt shares bounded Mode and envelope across Gaussian, Analysis and Report; invalidation and Undo are exact',async({page},info)=>{

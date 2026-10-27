@@ -3,7 +3,7 @@ import type {Page} from '@playwright/test';
 import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
 async function asphere(page:Page){await page.getByLabel('S1 Type',{exact:true}).selectOption('even-asphere');await page.getByLabel('S1 Conic',{exact:true}).fill('-1');await page.getByLabel('S1 A4',{exact:true}).fill('0.02');}
 test.beforeEach(async({page},info)=>{test.skip(info.project.name!=='desktop','F1.1 targets the desktop Surface Data editor.');await page.context().setOffline(true);await page.goto(offline);});

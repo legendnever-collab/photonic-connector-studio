@@ -4,9 +4,9 @@ import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
 import {tab} from './ui';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){await tab(page,'Layout');const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
-async function open(page:Page){await tab(page,'Layout');await page.getByRole('button',{name:'Design Problem',exact:true}).click();await page.getByRole('button',{name:'Joint Tolerance',exact:true}).click();}
+async function open(page:Page){await tab(page,'Layout');if(await page.locator('.legacy-design-tools').getAttribute('open')===null)await page.locator('.legacy-design-tools summary').click();await page.getByRole('button',{name:'Design Problem',exact:true}).click();await page.getByRole('button',{name:'Joint Tolerance',exact:true}).click();}
 async function run(page:Page){await page.getByRole('button',{name:'Assess Joint Tolerance',exact:true}).click();await expect(page.getByTestId('joint-result')).toBeVisible({timeout:20000});}
 test.beforeEach(async({page})=>{await page.context().setOffline(true);await page.goto(offline);});
 test('joint settings roundtrip with one Undo; read-only assessment, stale coverage and partial Lens domain are explicit',async({page},info)=>{

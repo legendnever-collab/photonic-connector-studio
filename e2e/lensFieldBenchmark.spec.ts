@@ -4,7 +4,7 @@ import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
 import {tab} from './ui';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 const root=(p:Page)=>p.getByRole('region',{name:'Lens Field Benchmark',exact:true});
 async function save(page:Page){await tab(page,'Layout');const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
 async function exported(page:Page,area:Locator){const dl=page.waitForEvent('download');await area.getByRole('button',{name:'Export Lens Benchmark JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}

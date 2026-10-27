@@ -7,7 +7,7 @@ import {prismFixture} from '../tests/prismFixtures';
 import {tensorOverlap} from '../src/project/tensorOverlap';
 const gaussianPercent=(eta:number)=>`${Number((eta*100).toPrecision(5))}%`;
 import {tab,openProjectExample} from './ui';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){await tab(page,'Layout');const pending=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await pending).path())!,'utf8'));}
 async function load(page:Page,p:unknown){await page.getByTestId('surface-json-input').setInputFiles({name:'prism.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});const guard=page.getByRole('dialog',{name:'Unsaved Project',exact:true});if(await guard.isVisible())await guard.getByRole('button',{name:'Discard & Open',exact:true}).click();}
 test.beforeEach(async({page})=>{await page.context().setOffline(true);await page.goto(offline);});

@@ -1,4 +1,5 @@
 import {SynthesisSchema} from '../synthesis/contract';
+import {PortArraysSchema} from './portArrays';
 import {ProblemSchema} from '../design/contract';
 import { resolveMaterials } from '../surface/materials';
 import { RoutingSchema } from '../routing/contract';
@@ -27,6 +28,7 @@ export const BuildingBlockSchema=z.object({id:z.string().min(1).max(80),name:z.s
 export type BuildingBlock=z.infer<typeof BuildingBlockSchema>;
 export const ProjectSchema = z.object({ kind: z.literal('optical-project'), schemaVersion: z.literal(1), units: z.literal('SI'),
     routing:RoutingSchema.optional(),
+    portArrays:PortArraysSchema.optional(),
     synthesis:SynthesisSchema.optional(),
     designProblem:ProblemSchema.optional(),
     targetBody:z.object({radius:dim,length:dim}).strict().nullable().optional(),
@@ -37,6 +39,8 @@ export const ProjectSchema = z.object({ kind: z.literal('optical-project'), sche
     ]), bodies: z.array(BodySchema).max(50), sourceBody: z.object({ radius: dim, length: dim }).strict().nullable(),
 }).strict().superRefine((p, ctx) => {
     const doc = prescription(p), ids = new Set(doc.assemblies.map(a => a.id));
+    if(p.portArrays&&p.model.kind==='ideal')ctx.addIssue({code:'custom',message:'Product Port Arrays require a Physical Project.'});
+    if(p.portArrays&&p.model.kind==='surface'&&(doc.source.channels.rows!==1||doc.source.channels.cols!==1))ctx.addIssue({code:'custom',message:'Product Arrays use one representative ray Channel; legacy ray arrays must be converted explicitly.'});
     const moving=p.authoring?.alignment.movingId;if(moving&&moving!=='@source'&&!ids.has(moving))ctx.addIssue({code:'custom',message:'Unknown Alignment moving element'});
     if(p.buildingBlocks&&new Set(p.buildingBlocks.map(b=>b.id)).size!==p.buildingBlocks.length)ctx.addIssue({code:'custom',message:'Duplicate Building Block ID'});
     if (new Set(p.bodies.map(b => b.assemblyId)).size !== p.bodies.length)

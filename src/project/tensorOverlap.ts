@@ -33,6 +33,7 @@ export function gaussianTensorOverlap(q:QTensor,lambda:number,n:number,mfd:[numb
 export function tensorOverlap(p:Project,r:FoldedResult=solveFoldedGaussian(p,{sampleSegments:false})):Overlap{
  const no=(reason:string):Overlap=>({status:'not-calculated',reason:/^(Input undefined|Input invalid|Model unsupported|Out of domain):/.test(reason)?reason:`${/undefined|Select an Output/.test(reason)?'Input undefined':/mismatch|medium differs/.test(reason)?'Input invalid':/unsupported|requires|not evaluated|only/.test(reason)?'Model unsupported':'Out of domain'}: ${reason}`});
  if(p.model.kind!=='surface')return no('Model unsupported: Physical Project required.');
+ if(p.portArrays?.interface==='evanescent')return no('Model unsupported: Evanescent Coupling requires a dedicated field adapter.');
  for(const which of ['source','target'] as const){
   const port=p.authoring?.ports[which],mode=which==='source'?p.model.sourceMode:p.model.targetMode;
   if(port&&(port.fieldModel!=='gaussian'||port.imported||port.adapter==='near-field-em-required'))return no(`Model unsupported: ${which} imported / confined field requires its dedicated field adapter.`);

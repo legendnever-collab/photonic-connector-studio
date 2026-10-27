@@ -45,8 +45,8 @@ export default function SearchDialog({onClose}:{onClose:()=>void}){
 }
 function CandidatePreview({candidate:c}:{candidate:Candidate}){
  const doc=c.project.model.kind==='surface'?c.project.model.prescription:null;
- const trace=useMemo(()=>projectTrace(c.project),[c.project]),geometry=useMemo(()=>doc?bodyGeometry(doc,trace.surfaces,c.project.bodies,c.project.sourceBody,c.project.targetBody):null,[doc,trace,c.project]);
- const full=useMemo(()=>doc&&geometry?sceneBounds(doc,trace,geometry.faces.flatMap(f=>f.points)):null,[doc,trace,geometry]);
+ const trace=useMemo(()=>projectTrace(c.project),[c.project]),geometry=useMemo(()=>doc?bodyGeometry(doc,trace.surfaces,c.project.bodies,c.project.sourceBody,c.project.targetBody,c.project.portArrays):null,[doc,trace,c.project]);
+ const full=useMemo(()=>doc&&geometry?sceneBounds(doc,trace,[...geometry.faces.flatMap(f=>f.points),...geometry.edges.flatMap(e=>e.points)]):null,[doc,trace,geometry]);
  const [view,setView]=useState<SceneView>('3D'),[camera,setCamera]=useState(INITIAL_CAMERA),[focus,setFocus]=useState(false),svg=useRef<SVGSVGElement>(null);
  const bounds=useMemo(()=>{if(!focus||!geometry)return full;const points=geometry.faces.filter(f=>f.bodyId&&c.generatedIds.includes(f.bodyId)).flatMap(f=>f.points);if(!points.length)return full;
   const axes=['x','y','z'] as const,lo=V(...axes.map(k=>Math.min(...points.map(p=>p[k]))) as [number,number,number]),hi=V(...axes.map(k=>Math.max(...points.map(p=>p[k]))) as [number,number,number]);return {center:mul(add(lo,hi),.5),span:norm(sub(hi,lo)),points};

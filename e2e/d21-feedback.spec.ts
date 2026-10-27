@@ -4,13 +4,13 @@ import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
 import {defaultProblem} from '../src/design/engine';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function layout(page:Page){const button=page.getByRole('navigation',{name:'Surface Workspace tabs'}).getByRole('button',{name:'Layout',exact:true});if(await button.isVisible())await button.click();}
 async function save(page:Page){await layout(page);const pending=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await pending).path())!,'utf8'));}
 test('reported Mirror/Prism path exposes both physical folds and repairs inherited limits explicitly',async({page})=>{
  test.setTimeout(180000);await page.context().setOffline(true);await page.goto(offline);
- await page.getByRole('button',{name:'Design Setup',exact:true}).click();await page.getByLabel('Output Global Z',{exact:true}).fill('5000');await page.getByLabel('Output Global Z',{exact:true}).blur();
- await page.getByRole('button',{name:'Find Routing Solutions',exact:true}).click();
+ await page.getByRole('button',{name:'설계 조건',exact:true}).click();await page.getByLabel('Output Global Z',{exact:true}).fill('5000');await page.getByLabel('Output Global Z',{exact:true}).blur();
+ if(!await page.getByRole('button',{name:'Find Routing Solutions',exact:true}).isVisible())await page.getByTestId('design-setup').locator('summary').filter({hasText:'상세 설계 도구'}).click();await page.getByRole('button',{name:'Find Routing Solutions',exact:true}).click();
  for(const name of ['Direct','1 Mirror','2 Mirrors','TIR Prism'])await page.getByLabel(`Search ${name}`,{exact:true}).uncheck();
  await page.getByRole('button',{name:'Run Search',exact:true}).click();await expect(page.getByTestId('route-candidate').first()).toBeVisible();
  await expect(page.getByTestId('route-optical-scope')).toContainText('Mode matching 미검증');
@@ -20,7 +20,7 @@ test('reported Mirror/Prism path exposes both physical folds and repairs inherit
  await page.screenshot({path:`test-results/D211-folds-${test.info().project.name}.png`,fullPage:true});
  const baseline=await save(page);baseline.designProblem=defaultProblem(baseline);expect(baseline.designProblem.maxGenerated).toBe(2);
  await page.getByTestId('surface-json-input').setInputFiles({name:'reported-limits.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(baseline))});
- await page.getByRole('button',{name:'Design Setup',exact:true}).click();await page.getByRole('button',{name:'Setup Automatic Synthesis',exact:true}).click();
+ await page.getByRole('button',{name:'설계 조건',exact:true}).click();if(await page.locator('.legacy-design-tools').getAttribute('open')===null)await page.locator('.legacy-design-tools summary').click();await page.getByRole('button',{name:'Automatic Synthesis',exact:true}).click();
  await expect(page.getByTestId('synthesis-limit-summary')).toContainText('new·replacement 2');
  await page.getByRole('button',{name:'Run Automatic Synthesis',exact:true}).click();await expect(page.getByTestId('synthesis-result')).toContainText('0 candidates',{timeout:120000});
  await expect(page.getByTestId('synthesis-result')).toContainText('4 > 2');

@@ -19,7 +19,7 @@ type ProjectHistory = {
     future: Project[];
 };
 function useProjectStore() {
-    const [history, setHistory] = useState<ProjectHistory>(() => ({ past: [], present: location.hash === '#surfaces' ? projectExample('compound') : location.hash==='#ideal'?idealProject():location.hash==='#blank'?newPhysicalProject():fiberLensFiberProject(), future: [] }));
+    const [history, setHistory] = useState<ProjectHistory>(() => ({ past: [], present: location.hash === '#surfaces' ? projectExample('compound') : location.hash==='#ideal'?idealProject():location.hash==='#blank'?newPhysicalProject():location.hash==='#starter'?fiberLensFiberProject():newPhysicalProject(), future: [] }));
     const project = history.present, [saved, setSaved] = useState(() => serializeProject(project));
     const [selection, setSelection] = useState(() => project.authoring?.ports.source.preset?'@source':prescription(project).surfaces[0].id), [revision, setRevision] = useState(0);
     const [pending, setPending] = useState<Project|null>(null);
@@ -41,7 +41,7 @@ function useProjectStore() {
     const transportedReference=useMemo(()=>project.model.kind==='surface'?solveFoldedGaussian(project,{sampleSegments:false}):null,[foldedJSON]);
     const useTransported=hasFolds(project)||(!!project.routing?.lensSolution&&physicalRaw.status!=='valid')||(transportedReference?.status==='valid'&&(transportedReference.refractions.some(s=>s.incidenceRad>1e-8)||(physicalRaw.status!=='valid'&&!transportedReference.apertureLimited)));
     const foldedGaussian=useMemo(()=>useTransported?solveFoldedGaussian(project):null,[foldedJSON,useTransported]);
-    const synthesisOverlap=useMemo(()=>project.model.kind==='surface'?tensorOverlap(project,foldedGaussian??transportedReference!):null,[foldedJSON,foldedGaussian,transportedReference]);
+    const synthesisOverlap=useMemo(()=>project.model.kind==='surface'?tensorOverlap(project,foldedGaussian??transportedReference!):null,[foldedJSON,foldedGaussian,transportedReference,project.portArrays]);
     const physicalGaussian=useMemo(()=>physicalRaw.status==='valid'&&synthesisOverlap?{...physicalRaw,overlap:synthesisOverlap}:physicalRaw,[physicalRaw,synthesisOverlap]);
     function updateIdeal(d: DesignDocument) { commit({ ...project, model: idealProject(d, project.sourceBody).model }); }
     function updateSurface(d: Prescription) { commit(withPrescription(project, d)); }
