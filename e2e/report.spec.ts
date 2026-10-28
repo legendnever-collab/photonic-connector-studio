@@ -13,9 +13,10 @@ test('report B/C, orbit and display envelopes share the current prescription wit
     await expect(page.locator('.report-inline')).toBeVisible();
     await expect(figure.locator('[data-defined-body]').first()).toBeVisible();
     const first=await figure.locator('[data-report-face]').first().getAttribute('points');
-    const box=await figure.boundingBox();
-    await page.mouse.move(box!.x+60,box!.y+150);await page.mouse.down();await page.mouse.move(box!.x+130,box!.y+180);await page.mouse.up();
-    expect(await figure.locator('[data-report-face]').first().getAttribute('points')).not.toEqual(first);
+    await figure.scrollIntoViewIfNeeded();const box=await figure.boundingBox();
+    // Drag the blank SVG heading area; optical Surfaces intentionally select rather than orbit.
+    await page.mouse.move(box!.x+box!.width*.4,box!.y+box!.height*.08);await page.mouse.down();await page.mouse.move(box!.x+box!.width*.65,box!.y+box!.height*.18,{steps:6});await page.mouse.up();
+    await expect.poll(()=>figure.locator('[data-report-face]').first().getAttribute('points')).not.toEqual(first);
     await page.getByLabel('Show defined bodies',{exact:true}).uncheck();
     await expect(figure.locator('[data-defined-body]')).toHaveCount(0);
     await page.getByRole('button',{name:'C · Linked Inspector',exact:true}).click();

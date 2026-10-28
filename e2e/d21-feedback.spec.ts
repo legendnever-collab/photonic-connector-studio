@@ -20,7 +20,7 @@ test('reported Mirror/Prism path exposes both physical folds and repairs inherit
  await page.screenshot({path:`test-results/D211-folds-${test.info().project.name}.png`,fullPage:true});
  const baseline=await save(page);baseline.designProblem=defaultProblem(baseline);expect(baseline.designProblem.maxGenerated).toBe(2);
  await page.getByTestId('surface-json-input').setInputFiles({name:'reported-limits.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(baseline))});
- await page.getByRole('button',{name:'설계 조건',exact:true}).click();if(await page.locator('.legacy-design-tools').getAttribute('open')===null)await page.locator('.legacy-design-tools summary').click();await page.getByRole('button',{name:'Automatic Synthesis',exact:true}).click();
+ await page.getByRole('button',{name:'설계 조건',exact:true}).click();await layout(page);if(await page.locator('.legacy-design-tools').getAttribute('open')===null)await page.locator('.legacy-design-tools summary').click();await page.getByRole('button',{name:'Automatic Synthesis',exact:true}).click();
  await expect(page.getByTestId('synthesis-limit-summary')).toContainText('new·replacement 2');
  await page.getByRole('button',{name:'Run Automatic Synthesis',exact:true}).click();await expect(page.getByTestId('synthesis-result')).toContainText('0 candidates',{timeout:120000});
  await expect(page.getByTestId('synthesis-result')).toContainText('4 > 2');
