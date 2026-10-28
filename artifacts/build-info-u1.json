@@ -1,8 +1,8 @@
 {
   "version": "0.22.0-ux3",
   "schemaVersion": 1,
-  "sourceCommit": "dce49bf95d32eb52367bf16e53ea9c6cfd62a129",
-  "sourceFingerprint": "7a98ec3df812ce180f363e169e5f9f9b9168c5cd4758badfae22c4d96c35554c",
+  "sourceCommit": "c350f8c99bd0e189a31aa9c258af515e4af4c195",
+  "sourceFingerprint": "328100c7eca83b4cef4a135bbd604d172ba0da7ec5257003663202748f9eced8",
   "inputs": {
     "index.html": "cea742b590b4266564318f5af42c8a27c70e0f62611592933f1d67b18d00817c",
     "package-lock.json": "c9ec42b96708133ba44c6599fc24233b562593adf2156b9d74a5fcdd66a18d5c",
@@ -33,7 +33,7 @@
     "src/authoring/Explorer.tsx": "c25d145b2201edadb41fb5003a60bf3a39b3f5799a063f7b8e1630c4f8bc4d74",
     "src/authoring/FileGuard.tsx": "07b6b2e903233bf04c512786eb2bccb3f26433b3c97df4465a702e9dfaa53b4f",
     "src/authoring/GuidedResults.tsx": "c8ccfc9a1f55ee306f9e7be3f9322df80337cd8b1bcd02bb3e580dde38dedc86",
-    "src/authoring/Panels.tsx": "49cb8357149616e6c77477f0a505613e5ac338abef2144ce854d2c2232f1b4a8",
+    "src/authoring/Panels.tsx": "c558c6302dc8c91b29f2f0aa3400449144aa427e83749df3a47fd36d5e93d033",
     "src/authoring/Ports.tsx": "b97718fa95f67c636ba8505a62145ace3d55221620b1423bc56304ad8a0befc9",
     "src/authoring/ScenarioGuide.tsx": "6bbbedfc949eac5d79fd4256733cb29e412c8d1be8b9fcfbf383b7e3ccc327ad",
     "src/authoring/StarterSummary.tsx": "8cc812a9e81b0da12b3b5cf0152e2ba4f9f15b0cf2ec4bd4d1a6ac05d8c70f25",
@@ -114,7 +114,7 @@
     "src/surface/ProfileFields.tsx": "a495b61c7467b2ea5d91dbd533b08c143c1db31e6a06053958be56ff5e59fe75",
     "src/surface/ReportFigure.tsx": "c0ea6d206ce53d5db18eea843049130e3ff272e092177b36a07933e0e2404175",
     "src/surface/Scene.tsx": "d17faf430847e2c30cc0ea835006768aa1dc6006c54136ee2686892e2849fc90",
-    "src/surface/Workbench.tsx": "deea4c49bdd89766c91e403eafd3fbc71e3ec7f2e54d5fcbb67562a3af7bf0e8",
+    "src/surface/Workbench.tsx": "aaa0ec088ad58e496e8a7fab47607292e59ff1f90cc29bc4a2a775ac77518ada",
     "src/surface/asphereIntersection.ts": "5872920e169cf0807d89a26947f54bd0145eb01388d055724afa98dc358b1e2c",
     "src/surface/evaluator.ts": "6394a99655338086db2d2908af797e6b232ba54c27404dc0f3b8de47c476cfbc",
     "src/surface/examples.ts": "8b3ace8284f735121d2fbcb298c20e0a31c63eedc8d0c85f66a5b128b40c8864",
@@ -137,6 +137,6 @@
     "vite.config.ts": "053836db8e246fabb580d4e5122bad6856a6f5e5a4071cef8e5fd3d188aa7730"
   },
   "artifact": "photonic-connector-studio-u1.html",
-  "artifactSHA256": "a2212fc29684fdcb7de619a0380ae4b11ca10eda9d6d2c64fba35934d078e09d",
-  "artifactBytes": 947695
+  "artifactSHA256": "1eb2c62921d64a038d6671a5b0d6e23467aea16bc65c2442fe5ae4124891c329",
+  "artifactBytes": 947795
 }
