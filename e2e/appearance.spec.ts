@@ -1,4 +1,4 @@
-import { openProjectExample } from './ui';
+import { openProjectExample,tab } from './ui';
 import { acceptProjectReplacement } from './ui';
 import {test,expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
@@ -13,7 +13,7 @@ test('appearance options preserve optical state, geometry nodes, zoom and edited
  const eta=await page.getByTestId('summary-eta').textContent();await page.evaluate(()=>{(window as any).originalSVG=document.querySelector('[data-testid="optical-canvas"]');(window as any).originalAxis=document.querySelector('[data-testid="beam-axis"]');(window as any).axisPoints=document.querySelector('[data-testid="beam-axis"]')?.getAttribute('points');});
  for(const name of ['Precision Dark','Focus Hybrid','Lab Light']){await appearance(page,name);await expect(page.getByTestId('summary-eta')).toHaveText(eta!);await expect(page.getByTestId('zoom-level')).toHaveText('125%');expect(await page.evaluate(()=>{const w=window as any;return w.originalSVG===document.querySelector('[data-testid="optical-canvas"]')&&w.originalAxis===document.querySelector('[data-testid="beam-axis"]')&&w.axisPoints===w.originalAxis.getAttribute('points');})).toBe(true);}
  if(info.project.name==='desktop'){
-  await page.getByTestId('tree-fiber').click();const yaw=page.getByLabel('Yaw',{exact:true});await yaw.fill('0.2');const editedEta=await page.getByTestId('summary-eta').textContent();
+  await tab(page,'Surfaces');await page.getByTestId('tree-fiber').click();const yaw=page.getByLabel('Yaw',{exact:true});await yaw.fill('0.2');const editedEta=await page.getByTestId('summary-eta').textContent();
   await appearance(page,'Precision Dark');await expect(yaw).toHaveValue('0.2');await expect(page.getByTestId('summary-eta')).toHaveText(editedEta!);await yaw.fill('0');await expect(yaw).toBeFocused();await expect(page.getByTestId('summary-eta')).toHaveText('100%');
  }
 });

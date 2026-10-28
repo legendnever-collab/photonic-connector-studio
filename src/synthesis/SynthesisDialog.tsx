@@ -19,10 +19,11 @@ import {SurfaceScene,sceneBounds,INITIAL_CAMERA} from '../surface/Scene';
 import {solveFoldedGaussian} from '../project/foldedGaussian';
 import {tensorOverlap} from '../project/tensorOverlap';
 import {jointEligible} from './robustness';
+import {portWorld} from '../routing/model';
 import FoldedGaussianView from '../project/FoldedGaussianView';
 import '../design/problem.css';
 const pct=(v:number|null)=>v===null?'Not calculated':`${(100*v).toFixed(5)}%`;
-export default function SynthesisDialog({onClose,initial,embedded=false,onAdvanced}:{embedded?:boolean;onAdvanced?:()=>void;onClose:()=>void;initial?:{problem:DesignProblem;routing:Routing}}){
+export default function SynthesisDialog({onClose,initial,embedded=false,onAdvanced,guided=false,onApplied}:{embedded?:boolean;onAdvanced?:()=>void;guided?:boolean;onApplied?:()=>void;onClose:()=>void;initial?:{problem:DesignProblem;routing:Routing}}){
  const [stage,setStage]=useState<'ports'|'constraints'|'candidates'>('ports');
  const Shell=embedded?'section':'dialog';
  const store=useProject(),p=store.project,dialog=useRef<HTMLDialogElement>(null),cancel=useRef(false),mounted=useRef(true),opener=useRef<HTMLElement|null>(null);
@@ -37,10 +38,11 @@ export default function SynthesisDialog({onClose,initial,embedded=false,onAdvanc
   try{const r=await searchSynthesisAsync(p,problem,routing,o,{cancelled:()=>cancel.current||!mounted.current||original.signature!==live.current.signature||original.settings!==live.current.settings,progress:setProgress});if(mounted.current){setBatch(r);setSelected(r.candidates[0]?.id??'');if(embedded)setStage('candidates');}}catch(e){if(mounted.current)setError(String(e));}finally{clearInterval(timer);if(mounted.current){setBusy(false);setElapsed((performance.now()-started)/1000);}}
  }
  function save(){try{store.commit(synthesisProject(p,problem,routing,o));setError('');return true;}catch(e){setError(String(e));return false;}}
- function apply(){if(!batch||!c||stale)return;try{store.replace(applySynthesis(p,batch,c.id));onClose();}catch(e){setError(String(e));}}
+ function apply(){if(!batch||!c||stale)return;try{store.replace(applySynthesis(p,batch,c.id));(onApplied??onClose)();}catch(e){setError(String(e));}}
  const nf=(label:string,value:number,unit:string,put:(v:number)=>void,min=0,max=10000,step:number|'any'='any')=><NumberField label={label} value={value} unit={unit} min={min} max={max} step={step} onChange={v=>{put(v!);return true;}}/>;
  return <Shell ref={embedded?undefined:dialog} className={embedded?`unified-design design-stage-${stage}`:"insert-dialog problem-dialog"} aria-label={embedded?"설계 조건":"Automatic Synthesis"} onCancel={e=>{e.preventDefault();onClose();}}>
- {!embedded&&<header><div><h2>Automatic Synthesis</h2><p>Input Mode → 실제 Lens / Fold → Output Reference Mode · D2.3.2</p></div><button aria-label="Close Automatic Synthesis" onClick={onClose}>×</button></header>}
+ {!embedded&&<header><div><h2>{guided?'자동 설계 찾기':'Automatic Synthesis'}</h2><p>{guided?'변경한 Port를 목표로 탐색 → 후보 확인 → 적용':'Input Mode → 실제 Lens / Fold → Output Reference Mode · D2.3.2'}</p></div><button aria-label="Close Automatic Synthesis" onClick={onClose}>×</button></header>}
+ {guided&&<section className="synthesis-port-goals" aria-label="고정된 탐색 목표"><strong>Input / Output 위치·방향은 탐색 중 고정합니다.</strong>{(['source','target'] as const).map(k=>{const f=portWorld(p,k);return <p key={k}>{k==='source'?'Input':'Output'} XYZ [mm]: {(['x','y','z'] as const).map(a=>(f.origin[a]*1000).toPrecision(6)).join(' / ')}</p>;})}<p>허용한 기존 변수와 새 구성을 비교합니다. 고정하지 않은 부품은 교체될 수 있습니다. 탐색 한도 안에서 찾은 후보이며 전역 최적해를 보장하지 않습니다.</p></section>}
  {embedded&&<><nav className="problem-tabs" aria-label="설계 작업">{(['ports','constraints','candidates'] as const).map(k=><button key={k} aria-pressed={stage===k} onClick={()=>setStage(k)}>{k==='ports'?'Ports & Array':k==='constraints'?'목표·제약':'후보 비교'}</button>)}</nav><ArrayScope/><div hidden={stage!=='ports'}><DesignSetup portsOnly onExample={()=>{}} onError={setError} onSynthesis={()=>setStage('constraints')}/></div></>}
  <div className="problem-body"><section className="problem-settings" hidden={embedded&&stage==='ports'}><div className="problem-summary" hidden={embedded&&stage!=='constraints'}>현재 Project에서 시작합니다. Preview는 read-only이며 Apply = one Undo.<br/>Lens / ideal planar Mirror: conditional Gaussian overlap. Prism: collimated / coplanar / explicit TE-TM domain 검증 후 평가.</div>
  <div className="problem-settings-scroll" hidden={embedded&&stage!=='constraints'}><fieldset className="problem-fields" disabled={busy}>
