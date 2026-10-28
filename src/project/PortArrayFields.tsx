@@ -1,9 +1,10 @@
+import {currentArrayStudy} from './arrayStudy';
 import {NumberField} from '../Fields';
 import {useProject} from './Store';
 import {defaultPortArrays,PortArraysSchema,arrayAssessment} from './portArrays';
 import type {PortArrays,PortGrid} from './portArrays';
 import {withPortGrid} from './arrayCommands';
-export function ArrayScope(){const {project:p}=useProject();if(!p.portArrays)return null;const a=p.portArrays;return <section className="array-scope" data-testid="array-scope"><strong>대표 Channel · Input {a.source.rows} × {a.source.cols} → Output {a.target.rows} × {a.target.cols}</strong><p>{a.mapping==='row-major'?'Row-major 1:1 mapping':'Channel Mapping 미지정'} · Array 전체 Mode / 공차 / Crosstalk 미평가</p><p>Report는 지정한 Port 위치를 표시합니다. Body 치수가 없는 Port는 표시용 Marker이며 실제 Coupler 형상이 아닙니다.</p></section>;}
+export function ArrayScope(){const shared=useProject(),p=shared.project,study=currentArrayStudy(p,shared.arrayStudyResult,!!shared.invalid.length);if(!p.portArrays)return null;const a=p.portArrays;return <section className="array-scope" data-testid="array-scope"><strong>대표 Channel · Input {a.source.rows} × {a.source.cols} → Output {a.target.rows} × {a.target.cols}</strong><p>{a.mapping==='row-major'?'Row-major 1:1 mapping':'Channel Mapping 미지정'} · {study?`Channel 평가 ${study.nominalValid}/${study.total} → ${study.perturbedValid}/${study.total} · 공차 / Crosstalk 미평가`:'Array 전체 Mode / 공차 / Crosstalk 미평가'}</p><p>Report는 지정한 Port 위치를 표시합니다. Body 치수가 없는 Port는 표시용 Marker이며 실제 Coupler 형상이 아닙니다.</p></section>;}
 export default function PortArrayFields(){const s=useProject(),p=s.project,a=p.portArrays??defaultPortArrays(p);
  function put(next:PortArrays){if(next.source.rows*next.source.cols!==next.target.rows*next.target.cols||next.source.referenceRow*next.source.cols+next.source.referenceCol!==next.target.referenceRow*next.target.cols+next.target.referenceCol)next={...next,mapping:'unassigned'};try{s.commit({...p,portArrays:PortArraysSchema.parse(next)});return true;}catch{return false;}}
  function grid(which:'source'|'target',next:PortGrid){try{s.commit(withPortGrid(p,which,next));return true;}catch{return false;}}

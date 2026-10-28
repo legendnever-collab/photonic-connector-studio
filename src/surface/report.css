@@ -16,3 +16,5 @@
 }
 
 .report-route-scope{flex-shrink:0;margin:0;padding:6px 20px;background:#fff9ee;font-size:12px;line-height:1.5}
+
+.report-results{flex:0 1 auto;max-height:210px;overflow:auto;padding:0 12px;min-height:0}.report-dialog .report-paper-wrap{min-height:200px}.report-results .array-study-results h3{font-size:14px}.report-results .array-scope{margin:6px 0}.report-results .joint-summary{padding:6px 0}
