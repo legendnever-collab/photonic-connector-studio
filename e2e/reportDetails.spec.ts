@@ -1,3 +1,4 @@
+import {openTechnicalExamples} from './ui';
 import {test,expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
 import {pathToFileURL} from 'node:url';
@@ -14,7 +15,7 @@ test('linked 3D region uses real Lens shape, dimensions and Gaussian data, witho
  await page.getByRole('button',{name:'Surface View',exact:true}).click();await expect(page.getByLabel('S1 Thickness',{exact:true})).toBeVisible();await page.getByLabel('S1 Thickness',{exact:true}).fill('0.8');await report(page);await expect(page.getByTestId('report-detail-dimensions')).toContainText('t = 0.8000 mm');await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(page.getByTestId('report-detail-dimensions')).toContainText('t = 1.000 mm');expect(await save(page)).toEqual(before);
 });
 test('folded Prism detail includes real depth, reflected ray directions and aperture-limited Beam scope',async({page})=>{
- await page.getByLabel('Project Example',{exact:true}).selectOption('routing:prism');await report(page);await expect(page.getByTestId('report-details')).toContainText('Prism depth');await expect(page.getByTestId('report-details')).toContainText('P-TIR');expect(await page.getByTestId('report-direction').count()).toBeGreaterThan(3);
+ await openTechnicalExamples(page);await page.getByLabel('Project Example',{exact:true}).selectOption('routing:prism');await report(page);await expect(page.getByTestId('report-details')).toContainText('Prism depth');await expect(page.getByTestId('report-details')).toContainText('P-TIR');expect(await page.getByTestId('report-direction').count()).toBeGreaterThan(3);
  const before=await save(page),dl=page.waitForEvent('download');await page.locator('.report-inline').getByRole('button',{name:'SVG',exact:true}).click();const svg=await readFile((await(await dl).path())!,'utf8');expect(svg).toContain('untruncated Gaussian reference');expect(svg).toContain('report-detail-viewport');expect(svg).toContain('href="#report-optical-scene-');expect(svg).not.toMatch(/<image[^>]+https?:|<script/);expect(await save(page)).toEqual(before);await page.getByRole('button',{name:'Expand Report',exact:true}).click();await expect(page.getByRole('dialog').getByTestId('report-detail-viewport')).toHaveCount(2);await page.screenshot({path:'test-results/Report-Prism-3D-details.png',fullPage:true});
 });
 test('expanded Report and offline PNG retain complete insets and close back to editing',async({page})=>{
@@ -34,7 +35,7 @@ test('all separated regions are available on paged sheets and modal SVG referenc
 });
 
 test('high magnification Prism stays visible under thin rays and bounded arrowheads in the exported Report',async({page})=>{
- await page.getByLabel('Project Example',{exact:true}).selectOption('routing:prism');const p=await save(page),lens=p.bodies.find((b:{kind:string})=>b.kind==='lens');lens.outerRadius=.0012;
+ await openTechnicalExamples(page);await page.getByLabel('Project Example',{exact:true}).selectOption('routing:prism');const p=await save(page),lens=p.bodies.find((b:{kind:string})=>b.kind==='lens');lens.outerRadius=.0012;
  p.model.prescription.surfaces.filter((s:{assemblyId:string})=>s.assemblyId===lens.assemblyId).forEach((s:{aperture:number})=>s.aperture=.001);
  await page.getByTestId('surface-json-input').setInputFiles({name:'prism-magnification.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});await report(page);const before=await save(page);
  await page.getByRole('button',{name:'Expand Report',exact:true}).click();const modal=page.getByRole('dialog'),inset=modal.locator('[data-detail-inset]').filter({hasText:'BK7 TIR Prism'}),view=inset.getByTestId('report-detail-viewport');

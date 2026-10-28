@@ -1,3 +1,4 @@
+import type {Overlap} from './physicalGaussian';
 import type {ArrayStudyResult} from './arrayStudy';
 import type {LensBenchmark} from './lensFieldBenchmark';
 import {tensorOverlap} from './tensorOverlap';
@@ -24,12 +25,13 @@ function useProjectStore() {
     const project = history.present, [saved, setSaved] = useState(() => serializeProject(project));
     const [selection, setSelection] = useState(() => project.authoring?.ports.source.preset?'@source':prescription(project).surfaces[0].id), [revision, setRevision] = useState(0);
     const [pending, setPending] = useState<Project|null>(null);
+    const [guidedResult,setGuidedResult]=useState<{fingerprint:string;overlap:Overlap|null}|null>(null);
     const [arrayStudyResult,setArrayStudyResult]=useState<ArrayStudyResult|null>(null);
     const [lensBenchmark,setLensBenchmark]=useState<LensBenchmark|null>(null);
     const [jointResult,setJointResult]=useState<JointResult|null>(null);
     const [invalid, setInvalid] = useState<string[]>([]);
     function commit(next: Project) { ProjectSchema.parse(next); setHistory(h => JSON.stringify(next) === JSON.stringify(h.present) ? h : { past: [...h.past.slice(-49), h.present], present: next, future: [] }); }
-    function replace(next: Project) { commit(next); setSelection(next.authoring?.ports.source.preset?'@source':prescription(next).surfaces[0].id); setRevision(r => r + 1); setInvalid([]); }
+    function replace(next: Project) { commit(next);setGuidedResult(next.designScenario==='basic-relay'?{fingerprint:projectFingerprint(next),overlap:tensorOverlap(next)}:null); setSelection(next.authoring?.ports.source.preset?'@source':prescription(next).surfaces[0].id); setRevision(r => r + 1); setInvalid([]); }
     const undo = () => { setHistory(h => h.past.length ? { past: h.past.slice(0, -1), present: h.past.at(-1)!, future: [h.present, ...h.future] } : h); setInvalid([]); };
     const redo = () => { setHistory(h => h.future.length ? { past: [...h.past, h.present], present: h.future[0], future: h.future.slice(1) } : h); setInvalid([]); };
     const doc = useMemo(() => prescription(project), [project.model]);
@@ -51,7 +53,7 @@ function useProjectStore() {
     function open(raw: string) { const next = parseProject(raw); if(serializeProject(project)!==saved){setPending(next);return;} replace(next); setSaved(serializeProject(next)); }
     function requestReplace(next:Project){if(serializeProject(project)!==saved){setPending(next);return;}replace(next);}
     function acceptPending(){if(pending){replace(pending);setPending(null);}}
-    return { arrayStudyResult,setArrayStudyResult,lensBenchmark,setLensBenchmark,project, doc, trace, routing, gaussian, synthesisOverlap, physicalGaussian, foldedGaussian, jointResult, setJointResult, history, pending, setPending, requestReplace, acceptPending, commit, replace, updateIdeal, updateSurface, undo, redo, selection, setSelection, revision, save, open, dirty: serializeProject(project) !== saved, invalid, setInvalid };
+    return { guidedResult,setGuidedResult,arrayStudyResult,setArrayStudyResult,lensBenchmark,setLensBenchmark,project, doc, trace, routing, gaussian, synthesisOverlap, physicalGaussian, foldedGaussian, jointResult, setJointResult, history, pending, setPending, requestReplace, acceptPending, commit, replace, updateIdeal, updateSurface, undo, redo, selection, setSelection, revision, save, open, dirty: serializeProject(project) !== saved, invalid, setInvalid };
 }
 const Context = createContext<ReturnType<typeof useProjectStore> | null>(null);
 export function ProjectProvider({ children }: {

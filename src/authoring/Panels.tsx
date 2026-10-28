@@ -2,10 +2,10 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode, PointerEvent as ReactPointerEvent } from 'react';
 type PanelState={mode:'dock'|'float'|'closed';x:number;y:number;width:number;height:number};
 type Session={dataHeight:number;panels:Record<string,PanelState>};
-const defaults=():Session=>({dataHeight:260,panels:{data:{mode:'dock',x:250,y:330,width:800,height:330},inspector:{mode:'dock',x:850,y:180,width:350,height:560}}});
+const defaults=():Session=>({dataHeight:260,panels:{data:{mode:location.hash?'dock':'closed',x:250,y:330,width:800,height:330},inspector:{mode:location.hash?'dock':'closed',x:850,y:180,width:350,height:560}}});
 function read():Session {
  try {
-  const v=JSON.parse(localStorage.getItem('pcs-u1-windows')??'null'),d=defaults();
+  const v=JSON.parse(localStorage.getItem('pcs-ux2-windows')??'null'),d=defaults();
   if(v&&Number.isFinite(v.dataHeight)) {
    d.dataHeight=Math.min(600,Math.max(160,v.dataHeight));
    for(const id of ['data','inspector']) {
@@ -18,10 +18,11 @@ function read():Session {
  }catch{return defaults();}
 }
 const Context=createContext<{session:Session;setSession:React.Dispatch<React.SetStateAction<Session>>}|null>(null);
-export function PanelProvider({children}:{children:ReactNode}){const [session,setSession]=useState(read);useEffect(()=>{try{localStorage.setItem('pcs-u1-windows',JSON.stringify(session));}catch{/* Session persistence is optional under file://. */}},[session]);return <Context.Provider value={{session,setSession}}>{children}</Context.Provider>;}
+export function PanelProvider({children}:{children:ReactNode}){const [session,setSession]=useState(read);useEffect(()=>{try{localStorage.setItem('pcs-ux2-windows',JSON.stringify(session));}catch{/* Session persistence is optional under file://. */}},[session]);return <Context.Provider value={{session,setSession}}>{children}</Context.Provider>;}
 function usePanels(){return useContext(Context)!;}
 export function useOpenInspector(){const {setSession}=usePanels();return ()=>setSession(s=>({...s,panels:{...s.panels,inspector:{...s.panels.inspector,mode:s.panels.inspector.mode==='closed'?'dock':s.panels.inspector.mode}}}));}
-export function WindowControls(){const {setSession}=usePanels();return <div className="window-controls" aria-label="Windows"><button onClick={()=>setSession(s=>({...s,panels:{...s.panels,data:{...s.panels.data,mode:'dock'}}}))}>Surface Data</button><button onClick={()=>setSession(s=>({...s,panels:{...s.panels,inspector:{...s.panels.inspector,mode:'dock'}}}))}>Properties / Analysis</button><button aria-label="Restore Window Layout" onClick={()=>setSession(defaults())}>Restore Layout</button></div>;}
+export function useWorkspacePanels(){const {setSession}=usePanels();return {inspector:()=>setSession(s=>({...s,panels:{...s.panels,inspector:{...s.panels.inspector,mode:'dock'}}})),data:(mode:'dock'|'closed')=>setSession(s=>({...s,panels:{...s.panels,data:{...s.panels.data,mode}}})),focusLayout:()=>setSession(s=>({...s,panels:{...s.panels,data:{...s.panels.data,mode:'closed'},inspector:{...s.panels.inspector,mode:'closed'}}}))};}
+export function WindowControls({onData,onRestore}:{onData?:()=>void;onRestore?:()=>void}){const {setSession}=usePanels();return <div className="window-controls" aria-label="Windows"><button aria-label="Surface Data" onClick={()=>{onData?.();setSession(s=>({...s,panels:{...s.panels,data:{...s.panels.data,mode:s.panels.data.mode==='closed'?'dock':'closed'}}}));}}>Surface Data</button><button aria-label="Properties / Analysis" onClick={()=>setSession(s=>({...s,panels:{...s.panels,inspector:{...s.panels.inspector,mode:'dock'}}}))}>설정·결과 창</button><button aria-label="Restore Window Layout" onClick={()=>{onRestore?.();setSession(defaults());}}>기본 배치</button></div>;}
 export function DockPanel({id,title,children}:{id:'data'|'inspector';title:string;children:ReactNode}){
  const {session,setSession}=usePanels(),p=session.panels[id],ref=useRef<HTMLDivElement>(null);
  const patch=(next:Partial<PanelState>)=>setSession(s=>({...s,panels:{...s.panels,[id]:{...s.panels[id],...next}}}));

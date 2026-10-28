@@ -1,3 +1,7 @@
+# UX2 · 예시 중심 설계 Workspace
+
+`0.21.0-ux2`: 왼쪽 작업 순서, 큰 광학 화면, 접을 수 있는 Surface Data, 일관된 주요 버튼과 01 Fiber–Lens–Lens–Fiber 기준 예시를 제공합니다. [변경·검증](docs/UX2_GUIDED_WORKSPACE.md) · [Astra 후속 개발 계획](docs/ASTRA_ARRAY_AND_INDUSTRY_EXAMPLES_PLAN.md).
+
 # A1 · Channel별 평가와 참고 구조 예시
 
 `0.20.0-a1`: Templates의 실제 참고 구조·가정·부품 역할, 계산 가능한 Mirror / 2-Lens 연습 예시, 공용 광학계의 Channel별 조건부 Gaussian 비교를 추가했습니다. Output 공통 이동·회전·Pitch 변화 전후를 비교하며 부분 coverage에서 전체 Array 성능을 추정하지 않습니다. [계약과 검증](docs/A1_ARRAY_CHANNEL_STUDY.md).

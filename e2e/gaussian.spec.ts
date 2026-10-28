@@ -47,15 +47,15 @@ test("invalid numeric drafts restore last valid values on Enter/Blur; auto-appli
   await f.press("Enter");await expect(f).toHaveValue("1.25");await expect(page.getByTestId("eta")).toHaveText("100%");
   await f.fill("");await expect(f).toHaveAttribute("aria-invalid","true");await f.press("Tab");await expect(f).toHaveValue("1.25");
   await f.fill("-2.5");await f.press("Enter");await expect(f).toHaveValue("-2.5");
-  await f.fill("1.375");await page.getByRole("button",{name:"편집 종료 · Layout",exact:true}).click();await expect(page.getByTestId("optical-canvas")).toBeVisible();
+  await f.fill("1.375");await page.getByRole("button",{name:"광학 화면 보기",exact:true}).click();await expect(page.getByTestId("optical-canvas")).toBeVisible();
   expect((await save(page)).components[1].focalLength).toBeCloseTo(0.001375,15);
 });
 test("visual viewport resize keeps mobile editing exit reachable; JSON roundtrip + Undo/Redo recompute",async({page},info)=>{
   await example(page,"matching");await choose(page,"waveguide");const m=page.getByLabel("MFDx",{exact:true});await m.fill("42.5");
   if(info.project.name==="mobile"){
     await page.evaluate(()=>{const v=window.visualViewport!;Object.defineProperty(v,"height",{configurable:true,value:360});Object.defineProperty(v,"offsetTop",{configurable:true,value:25});v.dispatchEvent(new Event("resize"));});
-    const b=await page.getByRole("button",{name:"편집 종료 · Layout",exact:true}).boundingBox();expect(b!.y).toBeGreaterThanOrEqual(25);expect(b!.y+b!.height).toBeLessThanOrEqual(385);
-    await page.getByRole("button",{name:"편집 종료 · Layout",exact:true}).click();
+    const b=await page.getByRole("button",{name:"광학 화면 보기",exact:true}).boundingBox();expect(b!.y).toBeGreaterThanOrEqual(25);expect(b!.y+b!.height).toBeLessThanOrEqual(385);
+    await page.getByRole("button",{name:"광학 화면 보기",exact:true}).click();
     await page.evaluate(()=>{const v=window.visualViewport!;delete (v as unknown as Record<string,unknown>).height;delete (v as unknown as Record<string,unknown>).offsetTop;v.dispatchEvent(new Event("resize"));});
   }else await tab(page,"Layout");
   const eta=await page.getByTestId("summary-eta").textContent();const data=await save(page);
@@ -67,7 +67,7 @@ test("visual viewport resize keeps mobile editing exit reachable; JSON roundtrip
 test("offline file calculation/edit/save/load and responsive evidence",async({page},info)=>{
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));await page.context().setOffline(true);await page.route("**/*",r=>r.request().url().startsWith("file:")?r.continue():r.abort());
   await page.goto(pathToFileURL(resolve("dist/index.html")).href+"#ideal");await example(page,"matching");await expect(page.getByTestId("summary-eta")).toHaveText("100%");
-  await choose(page,"lens-f");await page.getByLabel("Focal Length",{exact:true}).fill("1.4");await page.getByRole("button",{name:"편집 종료 · Layout",exact:true}).click();const data=await save(page);
+  await choose(page,"lens-f");await page.getByLabel("Focal Length",{exact:true}).fill("1.4");await page.getByRole("button",{name:"광학 화면 보기",exact:true}).click();const data=await save(page);
   await openProjectExample(page,'ideal:matching');await acceptProjectReplacement(page);await page.getByTestId("surface-json-input").setInputFiles({name:"offline-p1.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});await acceptProjectReplacement(page);expect(await save(page)).toEqual(data);await expect(page.getByTestId("summary-eta")).not.toHaveText("100%");expect(errors).toEqual([]);
   await openProjectExample(page,'ideal:matching');await acceptProjectReplacement(page);
   if(info.project.name==="desktop")for(const width of [360,412,768,1366,1920]){await page.setViewportSize({width,height:width<1000?915:900});await page.evaluate(()=>document.fonts.ready);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`test-results/P1.1-${width}.png`,fullPage:true});}

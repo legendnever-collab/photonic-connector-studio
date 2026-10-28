@@ -31,7 +31,7 @@ export const ProjectSchema = z.object({ kind: z.literal('optical-project'), sche
     routing:RoutingSchema.optional(),
     portArrays:PortArraysSchema.optional(),
     arrayStudy:ArrayStudySchema.optional(),
-    designScenario:z.enum(['edge-direct','edge-receptacle','vertical','spacer-fold','evanescent','mirror-reference','relay-reference']).optional(),
+    designScenario:z.enum(['edge-direct','edge-receptacle','vertical','spacer-fold','evanescent','mirror-reference','relay-reference','basic-relay']).optional(),
     synthesis:SynthesisSchema.optional(),
     designProblem:ProblemSchema.optional(),
     targetBody:z.object({radius:dim,length:dim}).strict().nullable().optional(),

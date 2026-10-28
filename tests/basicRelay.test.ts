@@ -1,0 +1,6 @@
+import {test,expect} from 'vitest';
+import {basicRelayReference} from '../src/authoring/basicRelay';
+import {tensorOverlap} from '../src/project/tensorOverlap';
+import {serializeProject,parseProject} from '../src/project/model';
+test('first guided example is a real two-Lens single-channel relay with valid baseline',()=>{const p=basicRelayReference();if(p.model.kind!=='surface')throw Error();expect(p.model.prescription.surfaces.filter(s=>s.interaction==='refract')).toHaveLength(4);expect(p.bodies.filter(b=>b.kind==='lens')).toHaveLength(2);expect(p.portArrays).toBeUndefined();expect(p.arrayStudy).toBeUndefined();expect(p.targetBody?.radius).toBe(62.5e-6);const r=tensorOverlap(p);expect(r.status).toBe('valid');if(r.status==='valid')expect(r.eta).toBeGreaterThan(.999);expect(serializeProject(parseProject(serializeProject(p)))).toBe(serializeProject(p));});
+test('real Output displacement changes its Gaussian overlap',()=>{const p=basicRelayReference();if(p.model.kind!=='surface')throw Error();const a=tensorOverlap(p);p.model.prescription.surfaces.at(-1)!.frame.origin.y+=5e-6;const b=tensorOverlap(p);if(a.status!=='valid'||b.status!=='valid')throw Error();expect(b.eta).toBeLessThan(a.eta*.6);});

@@ -9,7 +9,7 @@ import { pathToFileURL } from 'node:url';
 const tab=unifiedTab;
 async function save(page:Page){await tab(page,'Layout');const d=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await d).path())!,'utf8'));}
 async function assembly(page:Page,id:string){await tab(page,'Surfaces');if(await page.getByTestId('assembly-'+id).count())await page.getByTestId('assembly-'+id).click();else{await page.getByTestId('tree-'+id).click();await page.getByLabel('Surface Edit Target',{exact:true}).selectOption('assembly');}}
-async function finish(page:Page){await page.getByRole('button',{name:'편집 종료 · Layout',exact:true}).last().click();}
+async function finish(page:Page){await page.getByRole('button',{name:'광학 화면 보기',exact:true}).last().click();}
 async function report(page:Page){await tab(page,'Layout');await page.getByRole('button',{name:'Report View',exact:true}).click();}
 
 test('ideal Gaussian, Surface positions, report envelope and global Undo use one project',async({page})=>{
