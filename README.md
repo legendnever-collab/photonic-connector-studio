@@ -1,3 +1,7 @@
+# UX4 · 구조별 탐색 상태와 후보 비교
+
+`0.23.0-ux4`: 구조별 선택/부품 제한, 실제 기하·평가 제외 사유와 탐색 한도를 표시합니다. 같은 구조·평가 조건의 후보를 묶고 모두 펼쳐 비교·적용할 수 있습니다. [사용 순서·진단 계약](docs/UX4_SYNTHESIS_EXPLANATIONS.md).
+
 # UX3 · 조건 확인과 자동 설계 작업
 
 `0.22.0-ux3`: 예시를 ② 연결 조건에서 시작하고 ③ 자동 설계 찾기를 주요 작업으로 노출합니다. Explorer는 오른쪽 탭과 PC floating을 지원합니다. [변경·사용 순서](docs/UX3_DESIGN_ACTIONS.md) · [Astra 후속 계획](docs/ASTRA_ARRAY_AND_INDUSTRY_EXAMPLES_PLAN.md).

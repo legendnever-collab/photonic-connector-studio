@@ -21,10 +21,12 @@ import type {SynthesisOptions} from './contract';
 import {jointAxes} from '../design/joint';
 import {emptyJointFeedback,createJointScreen,compareJoint,jointEligible,jointKey,jointContext,jointPriority,betterJoint,assignJointGroups} from './robustness';
 import type {JointScreen,JointFeedback} from './robustness';
+import {emptyDiagnostics,noteIssue,observeProposals} from './diagnostics';
+import type {SynthesisDiagnostics} from './diagnostics';
 export type Recipe={kind:'existing'}|{kind:'generated';route:RouteProposal;clear:number;count:0|1|2;side:'first'|'last';leg?:number;segments?:number[]};
 export type OAT={status:'assessed'|'partial'|'not-assessed';planned:number;tested:number;fieldAssessed:number;geometryPassed:number;worstEta:number|null;issues:string[];coverage:string};
 export type SynthesisCandidate={id:string;topology:string;project:Project;recipe:Recipe;values:number[];seal:string;merit:BeamMerit|null;eta:number|null;comparisonClass:string;evaluator:string;etaResolution:number;comparisonContext:string;reason:string;qualified:boolean;oat:OAT;joint?:JointScreen};
-export type SynthesisResult={engine:typeof SYNTHESIS_ID;inputSignature:string;settings:string;problem:DesignProblem;routing:Routing;options:SynthesisOptions;status:'completed'|'budget-exhausted'|'unsupported'|'invalid-input'|'cancelled';reason:string;evaluated:number;geometryEvaluated:number;toleranceEvaluated:number;jointFeedback:JointFeedback;refinements:number;allocationCoverage:{planned:number;tested:number;interiorTested:number;anchorSurfaces:number};placementFeedback:{topology:string;tested:number;supported:number;worstEta:number|null}[];rejected:Record<string,number>;families:Record<string,number>;candidates:SynthesisCandidate[]};
+export type SynthesisResult={diagnostics:SynthesisDiagnostics;engine:typeof SYNTHESIS_ID;inputSignature:string;settings:string;problem:DesignProblem;routing:Routing;options:SynthesisOptions;status:'completed'|'budget-exhausted'|'unsupported'|'invalid-input'|'cancelled';reason:string;evaluated:number;geometryEvaluated:number;toleranceEvaluated:number;jointFeedback:JointFeedback;refinements:number;allocationCoverage:{planned:number;tested:number;interiorTested:number;anchorSurfaces:number};placementFeedback:{topology:string;tested:number;supported:number;worstEta:number|null}[];rejected:Record<string,number>;families:Record<string,number>;candidates:SynthesisCandidate[]};
 const message=(e:unknown)=>e instanceof Error?e.message:String(e),eq=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 const emptyOAT=():OAT=>({status:'not-assessed',planned:0,tested:0,fieldAssessed:0,geometryPassed:0,worstEta:null,issues:[],coverage:''});
 export function synthesisFingerprint(p:Project){const q=structuredClone(p);if(q.synthesis)delete q.synthesis.solution;return projectFingerprint(q);}
@@ -66,10 +68,10 @@ function overlap(p:Project,r:FoldedResult){
 function geometry(base:Project,p:Project,problem:DesignProblem){checkFrozen(base,p,problem);problemLimits(base,p,problem);const r=analyzeRouting(p);const reason=r.path?screenClearance(p,[],r.path,problem.routes.clearance):'No finite chief path';if(reason)throw Error(reason);}
 /** Shared budget covers every nominal transported forward solve, including Lens preflight and final candidate metrics. */
 export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRouting:Routing,rawOptions:SynthesisOptions):Generator<string,SynthesisResult>{
- const out:SynthesisResult={engine:SYNTHESIS_ID,inputSignature:serializeProject(input),settings:JSON.stringify([rawProblem,rawRouting,rawOptions]),problem:structuredClone(rawProblem),routing:structuredClone(rawRouting),options:structuredClone(rawOptions),status:'completed',reason:'',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,jointFeedback:emptyJointFeedback(rawOptions.toleranceMode==='joint',rawOptions.jointBudget??2048),refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};
- const reject=(s:string)=>{out.rejected[s]=(out.rejected[s]??0)+1;};
+ const out:SynthesisResult={diagnostics:emptyDiagnostics(),engine:SYNTHESIS_ID,inputSignature:serializeProject(input),settings:JSON.stringify([rawProblem,rawRouting,rawOptions]),problem:structuredClone(rawProblem),routing:structuredClone(rawRouting),options:structuredClone(rawOptions),status:'completed',reason:'',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,jointFeedback:emptyJointFeedback(rawOptions.toleranceMode==='joint',rawOptions.jointBudget??2048),refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};
+ const reject=(s:string,family:string|null=null,stage:'setup'|'geometry'|'fit'|'mode'='setup',count=1)=>{out.rejected[s]=(out.rejected[s]??0)+count;noteIssue(out.diagnostics,family,stage,s,count);};
  let p:Project,o:SynthesisOptions,problem:DesignProblem;
- try{problem=ProblemSchema.parse(rawProblem);const routing=RoutingSchema.parse(rawRouting);o=SynthesisSchema.parse(rawOptions);p=synthesisProject(input,problem,routing,o);preflight(p,problem);if(o.toleranceMode==='joint'){if(!problem.jointTolerance)throw Error('Define Joint Tolerance in Design Problem before enabling joint feedback.');jointAxes(p,problem.jointTolerance);if(![...problem.jointTolerance.mating.position,...problem.jointTolerance.mating.angle,...problem.jointTolerance.assembly.position,...problem.jointTolerance.assembly.angle].some(v=>v>0))throw Error('Joint feedback requires nonzero error bounds.');}}catch(e){out.status='invalid-input';out.reason=message(e);return out;}
+ try{problem=ProblemSchema.parse(rawProblem);const routing=RoutingSchema.parse(rawRouting);o=SynthesisSchema.parse(rawOptions);p=synthesisProject(input,problem,routing,o);preflight(p,problem);if(o.toleranceMode==='joint'){if(!problem.jointTolerance)throw Error('Define Joint Tolerance in Design Problem before enabling joint feedback.');jointAxes(p,problem.jointTolerance);if(![...problem.jointTolerance.mating.position,...problem.jointTolerance.mating.angle,...problem.jointTolerance.assembly.position,...problem.jointTolerance.assembly.angle].some(v=>v>0))throw Error('Joint feedback requires nonzero error bounds.');}}catch(e){out.status='invalid-input';out.reason=message(e);noteIssue(out.diagnostics,null,'setup',out.reason);return out;}
  const jointMode=o.toleranceMode==='joint',rank=jointMode?compareJoint:compare,ledger=out.jointFeedback;
  let opticalLimit=jointMode?o.budget-Math.min(64,Math.floor(o.budget/4)):o.budget;
  let jointLimit=jointMode?Math.floor(ledger.budget*.6):ledger.budget;
@@ -80,26 +82,29 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  function* retain(project:Project,recipe:Recipe,values:number[],topology:string):Generator<string,SynthesisCandidate>{
   geometry(p,project,problem);const r=forward(project,{sampleSegments:false});if(r.status!=='valid')throw Error(r.reason);if(r.apertureLimited)throw Error('Aperture tail bound exceeds 0.1%; untruncated reference only.');
   const m=beamMerit(r,project,o),v=overlap(project,r),eta=v.status==='valid'?v.eta:null;
+  if(v.status!=='valid')noteIssue(out.diagnostics,topology,'mode',v.reason);
   const c:SynthesisCandidate={id:`synthesis-${out.evaluated}-${out.geometryEvaluated}`,project,recipe:structuredClone(recipe),values:[...values],seal:JSON.stringify([recipe,values]),topology,merit:m,eta,comparisonClass:v.status==='valid'?v.comparisonClass??'scalar-assumed-copolarized':'unassessed',evaluator:v.status==='valid'?v.domain?.evaluator??TENSOR_OVERLAP_ID:'unassessed',etaResolution:v.status==='valid'?v.domain?.modelEtaTolerance??1e-10:0,comparisonContext:jointMode?jointContext(project):'',reason:v.status==='valid'?v.scope??'Conditional normalized Mode Overlap':v.reason,qualified:m.goalsMet&&eta!==null&&eta>=o.minimumOverlap,oat:emptyOAT()};
   const fp=serializeProject(project);const duplicate=out.candidates.find(c=>serializeProject(c.project)===fp);if(duplicate)return duplicate;
   if(screenJoint)c.joint=yield* screenJoint(project,c.qualified);
   const recipeKey=JSON.stringify(recipe),prior=taskBest.get(recipeKey);if(!prior||rank(c,prior)<0)taskBest.set(recipeKey,c);
-  out.candidates.push(c);out.candidates.sort(rank);
+  out.diagnostics.families[topology].accepted++;out.candidates.push(c);out.candidates.sort(rank);
   // Keep diversity by optical family and Lens count before filling with merit-ranked alternatives.
   const diverse=new Map<string,SynthesisCandidate>();for(const x of out.candidates){const key=(jointMode?jointKey(x)+'|':'')+x.topology+'-'+prescription(x.project).assemblies.filter(a=>a.kind==='lens'&&componentIds(x.project).includes(a.id)).length;if(!diverse.has(key))diverse.set(key,x);}
   const chosen=[...diverse.values()].sort(rank).slice(0,6);for(const x of out.candidates)if(chosen.length<8&&!chosen.includes(x))chosen.push(x);out.candidates=chosen.sort(rank);return c;
  }
  function* fit(recipe:Recipe,topology:string,allowance:number):Generator<string,number>{
+  const evidence=out.diagnostics.families[topology];evidence.fitTested++;
   const start=out.evaluated;let cost=Infinity;out.allocationCoverage.tested++;if(recipe.kind==='generated'&&recipe.segments?.some(i=>i>out.allocationCoverage.anchorSurfaces&&i<out.allocationCoverage.anchorSurfaces+recipe.route.blocks.reduce((n,b)=>n+(b.kind==='prism'?3:1),0)))out.allocationCoverage.interiorTested++;
   try{
    const base=construct(p,problem,o,recipe),hasLens=prescription(base).surfaces.some(s=>prescription(base).assemblies.find(a=>a.id===s.assemblyId)?.kind==='lens');
    if(!hasLens){yield* retain(base,recipe,[],topology);return out.candidates.find(c=>eq(c.recipe,recipe))?.merit?.score??Infinity;}
-   try{const initialDomain=lensDomain(base,'existing');yield* retain(base,recipe,initialDomain.slots.flatMap(s=>s.values),topology);const first=out.candidates.find(c=>eq(c.recipe,recipe));if(first)cost=(first.merit?.score??Infinity)+(first.eta===null?1e4:-Math.log(Math.max(first.eta,1e-300)));}catch{/* An invalid seed may still be repaired by bounded fitting. */}
+   try{const initialDomain=lensDomain(base,'existing');yield* retain(base,recipe,initialDomain.slots.flatMap(s=>s.values),topology);const first=out.candidates.find(c=>eq(c.recipe,recipe));if(first)cost=(first.merit?.score??Infinity)+(first.eta===null?1e4:-Math.log(Math.max(first.eta,1e-300)));}catch(e){noteIssue(out.diagnostics,topology,'fit',message(e));/* A failed seed may still be repaired. */}
    const prior=out.candidates.filter(c=>eq(c.recipe,recipe)&&c.values.length).sort(rank)[0],options=synthesisLensOptions(base,problem,o,Math.max(1,Math.min(prior?.qualified?64:o.fitBudget,allowance-3))),domain=lensDomain(base,'existing'),warm=prior?buildLensProject(domain,prior.values):base,it=lensSearch(warm,options,forward);let v=it.next();
    while(!v.done){yield `${topology} · optical ${out.evaluated}/${o.budget}`;if(out.evaluated>=opticalLimit-1||out.evaluated-start>=allowance){v=it.return({engine:'bounded-lens-reference/1.0.0',status:'budget-exhausted',reason:'Global allocation exhausted',inputSignature:'',inputFingerprint:'',options,evaluated:0,rejected:{},candidates:[],baseline:null});break;}v=it.next();}
    if(!v.done)return cost;
-   if(v.value.status==='unsupported')reject(v.value.reason);
-   if(v.value.candidates.length===0)for(const [s,n]of Object.entries(v.value.rejected))out.rejected[s]=(out.rejected[s]??0)+n;
+   if(v.value.status==='budget-exhausted')evidence.limited=true;
+   if(v.value.status==='unsupported')reject(v.value.reason,topology,'fit');
+   if(v.value.candidates.length===0)for(const [s,n]of Object.entries(v.value.rejected))reject(s,topology,'fit',n);
    for(const c of v.value.candidates.slice(0,2)){
     if(out.evaluated>=opticalLimit)break;
     try{yield* retain(buildLensProject(domain,c.values),recipe,c.values,topology);const found=out.candidates.find(x=>eq(x.recipe,recipe));if(found){const modePenalty=found.eta===null?1e4:-Math.log(Math.max(found.eta,1e-300));let penalty=0;
@@ -108,9 +113,9 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
       out.placementFeedback.push({topology,tested:selected.length,supported,worstEta:supported===selected.length&&selected.length?worst:null});
       if(supported===selected.length&&selected.length)penalty=-Math.log(Math.max(worst,1e-300));
      }
-     cost=Math.min(cost,c.merit.score+modePenalty+penalty);}}catch(e){reject(message(e));}
+     cost=Math.min(cost,c.merit.score+modePenalty+penalty);}}catch(e){reject(message(e),topology,'fit');}
    }
-  }catch(e){reject(message(e));}
+  }catch(e){reject(message(e),topology,'fit');}
   return cost;
  }
  const tasks:{recipe:Recipe;topology:string;domain?:RouteDomain;proposal?:RouteProposal}[]=[];
@@ -120,6 +125,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  const seeds:{q:RouteProposal;domain:RouteDomain;clear:number;leg:number}[]=[],pools:typeof seeds[]=[];
  if(base)for(const clear of manufacturingSeeds(o.clearRadius))for(const leg of legSeeds(problem,o,clear)){
   try{const opts=routeOptions(problem,o,clear,leg),domain=prepareRoutingDomain(base,opts,prescription(base).surfaces.length-1),all=routeProposals(domain,opts),pool:typeof seeds=[];
+   observeProposals(out.diagnostics,domain,o,p.routing!,all,opts);
    // Round-robin family opportunities; do not consume the geometry pool in one topology.
    const groups=o.families.map(f=>all.filter(q=>q.topology===f));let i=0;while(groups.some(g=>i<g.length)){for(const g of groups)if(g[i])pool.push({q:g[i],domain,clear,leg});i++;}pools.push(pool);
   }catch(e){reject(message(e));}
@@ -128,13 +134,13 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  for(let i=0;pools.some(p=>i<p.length);i++)for(const pool of pools)if(pool[i])seeds.push(pool[i]);
  if(!seeds.length&&o.families.some(f=>f.includes('prism')))reject('No eligible Prism geometry / manufacturing seed in the declared bounds.');
  const feasible:{recipe:Extract<Recipe,{kind:'generated'}>;domain:RouteDomain;proposal:RouteProposal}[]=[];
- for(const seed of seeds){if(out.geometryEvaluated>=Math.max(1,Math.floor(o.geometryBudget*.75))){limited=true;break;}const {q,domain,clear,leg}=seed,key=JSON.stringify([q,clear,leg]);if(seen.has(key))continue;seen.add(key);out.geometryEvaluated++;out.families[q.topology]=(out.families[q.topology]??0)+1;
-  try{const opts=routeOptions(problem,o,clear,leg),built=buildRouteProposal(domain,opts,q);validateRouteProposal(built.project,built.ids,opts,domain.box);
+ for(const seed of seeds){if(out.geometryEvaluated>=Math.max(1,Math.floor(o.geometryBudget*.75))){limited=true;break;}const {q,domain,clear,leg}=seed,key=JSON.stringify([q,clear,leg]);if(seen.has(key))continue;seen.add(key);out.geometryEvaluated++;out.diagnostics.families[q.topology].geometryTested++;out.families[q.topology]=(out.families[q.topology]??0)+1;
+  try{const opts=routeOptions(problem,o,clear,leg),built=buildRouteProposal(domain,opts,q);validateRouteProposal(built.project,built.ids,opts,domain.box);out.diagnostics.families[q.topology].geometryPassed++;
    for(const count of [2,1,0] as const){
     const retained=componentIds(domain.base).length,retainedLens=prescription(domain.base).assemblies.filter(a=>a.kind==='lens'&&componentIds(domain.base).includes(a.id)).length,parts=retained+q.blocks.length+count,structure=`${count} Lens + ${q.blocks.length} fold (${q.topology})`;
-    if(count+retainedLens>Math.min(2,p.routing!.parts.lens)){reject(`Lens limit excludes ${structure}: ${count} > ${p.routing!.parts.lens}`);continue;}
-    if(parts>problem.maxParts){reject(`Total component limit excludes ${structure}: ${parts} > ${problem.maxParts}`);continue;}
-    if(q.blocks.length+count>problem.maxGenerated){reject(`New / replacement component limit excludes ${structure}: ${q.blocks.length+count} > ${problem.maxGenerated}`);continue;}
+    if(count+retainedLens>Math.min(2,p.routing!.parts.lens)){reject(`Lens limit excludes ${structure}: ${count} > ${p.routing!.parts.lens}`,q.topology,'geometry');continue;}
+    if(parts>problem.maxParts){reject(`Total component limit excludes ${structure}: ${parts} > ${problem.maxParts}`,q.topology,'geometry');continue;}
+    if(q.blocks.length+count>problem.maxGenerated){reject(`New / replacement component limit excludes ${structure}: ${q.blocks.length+count} > ${problem.maxGenerated}`,q.topology,'geometry');continue;}
     // Endpoints retain the proven relay seed. In anchored problems use explicit
     // air cells so a new Lens cannot be inserted ahead of a fixed prefix.
     const air=airLensSegments(built.project),prefix=prescription(domain.base).surfaces.length-1,available=air.filter(i=>i>=prefix);
@@ -145,7 +151,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
      for(const side of !segments&&count===1?['first','last'] as const:['first'] as const){const recipe:Extract<Recipe,{kind:'generated'}>={kind:'generated',route:q,clear,count,side,leg,...(segments?{segments}:{})};feasible.push({recipe,domain,proposal:q});}
     }
    }
-  }catch(e){reject(message(e));}yield `Geometry ${out.geometryEvaluated}/${o.geometryBudget}`;
+  }catch(e){reject(message(e),q.topology,'geometry');}yield `Geometry ${out.geometryEvaluated}/${o.geometryBudget}`;
  }
  // Fit representatives first, then use optical merit to revisit placement rather than geometry rank.
  const groups=new Map<string,typeof feasible>();for(const t of feasible){const key=t.proposal.topology+'-'+t.recipe.count+'-'+t.recipe.side+'-'+t.recipe.clear+'-'+t.recipe.leg+'-'+JSON.stringify(t.recipe.segments);const a=groups.get(key)??[];a.push(t);groups.set(key,a);}
@@ -153,8 +159,10 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  const initial=groupList.flatMap(g=>g.slice(0,o.lensPlacement==='all-air'||o.prismLeg?1:3));
  for(const t of initial)tasks.push({recipe:t.recipe,topology:t.proposal.topology,domain:t.domain,proposal:t.proposal});
  out.allocationCoverage.planned=tasks.length;
+ for(const task of tasks)out.diagnostics.families[task.topology].fitPlanned++;
+ if(limited)for(const row of Object.values(out.diagnostics.families))if(row.proposals>row.geometryTested)row.limited=true;
  const scored:{cost:number;task:typeof tasks[number]}[]=[];
- for(const task of tasks){if(out.evaluated>=opticalLimit-4)break;const allowance=Math.min(o.fitBudget,Math.max(1,Math.floor((opticalLimit-out.evaluated)*.6/Math.max(1,tasks.length-scored.length))));const cost=yield* fit(task.recipe,task.topology,allowance);scored.push({cost,task});}
+ for(const task of tasks){if(out.evaluated>=opticalLimit-4)break;const allowance=Math.min(o.fitBudget,Math.max(1,Math.floor((opticalLimit-out.evaluated)*.6/Math.max(1,tasks.length-scored.length))));out.diagnostics.families[task.topology].fitStarted++;const cost=yield* fit(task.recipe,task.topology,allowance);scored.push({cost,task});}
  const orderedTasks=()=>{const list=scored.filter(s=>Number.isFinite(s.cost)).sort((a,b)=>a.cost-b.cost);return jointMode?jointPriority(list,s=>taskBest.get(JSON.stringify(s.task.recipe))):list;};
  if(jointMode)jointLimit=Math.floor(ledger.budget*.8);
  for(const {task} of orderedTasks().slice(0,2)){
@@ -184,7 +192,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
     const [lo,hi]=bounds[axis];if(lo===hi)continue;const values=[...best.values];values[axis]=Math.max(lo,Math.min(hi,values[axis]+sign*step*(hi-lo)));const key=JSON.stringify(values);if(tried.has(key))continue;tried.add(key);trials++;ledger.continuousTrials++;
     try{const next=yield* retain(buildLensProject(domain,values),seed.recipe,values,seed.topology);
      if(betterJoint(next,best)){ledger.improvements.push({kind:'lens',topology:seed.topology,coverage:next.joint!.coverage,before:best.joint!.result!.lowestEta!,after:next.joint!.result!.lowestEta!});best=next;}
-    }catch(e){reject(message(e));}yield `Joint Lens refinement ${trials}/32 · ${seed.topology}`;
+    }catch(e){reject(message(e),seed.topology,'fit');}yield `Joint Lens refinement ${trials}/32 · ${seed.topology}`;
    }
   }
   assignJointGroups(out.candidates,ledger);
@@ -201,12 +209,13 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  out.reason=out.candidates.some(c=>c.qualified)?'Nominal Mode goals met in the declared conditional Mode domain (Gaussian / validated Prism phase). No global optimum, combined-error or Yield claim.':out.candidates.length?'Best tested partial / model-limited candidates; nominal Mode goals are not met.':'No feasible candidate found in this bounded family / space / budget; not proof of impossibility.';
  if(jointMode)out.reason+=' Joint ranks apply only within identical coverage / field groups; incomplete or geometry-failed results are unranked. No cross-group robust winner.';
  if(out.status==='budget-exhausted')out.reason+=' Search coverage is partial; untested placements / refinements may remain.';
+ for(const row of Object.values(out.diagnostics.families))if(row.fitPlanned>row.fitStarted)row.limited=true;
  return out;
 }
 export function searchSynthesis(p:Project,problem:DesignProblem,r:Routing,o:SynthesisOptions){const it=synthesisSteps(p,problem,r,o);let v=it.next();while(!v.done)v=it.next();return v.value;}
 export async function searchSynthesisAsync(p:Project,problem:DesignProblem,r:Routing,o:SynthesisOptions,hooks:{cancelled:()=>boolean;progress:(s:string)=>void}){
  const it=synthesisSteps(structuredClone(p),structuredClone(problem),structuredClone(r),structuredClone(o));let v=it.next(),last=performance.now();
- while(!v.done){if(hooks.cancelled()){const empty:SynthesisResult={engine:SYNTHESIS_ID,inputSignature:serializeProject(p),settings:JSON.stringify([problem,r,o]),problem,routing:r,options:o,status:'cancelled',reason:'Cancelled; Preview discarded, Project unchanged.',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,jointFeedback:emptyJointFeedback(o.toleranceMode==='joint',o.jointBudget??2048),refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};it.return(empty);return empty;}
+ while(!v.done){if(hooks.cancelled()){const empty:SynthesisResult={diagnostics:emptyDiagnostics(),engine:SYNTHESIS_ID,inputSignature:serializeProject(p),settings:JSON.stringify([problem,r,o]),problem,routing:r,options:o,status:'cancelled',reason:'Cancelled; Preview discarded, Project unchanged.',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,jointFeedback:emptyJointFeedback(o.toleranceMode==='joint',o.jointBudget??2048),refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};it.return(empty);return empty;}
   if(performance.now()-last>8){hooks.progress(v.value);await new Promise(resolve=>setTimeout(resolve,0));last=performance.now();}v=it.next();
  }return v.value;
 }
