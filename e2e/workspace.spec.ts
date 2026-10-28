@@ -295,6 +295,7 @@ test("pan changes the camera; fit restores it; flags and wavelength are persiste
     .getByTestId("layout-lens-s")
     .locator("circle")
     .getAttribute("cx");
+  await page.getByTestId("optical-canvas").scrollIntoViewIfNeeded();
   const canvas = await page.getByTestId("optical-canvas").boundingBox();
   await page.mouse.move(canvas!.x + 30, canvas!.y + 60);
   await page.mouse.down();
