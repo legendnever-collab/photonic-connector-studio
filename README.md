@@ -1,3 +1,7 @@
+# D2.5 · 작은 offset 탐색 예산과 두 Lens Field 검증
+
+`0.25.0-d25`: 시작 형상을 번갈아 검사하고 Local fit 예산을 확보하여, 예시 01의 ±100 µm offset을 Optical 2048 / Local fit 256에서 찾습니다. Local fit 한도도 partial 상태에 반영합니다. 독립 finite-ray differential로 두 Lens 전체의 복소 Q를 교차 검증했습니다. [사용법·수치 결과·한계와 Astra 후속 계획](docs/D25_SEARCH_AND_TRAIN_VALIDATION.md).
+
 # D2.4 · 작은 offset과 Lens 편심·tilt 보정
 
 `0.24.0-d24`: 고정된 Input·Output 사이에서 실제 Lens 편심·tilt를 조정합니다. 50 µm offset의 2-Lens 후보를 탐색하고 보정량과 별도 Field 유효성을 확인할 수 있습니다. [사용법·계산 계약·검증과 다음 계획](docs/D24_SMALL_OFFSET_LENS_ALIGNMENT.md).

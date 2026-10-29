@@ -97,6 +97,17 @@ test('Lens Design replay includes pose variables, rejects altered bounds and ind
  const moved=structuredClone(r);prescription(moved.candidates[0].project).assemblies[0].frame.rotation.yaw+=1e-6;expect(()=>applyLensCandidate(p,moved,c.id)).toThrow(/tampered|fixed/);
 });
 
+test.each([-100e-6,100e-6])('bounded search recovers signed %s m offset at fit 256 without moving Ports',z=>{
+ const p=offset(z),before=serializeProject(p),o={...defaultSynthesis(),budget:2048,geometryBudget:32,fitBudget:256},r=searchSynthesis(p,{...defaultProblem(p),maxParts:4,maxGenerated:4},defaultRouting(),o),c=r.candidates.find(c=>c.recipe.kind==='aligned-direct'&&c.qualified);
+ expect(c,JSON.stringify(r.rejected)).toBeDefined();expect(c!.eta).toBeGreaterThan(.999);expect(c!.merit!.goalsMet).toBe(true);expect(r.evaluated).toBeLessThanOrEqual(o.budget);expect(serializeProject(p)).toBe(before);
+ const q=applySynthesis(p,r,c!.id);expect(portWorld(q,'target')).toEqual(portWorld(p,'target'));expect(prescription(q).source).toEqual(prescription(p).source);expect(analyzeRouting(q).withinTolerance).toBe(true);
+},30000);
+
+test('local fit exhaustion remains partial even with unused global optical / geometry budget',()=>{
+ const p=offset(100e-6),o={...settings(),fitBudget:256},r=searchSynthesis(p,{...defaultProblem(p),maxParts:4,maxGenerated:4},defaultRouting(),o);
+ expect(r.evaluated).toBeLessThan(o.budget-4);expect(r.geometryEvaluated).toBeLessThan(o.geometryBudget);expect(r.diagnostics.families.direct.limited).toBe(true);expect(r.status).toBe('budget-exhausted');expect(r.candidates.some(c=>c.qualified)).toBe(false);expect(r.reason).toContain('nominal Mode goals are not met');expect(r.reason).toContain('coverage is partial');
+},30000);
+
 test('disabled compensation, part caps, Keep-out and fixed Lens surfaces cannot be bypassed by the new direct seed',()=>{
  const p=offset(50e-6),pb={...defaultProblem(p),maxParts:4,maxGenerated:4},routing=defaultRouting(),o={...settings(),budget:64,fitBudget:16};
  for(const r of [searchSynthesis(p,pb,routing,{...o,lensAlignment:undefined}),searchSynthesis(p,{...pb,maxGenerated:0},routing,o),searchSynthesis(p,pb,{...routing,keepOut:[{min:{x:0,y:-1,z:-1},max:{x:.011,y:1,z:1}}]},o),searchSynthesis(p,{...pb,fixedSurfaces:prescription(p).surfaces.slice(0,4).map(s=>s.id)},routing,o)])expect(r.candidates).toHaveLength(0);
