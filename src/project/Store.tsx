@@ -1,3 +1,4 @@
+import type {TrainPupilResult} from './trainPupilBenchmark';
 import type {Overlap} from './physicalGaussian';
 import type {ArrayStudyResult} from './arrayStudy';
 import type {LensBenchmark} from './lensFieldBenchmark';
@@ -27,6 +28,7 @@ function useProjectStore() {
     const [pending, setPending] = useState<Project|null>(null);
     const [guidedResult,setGuidedResult]=useState<{fingerprint:string;overlap:Overlap|null}|null>(null);
     const [arrayStudyResult,setArrayStudyResult]=useState<ArrayStudyResult|null>(null);
+    const [trainPupil,setTrainPupil]=useState<TrainPupilResult|null>(null);
     const [lensBenchmark,setLensBenchmark]=useState<LensBenchmark|null>(null);
     const [jointResult,setJointResult]=useState<JointResult|null>(null);
     const [invalid, setInvalid] = useState<string[]>([]);
@@ -53,7 +55,7 @@ function useProjectStore() {
     function open(raw: string) { const next = parseProject(raw); if(serializeProject(project)!==saved){setPending(next);return;} replace(next); setSaved(serializeProject(next)); }
     function requestReplace(next:Project){if(serializeProject(project)!==saved){setPending(next);return;}replace(next);}
     function acceptPending(){if(pending){replace(pending);setPending(null);}}
-    return { guidedResult,setGuidedResult,arrayStudyResult,setArrayStudyResult,lensBenchmark,setLensBenchmark,project, doc, trace, routing, gaussian, synthesisOverlap, physicalGaussian, foldedGaussian, jointResult, setJointResult, history, pending, setPending, requestReplace, acceptPending, commit, replace, updateIdeal, updateSurface, undo, redo, selection, setSelection, revision, save, open, dirty: serializeProject(project) !== saved, invalid, setInvalid };
+    return { trainPupil,setTrainPupil,guidedResult,setGuidedResult,arrayStudyResult,setArrayStudyResult,lensBenchmark,setLensBenchmark,project, doc, trace, routing, gaussian, synthesisOverlap, physicalGaussian, foldedGaussian, jointResult, setJointResult, history, pending, setPending, requestReplace, acceptPending, commit, replace, updateIdeal, updateSurface, undo, redo, selection, setSelection, revision, save, open, dirty: serializeProject(project) !== saved, invalid, setInvalid };
 }
 const Context = createContext<ReturnType<typeof useProjectStore> | null>(null);
 export function ProjectProvider({ children }: {

@@ -1,3 +1,7 @@
+# D2.6 · 두꺼운 Lens의 수차와 Mode 비교
+
+`0.26.0-d26`: 실제 굴절·glass OPL과 ray-tube flux를 이용하는 1–2 Lens pupil benchmark를 추가했습니다. Analysis/Report에서 Gaussian·linear control·OPD와 수렴을 비교합니다. 내부 diffraction을 전파하는 전체 POP는 아직 아닙니다. [사용법·계산 범위·검증·다음 Astra 계획](docs/D26_THICK_LENS_PUPIL_BENCHMARK.md).
+
 # D2.5 · 작은 offset 탐색 예산과 두 Lens Field 검증
 
 `0.25.0-d25`: 시작 형상을 번갈아 검사하고 Local fit 예산을 확보하여, 예시 01의 ±100 µm offset을 Optical 2048 / Local fit 256에서 찾습니다. Local fit 한도도 partial 상태에 반영합니다. 독립 finite-ray differential로 두 Lens 전체의 복소 Q를 교차 검증했습니다. [사용법·수치 결과·한계와 Astra 후속 계획](docs/D25_SEARCH_AND_TRAIN_VALIDATION.md).
