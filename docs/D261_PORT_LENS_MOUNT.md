@@ -28,7 +28,7 @@ Version `0.26.1-d261` · 이번 구현 **Sol** · 다음 field propagation / Pri
 - 기존 prescription을 열거나 수동 편집한 광학계를 자동으로 이동·삭제하지 않는다. 새 Search / Preview / Apply에 조립 정책을 적용한다. 예전 파일의 solution/효율 표시는 새 조건으로 다시 탐색·검증해야 한다.
 - nominal fit 시작, 최종 후보 유지, Apply replay에서 정책을 확인한다. Lens의 실제 surface world frame을 사용하므로 nested assembly나 global rigid transform에서도 같다.
 - Lens front/rear는 Input 앞 첫 구간 또는 Output 앞 마지막 구간에 있어야 한다. Port 축으로부터 nominal lateral offset ≤1 nm, axis dot ≥1−10⁻¹⁰를 검사한다. 이는 nominal 구조의 수치 검증 허용치이며 제조 공차 1 nm를 요구한다는 뜻이 아니다. OAT/joint 공차 오차는 별도 기존 평가에서 처리한다.
-- Report는 조립 정책을 표시하고 Project / Report SVG metadata의 synthesis contract에 보존한다.
+- Report와 탐색 설정은 요청한 조립 정책과 기존 형상의 일치/미완성/불일치를 구분한다. Report는 조립 정책을 표시하고 Project / Report SVG metadata의 synthesis contract에 보존한다.
 
 ## 재현 결과
 

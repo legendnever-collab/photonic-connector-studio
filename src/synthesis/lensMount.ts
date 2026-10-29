@@ -27,3 +27,11 @@ export function lensMountGoal(p:Project,o:SynthesisOptions){
  const d=prescription(p),fold=d.surfaces.some(s=>s.interaction==='reflect'||s.interaction==='tir');
  return !fold||new Set(d.surfaces.filter(s=>d.assemblies.find(a=>a.id===s.assemblyId)?.kind==='lens').map(s=>s.assemblyId)).size===2;
 }
+/** Requested policy and compliance of an already saved prescription are distinct. */
+export function lensMountAssessment(p:Project,o:SynthesisOptions){
+ if(!portMounted(o))return {state:'advanced',reason:'고급 자유 광학계 · Port 동축 조립을 요구하지 않습니다.'};
+ try{checkLensMount(p,o);const d=prescription(p),hasLens=d.surfaces.some(s=>d.assemblies.find(a=>a.id===s.assemblyId)?.kind==='lens');
+  if(!hasLens||!lensMountGoal(p,o))return {state:'incomplete',reason:'양 끝 Lens 조립이 완성되지 않은 참고 형상입니다.'};
+  return {state:'coaxial',reason:'현재 Lens 형상의 Port 동축 조건을 확인했습니다. Collimation·실제 효율 인증은 별도입니다.'};
+ }catch(e){return {state:'violated',reason:'현재 형상은 요청한 동축 조립 조건과 다릅니다. 기존 결과를 목표 통과로 해석하지 말고 다시 탐색하세요. '+(e instanceof Error?e.message:String(e))};}
+}

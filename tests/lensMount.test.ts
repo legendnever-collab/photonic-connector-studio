@@ -8,18 +8,18 @@ import {portWorld,withPortWorld} from '../src/routing/model';
 import {defaultRouting} from '../src/routing/contract';
 import {defaultProblem} from '../src/design/engine';
 import {defaultSynthesis} from '../src/synthesis/contract';
-import {checkLensMount,lensMountGoal,portMounted} from '../src/synthesis/lensMount';
+import {checkLensMount,lensMountGoal,portMounted,lensMountAssessment} from '../src/synthesis/lensMount';
 import {synthesisLensOptions} from '../src/synthesis/construction';
 import {searchSynthesis,applySynthesis} from '../src/synthesis/engine';
 test('new and old saved settings both require explicit opt-in for intentional decenter',()=>{
  const o=defaultSynthesis();expect(portMounted(o)).toBe(true);expect(o.lensAlignment).toBeUndefined();
  const legacy={...o,lensMount:undefined,lensAlignment:{decenter:.001,tilt:.02}},p=basicRelayReference();
  prescription(p).assemblies.find(a=>a.kind==='lens')!.frame.origin.z=25e-6;
- expect(()=>checkLensMount(p,legacy)).toThrow('coaxial');expect(()=>synthesisLensOptions(p,defaultProblem(p),legacy,16)).toThrow('coaxial');
+ expect(lensMountAssessment(p,legacy).state).toBe('violated');expect(()=>checkLensMount(p,legacy)).toThrow('coaxial');expect(()=>synthesisLensOptions(p,defaultProblem(p),legacy,16)).toThrow('coaxial');
  expect(()=>checkLensMount(p,{...legacy,lensMount:'free'})).not.toThrow();
 });
 test('fixed Port axis, not the world axis or assembly origin, defines a coaxial mount',()=>{
- const p=basicRelayReference(),d=prescription(p),o=defaultSynthesis();expect(()=>checkLensMount(p,o)).not.toThrow();
+ const p=basicRelayReference(),d=prescription(p),o=defaultSynthesis();expect(lensMountAssessment(p,o).state).toBe('coaxial');expect(()=>checkLensMount(p,o)).not.toThrow();
  const g=frame(pose(.02,-.03,.01,.4,-.3,.2));d.source.frame=framePose(compose(g,frame(d.source.frame)));d.assemblies.forEach(a=>{a.parentId='World';});d.assemblies.push({id:'World',name:'World',kind:'group',parentId:null,frame:framePose(g)});expect(()=>checkLensMount(p,o)).not.toThrow();
  d.assemblies.find(a=>a.kind==='lens')!.frame.rotation.pitch=.001;expect(()=>checkLensMount(p,o)).toThrow('coaxial');
 });
