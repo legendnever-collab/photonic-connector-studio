@@ -15,3 +15,5 @@ U1: noto-kr-u1.woff — current recursive source subset, generated with fontTool
 UX1: active U1 font re-subset for new Korean workflow labels from @fontsource Noto Sans KR 5.2.8 Korean 400-normal WOFF (cdn.jsdelivr.net/fontsource/fonts/noto-sans-kr@5.2.8/korean-400-normal.woff); same SIL OFL 1.1 license. Coverage and SHA regenerated.
 
 A1: the active U1 subset was refreshed from the same 5.2.8 source for scenario explanations and channel-study labels; SIL OFL and coverage/SHA validation unchanged.
+
+UX2: active U1 font subset refreshed from the same licensed 5.2.8 source for guided-workspace labels and example text; coverage/SHA tests remain authoritative.

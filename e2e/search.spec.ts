@@ -1,3 +1,4 @@
+import {openTechnicalExamples} from './ui';
 import {test,expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
 import {pathToFileURL} from 'node:url';
@@ -5,7 +6,7 @@ import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
 const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
-async function task(page:Page){await page.getByLabel('Project Example',{exact:true}).selectOption('routing:search');}
+async function task(page:Page){await openTechnicalExamples(page);await page.getByLabel('Project Example',{exact:true}).selectOption('routing:search');}
 async function open(page:Page){if(!await page.getByRole('button',{name:'Find Routing Solutions',exact:true}).isVisible())await page.getByTestId('design-setup').locator('summary').filter({hasText:'상세 설계 도구'}).click();await page.getByRole('button',{name:'Find Routing Solutions',exact:true}).click();}
 async function run(page:Page){await page.getByRole('button',{name:'Run Search',exact:true}).click();await expect(page.getByTestId('search-status')).toBeVisible();}
 test.beforeEach(async({page},info)=>{test.skip(info.project.name!=='desktop','PC-first S2 solution comparison.');await page.context().setOffline(true);await page.goto(offline);});

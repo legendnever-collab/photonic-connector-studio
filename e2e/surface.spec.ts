@@ -22,7 +22,7 @@ test('all physical examples reach targets and table selection exposes local Surf
     await expect(page.getByLabel('Surface Interaction', { exact: true })).toHaveValue('tir');
     await expect(page.getByLabel('TIR Outside Index', { exact: true })).toHaveValue('1');
     await expect(page.getByLabel('Local X', { exact: true })).toHaveValue('2');
-    await page.getByRole('button', { name: '편집 종료 · Layout', exact: true }).last().click();
+    await page.getByRole('button', { name: '광학 화면 보기', exact: true }).last().click();
     await analysis(page);
     await expect(page.getByTestId('surface-termination')).toContainText('0 / 45 blocked');
 });
@@ -36,7 +36,7 @@ test('mirror edits continuously update rays without replacing canvas, surface no
         await yaw.fill(value);
         await expect(yaw).toBeFocused();
     }
-    await page.getByRole('button', { name: '편집 종료 · Layout', exact: true }).last().click();
+    await page.getByRole('button', { name: '광학 화면 보기', exact: true }).last().click();
     expect(await page.evaluate(() => { const w = window as any; return w.surfaceSVG === document.querySelector('[data-testid="surface-canvas"]') && w.node === document.querySelector('[data-testid="surface-node-M1-0:0"]') && w.ray === document.querySelector('[data-testid="surface-ray-0"]') && w.points !== w.ray.getAttribute('points'); })).toBe(true);
     await expect(page.getByTestId('surface-zoom')).toHaveText('125%');
 });
@@ -51,13 +51,13 @@ test('invalid drafts suppress current trace; clipping and failed TIR remain expl
     await expect(clear).toHaveValue('1.5');
     await expect(page.getByTestId('surface-reached')).toHaveText('13 / 13');
     await clear.fill('0.001');
-    await page.getByRole('button', { name: '편집 종료 · Layout', exact: true }).last().click();
+    await page.getByRole('button', { name: '광학 화면 보기', exact: true }).last().click();
     await analysis(page);
     await expect(page.getByText('P-entry: aperture / cell clipping', { exact: true })).toBeVisible();
     await example(page, 'prism');
     await select(page, 'P-TIR');
     await page.getByLabel('TIR Outside Index', { exact: true }).fill('1.4');
-    await page.getByRole('button', { name: '편집 종료 · Layout', exact: true }).last().click();
+    await page.getByRole('button', { name: '광학 화면 보기', exact: true }).last().click();
     await analysis(page);
     await expect(page.getByText('P-TIR: TIR condition not met', { exact: true })).toBeVisible();
 });
@@ -133,7 +133,7 @@ test('offline responsive workbench and mobile keyboard exit remain usable', asyn
     if (info.project.name === 'mobile') {
         await select(page, 'MLA-front');
         await page.evaluate(() => { document.documentElement.style.setProperty('--visible-height', '500px'); document.documentElement.style.setProperty('--visible-top', '0px'); });
-        const exit = page.getByRole('button', { name: '편집 종료 · Layout', exact: true }).last();
+        const exit = page.getByRole('button', { name: '광학 화면 보기', exact: true }).last();
         const box = await exit.boundingBox();
         expect(box!.y).toBeGreaterThanOrEqual(0);
         expect(box!.y + box!.height).toBeLessThanOrEqual(500);

@@ -1,3 +1,4 @@
+import {openTechnicalExamples} from './ui';
 import {test,expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
 import {pathToFileURL} from 'node:url';
@@ -6,7 +7,7 @@ import {readFile} from 'node:fs/promises';
 const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
 async function load(page:Page,p:unknown,discard=false){await page.getByTestId('surface-json-input').setInputFiles({name:'folded.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});const guard=page.getByRole('dialog',{name:'Unsaved Project',exact:true});if(discard){await expect(guard).toBeVisible();await guard.getByRole('button',{name:'Discard & Open',exact:true}).click();}}
-async function setup(page:Page){await page.getByLabel('Project Example',{exact:true}).selectOption('routing:mirrors');await page.getByRole('button',{name:'Gaussian View',exact:true}).click();}
+async function setup(page:Page){await openTechnicalExamples(page);await page.getByLabel('Project Example',{exact:true}).selectOption('routing:mirrors');await page.getByRole('button',{name:'Gaussian View',exact:true}).click();}
 test.beforeEach(async({page},info)=>{test.skip(info.project.name!=='desktop','S3.1 PC beam analysis workflows.');await page.context().setOffline(true);await page.goto(offline);});
 test('offline folded envelopes, Output section, Surface data and export are read-only views of the same Project',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await setup(page);const before=await save(page);
@@ -22,7 +23,7 @@ test('MFD edit, Undo, SaveLoad and geometry failure recalculate or remove the en
  const invalid=structuredClone(changed);invalid.model.prescription.source.n=1.1;await load(page,invalid);await expect(page.getByTestId('physical-gaussian-reason')).toContainText('medium mismatch');await expect(page.getByTestId('folded-beam-envelope')).toHaveCount(0);await expect(page.getByTestId('physical-beam-diameter')).toHaveCount(0);
 });
 test('TIR Prism shows arclength, body warnings and explicit undefined PIC coupling',async({page})=>{
- await page.getByLabel('Project Example',{exact:true}).selectOption('routing:prism');await page.getByRole('button',{name:'Gaussian View',exact:true}).click();await expect(page.getByTestId('folded-beam-envelope')).toBeVisible();await page.getByRole('button',{name:'Surface Beam Data',exact:true}).click();await expect(page.getByTestId('folded-beam-table')).toContainText('P-TIR');await page.getByRole('button',{name:'Analysis',exact:true}).click();await expect(page.getByTestId('folded-mode-details')).toContainText('PIC receiving field is undefined');
+ await openTechnicalExamples(page);await page.getByLabel('Project Example',{exact:true}).selectOption('routing:prism');await page.getByRole('button',{name:'Gaussian View',exact:true}).click();await expect(page.getByTestId('folded-beam-envelope')).toBeVisible();await page.getByRole('button',{name:'Surface Beam Data',exact:true}).click();await expect(page.getByTestId('folded-beam-table')).toContainText('P-TIR');await page.getByRole('button',{name:'Analysis',exact:true}).click();await expect(page.getByTestId('folded-mode-details')).toContainText('PIC receiving field is undefined');
  const p=await save(page);p.model.prescription.surfaces.find((s:{id:string})=>s.id==='P-TIR').outsideIndex=1.49;await load(page,p);await expect(page.getByTestId('physical-gaussian-reason')).toContainText('TIR condition not met');
 });
 test('laptop windows keep beam and metrics visible across view controls',async({page})=>{

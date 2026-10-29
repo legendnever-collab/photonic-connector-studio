@@ -17,7 +17,7 @@ test('Source Tilt propagates beam axis and preserves focus/SVG/camera under repe
  await page.evaluate(()=>{const w=window as unknown as Record<string,unknown>;w.axis=document.querySelector('[data-testid="beam-axis"]');w.points=document.querySelector('[data-testid="beam-axis"]')?.getAttribute('points');w.svg=document.querySelector('[data-testid="optical-canvas"]');});
  await tab(page,'Analysis');await expect(page.getByTestId('axis-metrics')).toContainText('4 / 0 µm');await expect(page.getByTestId('axis-metrics')).toContainText('-3 / 0 mrad');
  await choose(page,'fiber');const input=page.getByLabel('Yaw',{exact:true});for(const v of ['0.1','0.15','0.2']){await input.fill(v);await expect(input).toBeFocused();}
- await page.getByRole('button',{name:'편집 종료 · Layout',exact:true}).click();expect(await page.evaluate(()=>{const w=window as unknown as Record<string,unknown>;return w.axis===document.querySelector('[data-testid="beam-axis"]')&&w.svg===document.querySelector('[data-testid="optical-canvas"]')&&w.points!==document.querySelector('[data-testid="beam-axis"]')?.getAttribute('points');})).toBe(true);
+ await page.getByRole('button',{name:'광학 화면 보기',exact:true}).click();expect(await page.evaluate(()=>{const w=window as unknown as Record<string,unknown>;return w.axis===document.querySelector('[data-testid="beam-axis"]')&&w.svg===document.querySelector('[data-testid="optical-canvas"]')&&w.points!==document.querySelector('[data-testid="beam-axis"]')?.getAttribute('points');})).toBe(true);
  await expect(page.getByTestId('zoom-level')).toHaveText('125%');
 });
 test('WG Tilt benchmark and angle-domain gates suppress stale axis/sensitivity',async({page})=>{

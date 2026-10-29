@@ -14,8 +14,8 @@ async function choose(page: Page, id: string) {
   await page.getByTestId(`tree-${id}`).click();
 }
 async function save(page: Page) {
-  const inMobileEditor = await page.getByRole("navigation", {name:"Surface Workspace tabs"}).isVisible() && await page.getByRole("button", {name:"편집 종료 · Layout"}).isVisible();
-  if (inMobileEditor) await page.getByRole("button", {name:"편집 종료 · Layout"}).click();
+  const inMobileEditor = await page.getByRole("navigation", {name:"Surface Workspace tabs"}).isVisible() && await page.getByRole("button", {name:"광학 화면 보기"}).isVisible();
+  if (inMobileEditor) await page.getByRole("button", {name:"광학 화면 보기"}).click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Save Project JSON" }).click();
   const download = await downloadPromise;

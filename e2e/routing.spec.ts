@@ -1,3 +1,4 @@
+import {openTechnicalExamples} from './ui';
 import {test,expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
 import {pathToFileURL} from 'node:url';
@@ -5,7 +6,7 @@ import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
 const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
-async function example(page:Page,which='mirrors'){await page.getByLabel('Project Example',{exact:true}).selectOption(`routing:${which}`);await page.getByRole('button',{name:'설계 조건',exact:true}).click();}
+async function example(page:Page,which='mirrors'){await openTechnicalExamples(page);await page.getByLabel('Project Example',{exact:true}).selectOption(`routing:${which}`);await page.getByRole('button',{name:'설계 조건',exact:true}).click();}
 test.beforeEach(async({page},info)=>{test.skip(info.project.name!=='desktop','PC-first Port routing checkpoint.');await page.context().setOffline(true);await page.goto(offline);});
 test('manual Mirror example exposes µm Global Ports and the independent zero-error reference ray',async({page})=>{
  await example(page);await expect(page.getByLabel('Input Global Z',{exact:true})).toHaveValue('-10');await expect(page.getByLabel('Output Global Z',{exact:true})).toHaveValue('50');await expect(page.getByLabel('Output Device',{exact:true})).toHaveValue('pic-edge');
