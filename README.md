@@ -1,3 +1,7 @@
+# UX3 · 조건 확인과 자동 설계 작업
+
+`0.22.0-ux3`: 예시를 ② 연결 조건에서 시작하고 ③ 자동 설계 찾기를 주요 작업으로 노출합니다. Explorer는 오른쪽 탭과 PC floating을 지원합니다. [변경·사용 순서](docs/UX3_DESIGN_ACTIONS.md) · [Astra 후속 계획](docs/ASTRA_ARRAY_AND_INDUSTRY_EXAMPLES_PLAN.md).
+
 # UX2 · 예시 중심 설계 Workspace
 
 `0.21.0-ux2`: 왼쪽 작업 순서, 큰 광학 화면, 접을 수 있는 Surface Data, 일관된 주요 버튼과 01 Fiber–Lens–Lens–Fiber 기준 예시를 제공합니다. [변경·검증](docs/UX2_GUIDED_WORKSPACE.md) · [Astra 후속 개발 계획](docs/ASTRA_ARRAY_AND_INDUSTRY_EXAMPLES_PLAN.md).

@@ -7,6 +7,7 @@ import "./visual.css";
 import "./surface/workbench.css";
 import "./authoring/authoring.css";
 import "./authoring/workspace.css";
+import "./authoring/workspace3.css";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ProjectProvider><App /></ProjectProvider>
