@@ -1,3 +1,4 @@
+import {portMounted,checkLensMount,lensMountGoal} from './lensMount';
 import {ProjectSchema,prescription,serializeProject,projectFingerprint} from '../project/model';
 import type {Project} from '../project/model';
 import {problemProject,problemLimits,componentIds,stressCases} from '../design/engine';
@@ -31,7 +32,7 @@ export type SynthesisResult={diagnostics:SynthesisDiagnostics;engine:typeof SYNT
 const message=(e:unknown)=>e instanceof Error?e.message:String(e),eq=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 const emptyOAT=():OAT=>({status:'not-assessed',planned:0,tested:0,fieldAssessed:0,geometryPassed:0,worstEta:null,issues:[],coverage:''});
 export function synthesisFingerprint(p:Project){const q=structuredClone(p);if(q.synthesis)delete q.synthesis.solution;return projectFingerprint(q);}
-export function synthesisProject(p:Project,problem:DesignProblem,routing:Routing,options:SynthesisOptions){const o=SynthesisSchema.parse(options);delete o.solution;return ProjectSchema.parse({...problemProject(p,problem,routing),synthesis:o});}
+export function synthesisProject(p:Project,problem:DesignProblem,routing:Routing,options:SynthesisOptions){const o=SynthesisSchema.parse(options);delete o.solution;o.lensMount??='port-axis';return ProjectSchema.parse({...problemProject(p,problem,routing),synthesis:o});}
 export const manufacturingSeeds=([a,b]:[number,number])=>[...new Set([a,b,Math.sqrt(a*b)])];
 function legSeeds(problem:DesignProblem,o:SynthesisOptions,clear:number){if(!o.prismLeg)return [Math.max(problem.routes.prismLeg,4*clear)];const eligible=manufacturingSeeds(o.prismLeg).filter(v=>v>=4*clear);return eligible.length?eligible:[o.prismLeg[0]];}
 function routeOptions(problem:DesignProblem,o:SynthesisOptions,clear:number,leg=legSeeds(problem,o,clear)[0]):SearchOptions{if(leg===undefined)throw Error('No Prism leg satisfies Clear Radius / manufacturing bounds.');const templates=o.families.filter(f=>!f.includes('prism')||leg>=4*clear);if(!templates.length)throw Error('No Prism leg satisfies Clear Radius / manufacturing bounds.');return {...problem.routes,templates,budget:o.geometryBudget,clearRadius:clear,prismLeg:leg,mirrorThickness:Math.max(problem.routes.mirrorThickness,20e-6)};}
@@ -43,7 +44,7 @@ function construct(p:Project,problem:DesignProblem,o:SynthesisOptions,recipe:Rec
  const shapes:Record<Topology,string[]>={direct:[],mirror1:['mirror'],mirror2:['mirror','mirror'],prism1:['prism'],'mirror-prism':['mirror','prism'],prism2:['prism','prism']};
  if(!eq(recipe.route.blocks.map(b=>b.kind),shapes[recipe.route.topology]))throw Error('Recipe topology changed.');
  const reserved=[...prescription(p).assemblies.map(a=>a.id),...prescription(p).surfaces.map(s=>s.id)],route=buildRouteProposal(domain,opts,recipe.route,reserved).project;prescription(route).name=prescription(p).name;
- if(recipe.segments&&o.lensPlacement!=='all-air'){const air=airLensSegments(route).filter(i=>i>=prescription(base).surfaces.length-1);if(recipe.segments.some(i=>i!==air[0]&&i!==air.at(-1)))throw Error('Interior Lens allocation is not enabled.');}
+ if(recipe.segments&&(portMounted(o)||o.lensPlacement!=='all-air')){const air=airLensSegments(route).filter(i=>i>=prescription(base).surfaces.length-1);if(recipe.segments.some(i=>i!==air[0]&&i!==air.at(-1)))throw Error('Interior Lens allocation is not enabled.');}
  return addLenses(route,recipe.count,recipe.clear,o,recipe.side,reserved,recipe.segments);
 }
 function preflight(p:Project,problem:DesignProblem){
@@ -82,10 +83,10 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  const forward:typeof solveFoldedGaussian=(q,settings)=>{if(out.evaluated>=opticalLimit)throw Error('Global optical evaluation budget exhausted');out.evaluated++;return solveFoldedGaussian(q,settings);};
  const seen=new Set<string>();let limited=false;
  function* retain(project:Project,recipe:Recipe,values:number[],topology:string):Generator<string,SynthesisCandidate>{
-  geometry(p,project,problem);const r=forward(project,{sampleSegments:false});if(r.status!=='valid')throw Error(r.reason);if(r.apertureLimited)throw Error('Aperture tail bound exceeds 0.1%; untruncated reference only.');
+  checkLensMount(project,o);geometry(p,project,problem);const r=forward(project,{sampleSegments:false});if(r.status!=='valid')throw Error(r.reason);if(r.apertureLimited)throw Error('Aperture tail bound exceeds 0.1%; untruncated reference only.');
   const m=beamMerit(r,project,o),v=overlap(project,r),eta=v.status==='valid'?v.eta:null;
   if(v.status!=='valid')noteIssue(out.diagnostics,topology,'mode',v.reason);
-  const c:SynthesisCandidate={id:`synthesis-${out.evaluated}-${out.geometryEvaluated}`,project,recipe:structuredClone(recipe),values:[...values],seal:JSON.stringify([recipe,values]),topology,merit:m,eta,comparisonClass:v.status==='valid'?v.comparisonClass??'scalar-assumed-copolarized':'unassessed',evaluator:v.status==='valid'?v.domain?.evaluator??TENSOR_OVERLAP_ID:'unassessed',etaResolution:v.status==='valid'?v.domain?.modelEtaTolerance??1e-10:0,comparisonContext:jointMode?jointContext(project):'',reason:v.status==='valid'?v.scope??'Conditional normalized Mode Overlap':v.reason,qualified:m.goalsMet&&eta!==null&&eta>=o.minimumOverlap,oat:emptyOAT()};
+  const c:SynthesisCandidate={id:`synthesis-${out.evaluated}-${out.geometryEvaluated}`,project,recipe:structuredClone(recipe),values:[...values],seal:JSON.stringify([recipe,values]),topology,merit:m,eta,comparisonClass:v.status==='valid'?v.comparisonClass??'scalar-assumed-copolarized':'unassessed',evaluator:v.status==='valid'?v.domain?.evaluator??TENSOR_OVERLAP_ID:'unassessed',etaResolution:v.status==='valid'?v.domain?.modelEtaTolerance??1e-10:0,comparisonContext:jointMode?jointContext(project):'',reason:(v.status==='valid'?v.scope??'Conditional normalized Mode Overlap':v.reason)+(!lensMountGoal(project,o)?' Port–Lens mount incomplete: folded connector requires Input and Output Lenses; reference only.':''),qualified:lensMountGoal(project,o)&&m.goalsMet&&eta!==null&&eta>=o.minimumOverlap,oat:emptyOAT()};
   const fp=serializeProject(project);const duplicate=out.candidates.find(c=>serializeProject(c.project)===fp);if(duplicate)return duplicate;
   if(screenJoint)c.joint=yield* screenJoint(project,c.qualified);
   const recipeKey=JSON.stringify(recipe),prior=taskBest.get(recipeKey);if(!prior||rank(c,prior)<0)taskBest.set(recipeKey,c);
@@ -125,7 +126,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  const tasks:{recipe:Recipe;topology:string;domain?:RouteDomain;proposal?:RouteProposal}[]=[];
  if(componentIds(p).length)tasks.push({recipe:{kind:'existing'},topology:'Retained initial train'});
  let base:Project|null=null;try{base=emptyTrain(p,problem);}catch(e){reject(message(e));if(!lockedIds(p,problem).size){out.status='unsupported';out.reason=message(e);return out;}}
- if(base&&o.lensAlignment&&o.families.includes('direct')&&!analyzeRouting(base).withinTolerance)for(const clear of manufacturingSeeds(o.clearRadius)){
+ if(base&&!portMounted(o)&&o.lensAlignment&&o.families.includes('direct')&&!analyzeRouting(base).withinTolerance)for(const clear of manufacturingSeeds(o.clearRadius)){
   try{alignedDirectSeed(p,problem,o,clear);tasks.push({recipe:{kind:'aligned-direct',clear},topology:'direct'});}catch(e){reject(message(e),'direct','setup');}
  }
  if(base)out.allocationCoverage.anchorSurfaces=prescription(base).surfaces.length-1;
@@ -152,9 +153,9 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
     // air cells so a new Lens cannot be inserted ahead of a fixed prefix.
     const air=airLensSegments(built.project),prefix=prescription(domain.base).surfaces.length-1,available=air.filter(i=>i>=prefix);
     const allocations:(number[]|undefined)[]=prefix?[...(count===0?[[]]:count===1?available.map(i=>[i]):available.flatMap((i,k)=>available.slice(k).map(j=>[i,j])))]:[undefined];
-    if(!prefix&&o.lensPlacement==='all-air'&&count)for(const a of count===1?available.map(i=>[i]):available.flatMap((i,k)=>available.slice(k).map(j=>[i,j])))allocations.push(a);
+    if(!prefix&&(!portMounted(o)&&o.lensPlacement==='all-air')&&count)for(const a of count===1?available.map(i=>[i]):available.flatMap((i,k)=>available.slice(k).map(j=>[i,j])))allocations.push(a);
     for(const segments of allocations){
-     if(segments&&prefix&&o.lensPlacement!=='all-air'&&segments.some(i=>i!==available[0]&&i!==available.at(-1)))continue;
+     if(segments&&prefix&&(portMounted(o)||o.lensPlacement!=='all-air')&&segments.some(i=>i!==available[0]&&i!==available.at(-1)))continue;
      for(const side of !segments&&count===1?['first','last'] as const:['first'] as const){const recipe:Extract<Recipe,{kind:'generated'}>={kind:'generated',route:q,clear,count,side,leg,...(segments?{segments}:{})};feasible.push({recipe,domain,proposal:q});}
     }
    }
@@ -163,7 +164,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  // Fit representatives first, then use optical merit to revisit placement rather than geometry rank.
  const groups=new Map<string,typeof feasible>();for(const t of feasible){const key=t.proposal.topology+'-'+t.recipe.count+'-'+t.recipe.side+'-'+t.recipe.clear+'-'+t.recipe.leg+'-'+JSON.stringify(t.recipe.segments);const a=groups.get(key)??[];a.push(t);groups.set(key,a);}
  const groupList=[...groups.values()].sort((a,b)=>Number(!!a[0].recipe.segments)-Number(!!b[0].recipe.segments));
- const initial=groupList.flatMap(g=>g.slice(0,o.lensPlacement==='all-air'||o.prismLeg?1:3));
+ const initial=groupList.flatMap(g=>g.slice(0,(!portMounted(o)&&o.lensPlacement==='all-air')||o.prismLeg?1:3));
  for(const t of initial)tasks.push({recipe:t.recipe,topology:t.proposal.topology,domain:t.domain,proposal:t.proposal});
  out.allocationCoverage.planned=tasks.length;
  for(const task of tasks)out.diagnostics.families[task.topology].fitPlanned++;
@@ -216,6 +217,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  out.candidates.sort(rank);out.status=limited||ledger.limited||Object.values(out.diagnostics.families).some(row=>row.limited)||out.evaluated>=opticalLimit-4||out.geometryEvaluated>=o.geometryBudget?'budget-exhausted':'completed';
  out.reason=out.candidates.some(c=>c.qualified)?'Nominal Mode goals met in the declared conditional Mode domain (Gaussian / validated Prism phase). No global optimum, combined-error or Yield claim.':out.candidates.length?'Best tested partial / model-limited candidates; nominal Mode goals are not met.':'No feasible candidate found in this bounded family / space / budget; not proof of impossibility.';
  if(jointMode)out.reason+=' Joint ranks apply only within identical coverage / field groups; incomplete or geometry-failed results are unranked. No cross-group robust winner.';
+ if(portMounted(o))out.reason+=' Port–Lens coaxial mount enforced; no intentional Lens decenter. No candidate is not proof that a folded connector is impossible.';
  if(out.status==='budget-exhausted')out.reason+=' Search coverage is partial; untested placements / refinements may remain.';
  return out;
 }
@@ -231,7 +233,7 @@ export function applySynthesis(current:Project,result:SynthesisResult,id:string)
  const c=result.candidates.find(c=>c.id===id);if(!c||c.seal!==JSON.stringify([c.recipe,c.values]))throw Error('Candidate parameters changed.');
  const problem=ProblemSchema.parse(result.problem),o=SynthesisSchema.parse(result.options),working=synthesisProject(current,problem,result.routing,o),base=construct(working,problem,o,c.recipe);
  let rebuilt=base;if(c.values.length){const opts=synthesisLensOptions(base,problem,o,1),limits=lensBounds(opts);if(c.values.length!==limits.length||limits.some(([a,b],i)=>!Number.isFinite(c.values[i])||c.values[i]<a-1e-12||c.values[i]>b+1e-12))throw Error('Lens variables exceed bounds.');rebuilt=buildLensProject(lensDomain(base,'existing',!!opts.alignment),c.values);}
- if(serializeProject(rebuilt)!==serializeProject(c.project))throw Error('Candidate Project was changed.');geometry(working,rebuilt,problem);
+ if(serializeProject(rebuilt)!==serializeProject(c.project))throw Error('Candidate Project was changed.');checkLensMount(rebuilt,o);geometry(working,rebuilt,problem);
  const r=solveFoldedGaussian(rebuilt,{sampleSegments:false});if(r.status!=='valid'||r.apertureLimited)throw Error('Candidate failed current forward validation.');const m=beamMerit(r,rebuilt,o),eta=tensorOverlap(rebuilt,r);
- rebuilt.synthesis!.solution={engine:SYNTHESIS_ID,baselineFingerprint:projectFingerprint(current),designFingerprint:synthesisFingerprint(rebuilt),evaluated:result.evaluated,geometryEvaluated:result.geometryEvaluated,topology:c.topology,qualified:m.goalsMet&&eta.status==='valid'&&eta.eta>=o.minimumOverlap};return ProjectSchema.parse(rebuilt);
+ rebuilt.synthesis!.solution={engine:SYNTHESIS_ID,baselineFingerprint:projectFingerprint(current),designFingerprint:synthesisFingerprint(rebuilt),evaluated:result.evaluated,geometryEvaluated:result.geometryEvaluated,topology:c.topology,qualified:lensMountGoal(rebuilt,o)&&m.goalsMet&&eta.status==='valid'&&eta.eta>=o.minimumOverlap};return ProjectSchema.parse(rebuilt);
 }

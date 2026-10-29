@@ -103,7 +103,7 @@ import {searchSynthesis,applySynthesis} from '../src/synthesis/engine';
 test.each(['one','two','mixed'] as const)('existing %s Prism synthesis uses the same evaluator; Apply is revalidated',kind=>{
  const p=prismFixture(kind),before=serializeProject(p),problem={...defaultProblem(p),maxGenerated:0};
  problem.tolerance={...problem.tolerance,portPosition:[0,0,0],portAngle:[0,0,0],componentPosition:[0,0,0],componentAngle:[0,0,0]};
- const routing={...defaultRouting(),parts:{lens:2,mirror:2,prism:2}},o={...defaultSynthesis(),budget:32,geometryBudget:4,fitBudget:4,phaseTolerance:.15};
+ const routing={...defaultRouting(),parts:{lens:2,mirror:2,prism:2}},o={...defaultSynthesis(),lensMount:'free' as const,budget:32,geometryBudget:4,fitBudget:4,phaseTolerance:.15};
  const batch=searchSynthesis(p,problem,routing,o),c=batch.candidates.find(c=>c.recipe.kind==='existing');
  expect(c,JSON.stringify(batch.rejected)).toBeDefined();expect(c!.qualified).toBe(true);
  const v=tensorOverlap(p);if(v.status!=='valid')throw Error(v.reason);expect(c!.eta).toBeCloseTo(v.eta,12);
