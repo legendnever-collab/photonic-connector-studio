@@ -7,15 +7,16 @@ import {rayleigh} from '../physics';
 import {analyzeRouting} from '../routing/analysis';
 import {screenClearance} from '../routing/clearance';
 import {defaultRouting} from '../routing/contract';
-import {lensDomain,lensValues,buildLensProject,frozenSignature,physical} from './domain';
+import {lensDomain,lensValues,buildLensProject,frozenSignature,physical,lensBounds} from './domain';
 import type {LensDomain} from './domain';
+import {alignLensChief} from './alignment';
 import {LensOptionsSchema} from './contract';
 import type {LensOptions} from './contract';
 export const LENS_SEARCH_ID='bounded-lens-reference/1.0.0' as const;
 export type ValidBeam=Extract<FoldedResult,{status:'valid'}>;
 export type BeamMerit={score:number;diameters:[number,number];sizeError:number;phaseError:number;outputQ:QTensor;goalsMet:boolean};
 export type LensCandidate={id:string;project:Project;values:number[];merit:BeamMerit;addedIds:string[]};
-export type LensResult={engine:typeof LENS_SEARCH_ID;status:'completed'|'budget-exhausted'|'cancelled'|'unsupported';reason:string;inputSignature:string;inputFingerprint:string;options:LensOptions;evaluated:number;rejected:Record<string,number>;candidates:LensCandidate[];baseline:BeamMerit|null};
+export type LensResult={engine:typeof LENS_SEARCH_ID;status:'completed'|'budget-exhausted'|'cancelled'|'unsupported';reason:string;inputSignature:string;inputFingerprint:string;options:LensOptions;evaluated:number;alignmentEvaluated:number;rejected:Record<string,number>;candidates:LensCandidate[];baseline:BeamMerit|null};
 const clamp=(v:number,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v));
 function bounds(o:LensOptions):[number,number][]{return o.variables.flatMap(v=>[v.position,v.front,v.rear,v.thickness]);}
 function normalize(values:number[],o:LensOptions){return bounds(o).map(([lo,hi],i)=>hi===lo?0:clamp((values[i]-lo)/(hi-lo)));}
@@ -40,16 +41,18 @@ export function beamMerit(r:ValidBeam,p:Project,o:Pick<LensOptions,'diameterTole
  return {score:Math.sqrt(Math.max(0,square)/2),diameters:[2*Math.sqrt(c00),2*Math.sqrt(c11)],sizeError,phaseError,outputQ:q,goalsMet:sizeError<=o.diameterTolerance&&phaseError<=o.phaseTolerance};
 }
 function prepare(input:Project,o:LensOptions,forward=solveFoldedGaussian){
- const domain=lensDomain(input,o.template),d=physical(domain.base),target=domain.base.authoring!.ports.target,m=domain.base.model.kind==='surface'?domain.base.model.targetMode:null;
+ const domain=lensDomain(input,o.template,!!o.alignment),d=physical(domain.base),target=domain.base.authoring!.ports.target,m=domain.base.model.kind==='surface'?domain.base.model.targetMode:null;
  if(target.fieldModel!=='gaussian'||target.imported||target.adapter!=='homogeneous-paraxial'||target.phase!=='waist-plane'||!m?.mfdX||!m.mfdY)throw Error('Define the Output Gaussian reference MFD, homogeneous adapter and waist-plane phase first. PIC MFD remains a user reference.');
  if([m.mfdX,m.mfdY].some(v=>d.wavelength/(Math.PI*v/2)>.1+1e-12))throw Error('Output reference divergence exceeds the paraxial 0.1 rad limit.');
  if(o.variables.length!==domain.slots.length||o.variables.some((v,i)=>v.id!==domain.slots[i].id))throw Error('Lens variable IDs / order do not match the selected template. Reset Lens bounds.');
  o.variables.forEach((v,i)=>{const s=domain.slots[i];if(v.position[0]<s.legal[0]-1e-12||v.position[1]>=s.legal[1]||v.thickness[0]<=0||v.thickness[1]>.1||v.front.some(c=>Math.abs(c)>1e6)||v.rear.some(c=>Math.abs(c)>1e6))throw Error(`${s.id}: variable bounds are outside the fixed free-space segment / supported curvature and thickness.`);});
+ if(o.alignment?.fixed.some(id=>!domain.slots.some(s=>s.id===id)))throw Error('Unknown frozen Lens alignment ID.');
  const r=forward(domain.base,{sampleSegments:false});
  if(r.status!=='valid'){
-  if(!domain.slots.some(s=>r.reason.startsWith(`${s.frontId}: 2w`)||r.reason.startsWith(`${s.rearId}: 2w`))&&!r.reason.includes('post-surface waist divergence'))throw Error(r.reason);
+  const repairable=domain.slots.some(s=>[s.frontId,s.rearId].some(id=>r.reason.startsWith(`${id}: 2w`)||!!o.alignment&&r.reason.startsWith(`${id}: spherical chief incidence`)))||r.reason.includes('post-surface waist divergence');
+  if(!repairable)throw Error(r.reason);
  }
- if((analyzeRouting(domain.base).angleError??Math.PI)>1e-5)throw Error('Lens reference matching requires normal Output incidence; first close the geometric route.');
+ if(!o.alignment&&(analyzeRouting(domain.base).angleError??Math.PI)>1e-5)throw Error('Lens reference matching requires normal Output incidence; first close the geometric route.');
  return {domain,baseline:r.status==='valid'?beamMerit(r,domain.base,o):null};
 }
 /** Bounded multistart Nelder–Mead. Yields one normalized trial at a time; no async work changes a Project. */
@@ -94,10 +97,21 @@ function seeds(domain:LensDomain,o:LensOptions):number[][]{
    }
   }
  }
+ if(o.alignment){
+  // Include powered-front / powered-rear real Lens starts. Symmetric biconvex
+  // relays can lie at the local-footprint boundary before a small decenter.
+  const starts=[...result];
+  for(const seed of starts)for(const fraction of [0,.25,.75,1]){
+   const x=denormalize(seed,o);for(let i=0;i<domain.slots.length;i++){
+    const power=x[4*i+1]-x[4*i+2],share=i===0?fraction:1-fraction;
+    x[4*i+1]=value(i,1,power*share);x[4*i+2]=value(i,2,-power*(1-share));
+   }result.push(normalize(x,o));
+  }
+ }
  return result.filter((x,i)=>result.findIndex(y=>x.every((v,j)=>Math.abs(v-y[j])<1e-9))===i);
 }
-export function* lensSearch(input:Project,raw:LensOptions,forward=solveFoldedGaussian):Generator<{evaluated:number;retained:number},LensResult,void>{
- const batch:LensResult={engine:LENS_SEARCH_ID,status:'unsupported',reason:'',inputSignature:serializeProject(input),inputFingerprint:projectFingerprint(input),options:structuredClone(raw),evaluated:0,rejected:{},candidates:[],baseline:null};
+export function* lensSearch(input:Project,raw:LensOptions,forward=solveFoldedGaussian):Generator<{evaluated:number;retained:number;alignmentEvaluated:number},LensResult,void>{
+ const batch:LensResult={engine:LENS_SEARCH_ID,status:'unsupported',reason:'',inputSignature:serializeProject(input),inputFingerprint:projectFingerprint(input),options:structuredClone(raw),evaluated:0,alignmentEvaluated:0,rejected:{},candidates:[],baseline:null};
  let o:LensOptions,domain:LensDomain;
  try{o=LensOptionsSchema.parse(raw);const p=prepare(input,o,forward);domain=p.domain;batch.baseline=p.baseline;}catch(e){batch.reason=e instanceof Error?e.message:String(e);return batch;}
  const reject=(reason:string)=>{batch.rejected[reason]=(batch.rejected[reason]??0)+1;},evaluated:{x:number[];f:number}[]=[],seen=new Map<string,number>();
@@ -105,7 +119,7 @@ export function* lensSearch(input:Project,raw:LensOptions,forward=solveFoldedGau
   const key=x.map(v=>v.toPrecision(12)).join('|'),known=seen.get(key);if(known!==undefined)return known;
   batch.evaluated++;let cost=1e12;
   try{
-   const values=denormalize(x,o),project=buildLensProject(domain,values),beam=forward(project,{sampleSegments:false});if(beam.status!=='valid')throw Error(beam.reason);
+   const shape=denormalize(x,o),{project,values}=alignLensChief(domain,shape,o,()=>batch.alignmentEvaluated++),beam=forward(project,{sampleSegments:false});if(beam.status!=='valid')throw Error(beam.reason);
    const merit=beamMerit(beam,project,o),tails=beam.surfaces.reduce((sum,s)=>sum+(s.tailBound??0),0);
    cost=merit.score+10*Math.log1p(tails/.001);
    if(beam.apertureLimited)reject('Aperture / body tail bound exceeds 0.1%');
@@ -121,13 +135,13 @@ export function* lensSearch(input:Project,raw:LensOptions,forward=solveFoldedGau
   }catch(e){reject(e instanceof Error?e.message:String(e));}
   seen.set(key,cost);evaluated.push({x,f:cost});return cost;
  };
- for(const x of seeds(domain,o)){if(batch.evaluated>=o.budget)break;evaluate(x);yield {evaluated:batch.evaluated,retained:batch.candidates.length};}
+ for(const x of seeds(domain,o)){if(batch.evaluated>=o.budget)break;evaluate(x);yield {evaluated:batch.evaluated,retained:batch.candidates.length,alignmentEvaluated:batch.alignmentEvaluated};}
  const starts=evaluated.sort((a,b)=>a.f-b.f).filter((v,i,list)=>list.slice(0,i).every(u=>Math.hypot(...v.x.map((x,j)=>x-u.x[j]))>.05)).slice(0,2),active=bounds(o).flatMap(([lo,hi],i)=>hi>lo?[i]:[]);
  let finished=true;
  for(let i=0;i<starts.length;i++){
   if(batch.evaluated>=o.budget){finished=false;break;}
   const allowance=Math.max(1,Math.floor((o.budget-batch.evaluated)/(starts.length-i))),optimizer=simplex(starts[i].x,active,allowance);let step=optimizer.next();
-  while(!step.done){if(batch.evaluated>=o.budget){finished=false;break;}const f=evaluate(step.value);yield {evaluated:batch.evaluated,retained:batch.candidates.length};step=optimizer.next(f);}if(!step.done||!step.value)finished=false;
+  while(!step.done){if(batch.evaluated>=o.budget){finished=false;break;}const f=evaluate(step.value);yield {evaluated:batch.evaluated,retained:batch.candidates.length,alignmentEvaluated:batch.alignmentEvaluated};step=optimizer.next(f);}if(!step.done||!step.value)finished=false;
  }
  batch.status=finished&&batch.evaluated<o.budget?'completed':'budget-exhausted';
  batch.reason=batch.candidates.some(c=>c.merit.goalsMet)?'Reference goals met within the tested Lens bounds; no global optimum or device coupling claim.':batch.candidates.length?'Best tested Gaussian reference candidates; requested size / phase goals are not met.':'No aperture-feasible candidate found in these Lens bounds. This is not proof of impossibility. Enlarge apertures or change the architecture.';
@@ -136,14 +150,14 @@ export function* lensSearch(input:Project,raw:LensOptions,forward=solveFoldedGau
 }
 export function searchLenses(input:Project,o:LensOptions):LensResult{const it=lensSearch(input,o);let step=it.next();while(!step.done)step=it.next();return step.value;}
 export async function searchLensesAsync(input:Project,o:LensOptions,hooks:{cancelled?:()=>boolean;progress?:(v:{evaluated:number;retained:number})=>void}={}):Promise<LensResult>{
- const it=lensSearch(structuredClone(input),structuredClone(o));let step=it.next();while(!step.done){hooks.progress?.(step.value);await new Promise(r=>setTimeout(r,0));if(hooks.cancelled?.()){return {engine:LENS_SEARCH_ID,status:'cancelled',reason:'Cancelled. Preview candidates discarded; Project unchanged.',inputSignature:serializeProject(input),inputFingerprint:projectFingerprint(input),options:o,evaluated:step.value.evaluated,rejected:{},candidates:[],baseline:null};}step=it.next();}return step.value;
+ const it=lensSearch(structuredClone(input),structuredClone(o));let step=it.next();while(!step.done){hooks.progress?.(step.value);await new Promise(r=>setTimeout(r,0));if(hooks.cancelled?.()){return {engine:LENS_SEARCH_ID,status:'cancelled',reason:'Cancelled. Preview candidates discarded; Project unchanged.',inputSignature:serializeProject(input),inputFingerprint:projectFingerprint(input),options:o,evaluated:step.value.evaluated,alignmentEvaluated:0,rejected:{},candidates:[],baseline:null};}step=it.next();}return step.value;
 }
 export function applyLensCandidate(current:Project,batch:LensResult,id:string):Project {
  if(serializeProject(current)!==batch.inputSignature)throw Error('Stale Lens candidates. Run Lens Design again.');
  if(batch.status==='cancelled'||batch.status==='unsupported')throw Error('No applicable Lens result.');
  const candidate=batch.candidates.find(c=>c.id===id);if(!candidate)throw Error('Lens candidate unavailable.');
  const o=LensOptionsSchema.parse(batch.options),{domain}=prepare(current,o);
- if(candidate.values.length!==o.variables.length*4||bounds(o).some(([lo,hi],i)=>!Number.isFinite(candidate.values[i])||candidate.values[i]<lo-1e-12||candidate.values[i]>hi+1e-12))throw Error('Candidate changed a frozen variable or exceeded its bounds.');
+ if(candidate.values.length!==lensBounds(o).length||lensBounds(o).some(([lo,hi],i)=>!Number.isFinite(candidate.values[i])||candidate.values[i]<lo-1e-12||candidate.values[i]>hi+1e-12))throw Error('Candidate changed a frozen variable or exceeded its bounds.');
  const rebuilt=buildLensProject(domain,candidate.values);
  if(frozenSignature(domain.base,domain)!==frozenSignature(candidate.project,domain)||serializeProject(rebuilt)!==serializeProject(candidate.project))throw Error('Candidate altered a fixed condition or was tampered with.');
  const beam=solveFoldedGaussian(rebuilt,{sampleSegments:false}),route=analyzeRouting(rebuilt);if(beam.status!=='valid'||beam.apertureLimited||route.status!=='evaluated'||!route.withinTolerance||!route.path)throw Error('Candidate failed current optical validation.');

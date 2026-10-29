@@ -12,10 +12,11 @@ import type {FoldedResult} from '../project/foldedGaussian';
 import {tensorOverlap,TENSOR_OVERLAP_ID} from '../project/tensorOverlap';
 import {analyzeRouting} from '../routing/analysis';
 import {screenClearance} from '../routing/clearance';
+import {alignLensChief} from '../lens/alignment';
 import {lensSearch,beamMerit} from '../lens/search';
 import type {BeamMerit} from '../lens/search';
-import {lensDomain,buildLensProject} from '../lens/domain';
-import {emptyTrain,addLenses,lockedIds,synthesisLensOptions,checkFrozen,airLensSegments} from './construction';
+import {lensDomain,buildLensProject,lensValues,lensBounds} from '../lens/domain';
+import {emptyTrain,addLenses,lockedIds,synthesisLensOptions,checkFrozen,airLensSegments,alignedDirectSeed} from './construction';
 import {SynthesisSchema,SYNTHESIS_ID} from './contract';
 import type {SynthesisOptions} from './contract';
 import {jointAxes} from '../design/joint';
@@ -23,10 +24,10 @@ import {emptyJointFeedback,createJointScreen,compareJoint,jointEligible,jointKey
 import type {JointScreen,JointFeedback} from './robustness';
 import {emptyDiagnostics,noteIssue,observeProposals} from './diagnostics';
 import type {SynthesisDiagnostics} from './diagnostics';
-export type Recipe={kind:'existing'}|{kind:'generated';route:RouteProposal;clear:number;count:0|1|2;side:'first'|'last';leg?:number;segments?:number[]};
+export type Recipe={kind:'existing'}|{kind:'aligned-direct';clear:number}|{kind:'generated';route:RouteProposal;clear:number;count:0|1|2;side:'first'|'last';leg?:number;segments?:number[]};
 export type OAT={status:'assessed'|'partial'|'not-assessed';planned:number;tested:number;fieldAssessed:number;geometryPassed:number;worstEta:number|null;issues:string[];coverage:string};
 export type SynthesisCandidate={id:string;topology:string;project:Project;recipe:Recipe;values:number[];seal:string;merit:BeamMerit|null;eta:number|null;comparisonClass:string;evaluator:string;etaResolution:number;comparisonContext:string;reason:string;qualified:boolean;oat:OAT;joint?:JointScreen};
-export type SynthesisResult={diagnostics:SynthesisDiagnostics;engine:typeof SYNTHESIS_ID;inputSignature:string;settings:string;problem:DesignProblem;routing:Routing;options:SynthesisOptions;status:'completed'|'budget-exhausted'|'unsupported'|'invalid-input'|'cancelled';reason:string;evaluated:number;geometryEvaluated:number;toleranceEvaluated:number;jointFeedback:JointFeedback;refinements:number;allocationCoverage:{planned:number;tested:number;interiorTested:number;anchorSurfaces:number};placementFeedback:{topology:string;tested:number;supported:number;worstEta:number|null}[];rejected:Record<string,number>;families:Record<string,number>;candidates:SynthesisCandidate[]};
+export type SynthesisResult={diagnostics:SynthesisDiagnostics;engine:typeof SYNTHESIS_ID;inputSignature:string;settings:string;problem:DesignProblem;routing:Routing;options:SynthesisOptions;status:'completed'|'budget-exhausted'|'unsupported'|'invalid-input'|'cancelled';reason:string;evaluated:number;alignmentEvaluated:number;geometryEvaluated:number;toleranceEvaluated:number;jointFeedback:JointFeedback;refinements:number;allocationCoverage:{planned:number;tested:number;interiorTested:number;anchorSurfaces:number};placementFeedback:{topology:string;tested:number;supported:number;worstEta:number|null}[];rejected:Record<string,number>;families:Record<string,number>;candidates:SynthesisCandidate[]};
 const message=(e:unknown)=>e instanceof Error?e.message:String(e),eq=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 const emptyOAT=():OAT=>({status:'not-assessed',planned:0,tested:0,fieldAssessed:0,geometryPassed:0,worstEta:null,issues:[],coverage:''});
 export function synthesisFingerprint(p:Project){const q=structuredClone(p);if(q.synthesis)delete q.synthesis.solution;return projectFingerprint(q);}
@@ -36,6 +37,7 @@ function legSeeds(problem:DesignProblem,o:SynthesisOptions,clear:number){if(!o.p
 function routeOptions(problem:DesignProblem,o:SynthesisOptions,clear:number,leg=legSeeds(problem,o,clear)[0]):SearchOptions{if(leg===undefined)throw Error('No Prism leg satisfies Clear Radius / manufacturing bounds.');const templates=o.families.filter(f=>!f.includes('prism')||leg>=4*clear);if(!templates.length)throw Error('No Prism leg satisfies Clear Radius / manufacturing bounds.');return {...problem.routes,templates,budget:o.geometryBudget,clearRadius:clear,prismLeg:leg,mirrorThickness:Math.max(problem.routes.mirrorThickness,20e-6)};}
 function construct(p:Project,problem:DesignProblem,o:SynthesisOptions,recipe:Recipe):Project{
  if(recipe.kind==='existing')return structuredClone(p);
+ if(recipe.kind==='aligned-direct')return alignedDirectSeed(p,problem,o,recipe.clear);
  const base=emptyTrain(p,problem),opts=routeOptions(problem,o,recipe.clear,recipe.leg),domain=prepareRoutingDomain(base,opts,prescription(base).surfaces.length-1);
  if(!o.families.includes(recipe.route.topology)||!opts.templates.includes(recipe.route.topology)||!manufacturingSeeds(o.clearRadius).includes(recipe.clear)||!legSeeds(problem,o,recipe.clear).includes(opts.prismLeg))throw Error('Recipe family / size is outside the declared finite set.');
  const shapes:Record<Topology,string[]>={direct:[],mirror1:['mirror'],mirror2:['mirror','mirror'],prism1:['prism'],'mirror-prism':['mirror','prism'],prism2:['prism','prism']};
@@ -68,7 +70,7 @@ function overlap(p:Project,r:FoldedResult){
 function geometry(base:Project,p:Project,problem:DesignProblem){checkFrozen(base,p,problem);problemLimits(base,p,problem);const r=analyzeRouting(p);const reason=r.path?screenClearance(p,[],r.path,problem.routes.clearance):'No finite chief path';if(reason)throw Error(reason);}
 /** Shared budget covers every nominal transported forward solve, including Lens preflight and final candidate metrics. */
 export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRouting:Routing,rawOptions:SynthesisOptions):Generator<string,SynthesisResult>{
- const out:SynthesisResult={diagnostics:emptyDiagnostics(),engine:SYNTHESIS_ID,inputSignature:serializeProject(input),settings:JSON.stringify([rawProblem,rawRouting,rawOptions]),problem:structuredClone(rawProblem),routing:structuredClone(rawRouting),options:structuredClone(rawOptions),status:'completed',reason:'',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,jointFeedback:emptyJointFeedback(rawOptions.toleranceMode==='joint',rawOptions.jointBudget??2048),refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};
+ const out:SynthesisResult={diagnostics:emptyDiagnostics(),engine:SYNTHESIS_ID,inputSignature:serializeProject(input),settings:JSON.stringify([rawProblem,rawRouting,rawOptions]),problem:structuredClone(rawProblem),routing:structuredClone(rawRouting),options:structuredClone(rawOptions),status:'completed',reason:'',evaluated:0,alignmentEvaluated:0,geometryEvaluated:0,toleranceEvaluated:0,jointFeedback:emptyJointFeedback(rawOptions.toleranceMode==='joint',rawOptions.jointBudget??2048),refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};
  const reject=(s:string,family:string|null=null,stage:'setup'|'geometry'|'fit'|'mode'='setup',count=1)=>{out.rejected[s]=(out.rejected[s]??0)+count;noteIssue(out.diagnostics,family,stage,s,count);};
  let p:Project,o:SynthesisOptions,problem:DesignProblem;
  try{problem=ProblemSchema.parse(rawProblem);const routing=RoutingSchema.parse(rawRouting);o=SynthesisSchema.parse(rawOptions);p=synthesisProject(input,problem,routing,o);preflight(p,problem);if(o.toleranceMode==='joint'){if(!problem.jointTolerance)throw Error('Define Joint Tolerance in Design Problem before enabling joint feedback.');jointAxes(p,problem.jointTolerance);if(![...problem.jointTolerance.mating.position,...problem.jointTolerance.mating.angle,...problem.jointTolerance.assembly.position,...problem.jointTolerance.assembly.angle].some(v=>v>0))throw Error('Joint feedback requires nonzero error bounds.');}}catch(e){out.status='invalid-input';out.reason=message(e);noteIssue(out.diagnostics,null,'setup',out.reason);return out;}
@@ -98,10 +100,12 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
   try{
    const base=construct(p,problem,o,recipe),hasLens=prescription(base).surfaces.some(s=>prescription(base).assemblies.find(a=>a.id===s.assemblyId)?.kind==='lens');
    if(!hasLens){yield* retain(base,recipe,[],topology);return out.candidates.find(c=>eq(c.recipe,recipe))?.merit?.score??Infinity;}
-   try{const initialDomain=lensDomain(base,'existing');yield* retain(base,recipe,initialDomain.slots.flatMap(s=>s.values),topology);const first=out.candidates.find(c=>eq(c.recipe,recipe));if(first)cost=(first.merit?.score??Infinity)+(first.eta===null?1e4:-Math.log(Math.max(first.eta,1e-300)));}catch(e){noteIssue(out.diagnostics,topology,'fit',message(e));/* A failed seed may still be repaired. */}
-   const prior=out.candidates.filter(c=>eq(c.recipe,recipe)&&c.values.length).sort(rank)[0],options=synthesisLensOptions(base,problem,o,Math.max(1,Math.min(prior?.qualified?64:o.fitBudget,allowance-3))),domain=lensDomain(base,'existing'),warm=prior?buildLensProject(domain,prior.values):base,it=lensSearch(warm,options,forward);let v=it.next();
-   while(!v.done){yield `${topology} · optical ${out.evaluated}/${o.budget}`;if(out.evaluated>=opticalLimit-1||out.evaluated-start>=allowance){v=it.return({engine:'bounded-lens-reference/1.0.0',status:'budget-exhausted',reason:'Global allocation exhausted',inputSignature:'',inputFingerprint:'',options,evaluated:0,rejected:{},candidates:[],baseline:null});break;}v=it.next();}
+   const startOptions=synthesisLensOptions(base,problem,o,1);
+   try{const initialDomain=lensDomain(base,'existing',!!startOptions.alignment),aligned=alignLensChief(initialDomain,lensValues(initialDomain),startOptions,()=>out.alignmentEvaluated++);if(lensBounds(startOptions).some(([lo,hi],i)=>aligned.values[i]<lo-1e-12||aligned.values[i]>hi+1e-12))throw Error('Initial Lens seed is outside the declared variable bounds.');yield* retain(aligned.project,recipe,aligned.values,topology);const first=out.candidates.find(c=>eq(c.recipe,recipe));if(first)cost=(first.merit?.score??Infinity)+(first.eta===null?1e4:-Math.log(Math.max(first.eta,1e-300)));}catch(e){noteIssue(out.diagnostics,topology,'fit',message(e));/* A failed seed may still be repaired. */}
+   const prior=out.candidates.filter(c=>eq(c.recipe,recipe)&&c.values.length).sort(rank)[0],options=synthesisLensOptions(base,problem,o,Math.max(1,Math.min(prior?.qualified?64:o.fitBudget,allowance-3))),domain=lensDomain(base,'existing',!!options.alignment),warm=prior&&!options.alignment?buildLensProject(domain,prior.values):base,it=lensSearch(warm,options,forward);let v=it.next(),chiefCount=0;
+   while(!v.done){out.alignmentEvaluated+=v.value.alignmentEvaluated-chiefCount;chiefCount=v.value.alignmentEvaluated;yield `${topology} · optical ${out.evaluated}/${o.budget}`;if(out.evaluated>=opticalLimit-1||out.evaluated-start>=allowance){v=it.return({engine:'bounded-lens-reference/1.0.0',status:'budget-exhausted',reason:'Global allocation exhausted',inputSignature:'',inputFingerprint:'',options,evaluated:0,alignmentEvaluated:0,rejected:{},candidates:[],baseline:null});break;}v=it.next();}
    if(!v.done)return cost;
+   out.alignmentEvaluated+=Math.max(0,v.value.alignmentEvaluated-chiefCount);
    if(v.value.status==='budget-exhausted')evidence.limited=true;
    if(v.value.status==='unsupported')reject(v.value.reason,topology,'fit');
    if(v.value.candidates.length===0)for(const [s,n]of Object.entries(v.value.rejected))reject(s,topology,'fit',n);
@@ -121,6 +125,9 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  const tasks:{recipe:Recipe;topology:string;domain?:RouteDomain;proposal?:RouteProposal}[]=[];
  if(componentIds(p).length)tasks.push({recipe:{kind:'existing'},topology:'Retained initial train'});
  let base:Project|null=null;try{base=emptyTrain(p,problem);}catch(e){reject(message(e));if(!lockedIds(p,problem).size){out.status='unsupported';out.reason=message(e);return out;}}
+ if(base&&o.lensAlignment&&o.families.includes('direct')&&!analyzeRouting(base).withinTolerance)for(const clear of manufacturingSeeds(o.clearRadius)){
+  try{alignedDirectSeed(p,problem,o,clear);tasks.push({recipe:{kind:'aligned-direct',clear},topology:'direct'});}catch(e){reject(message(e),'direct','setup');}
+ }
  if(base)out.allocationCoverage.anchorSurfaces=prescription(base).surfaces.length-1;
  const seeds:{q:RouteProposal;domain:RouteDomain;clear:number;leg:number}[]=[],pools:typeof seeds[]=[];
  if(base)for(const clear of manufacturingSeeds(o.clearRadius))for(const leg of legSeeds(problem,o,clear)){
@@ -185,7 +192,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  if(jointMode){opticalLimit=o.budget;jointLimit=ledger.budget;
   const starts=jointPriority(out.candidates.filter(c=>c.values.length&&jointEligible(c)),c=>c).filter((c,i,all)=>all.findIndex(v=>eq(v.recipe,c.recipe))===i).slice(0,2);
   for(const seed of starts){
-   let best=seed,trials=0;const base=construct(p,problem,o,seed.recipe),domain=lensDomain(base,'existing'),options=synthesisLensOptions(base,problem,o,1),bounds=options.variables.flatMap(v=>[v.position,v.front,v.rear,v.thickness]);
+   let best=seed,trials=0;const base=construct(p,problem,o,seed.recipe),options=synthesisLensOptions(base,problem,o,1),domain=lensDomain(base,'existing',!!options.alignment),bounds=lensBounds(options);
    const tried=new Set<string>([JSON.stringify(best.values)]);
    for(const step of [1/1024,1/4096,1/16384])for(let axis=0;axis<bounds.length;axis++)for(const sign of [-1,1]){
     if(trials>=32||out.evaluated>=opticalLimit||ledger.evaluated+1+Math.min(problem.jointTolerance!.samples,problem.jointTolerance!.maxCases)>ledger.budget)continue;
@@ -215,7 +222,7 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
 export function searchSynthesis(p:Project,problem:DesignProblem,r:Routing,o:SynthesisOptions){const it=synthesisSteps(p,problem,r,o);let v=it.next();while(!v.done)v=it.next();return v.value;}
 export async function searchSynthesisAsync(p:Project,problem:DesignProblem,r:Routing,o:SynthesisOptions,hooks:{cancelled:()=>boolean;progress:(s:string)=>void}){
  const it=synthesisSteps(structuredClone(p),structuredClone(problem),structuredClone(r),structuredClone(o));let v=it.next(),last=performance.now();
- while(!v.done){if(hooks.cancelled()){const empty:SynthesisResult={diagnostics:emptyDiagnostics(),engine:SYNTHESIS_ID,inputSignature:serializeProject(p),settings:JSON.stringify([problem,r,o]),problem,routing:r,options:o,status:'cancelled',reason:'Cancelled; Preview discarded, Project unchanged.',evaluated:0,geometryEvaluated:0,toleranceEvaluated:0,jointFeedback:emptyJointFeedback(o.toleranceMode==='joint',o.jointBudget??2048),refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};it.return(empty);return empty;}
+ while(!v.done){if(hooks.cancelled()){const empty:SynthesisResult={diagnostics:emptyDiagnostics(),engine:SYNTHESIS_ID,inputSignature:serializeProject(p),settings:JSON.stringify([problem,r,o]),problem,routing:r,options:o,status:'cancelled',reason:'Cancelled; Preview discarded, Project unchanged.',evaluated:0,alignmentEvaluated:0,geometryEvaluated:0,toleranceEvaluated:0,jointFeedback:emptyJointFeedback(o.toleranceMode==='joint',o.jointBudget??2048),refinements:0,allocationCoverage:{planned:0,tested:0,interiorTested:0,anchorSurfaces:0},placementFeedback:[],rejected:{},families:{},candidates:[]};it.return(empty);return empty;}
   if(performance.now()-last>8){hooks.progress(v.value);await new Promise(resolve=>setTimeout(resolve,0));last=performance.now();}v=it.next();
  }return v.value;
 }
@@ -223,7 +230,7 @@ export function applySynthesis(current:Project,result:SynthesisResult,id:string)
  if(result.engine!==SYNTHESIS_ID||result.status==='cancelled'||result.status==='unsupported'||result.status==='invalid-input'||serializeProject(current)!==result.inputSignature||JSON.stringify([result.problem,result.routing,result.options])!==result.settings)throw Error('Stale / unavailable synthesis result or changed settings.');
  const c=result.candidates.find(c=>c.id===id);if(!c||c.seal!==JSON.stringify([c.recipe,c.values]))throw Error('Candidate parameters changed.');
  const problem=ProblemSchema.parse(result.problem),o=SynthesisSchema.parse(result.options),working=synthesisProject(current,problem,result.routing,o),base=construct(working,problem,o,c.recipe);
- let rebuilt=base;if(c.values.length){const opts=synthesisLensOptions(base,problem,o,1),limits=opts.variables.flatMap(v=>[v.position,v.front,v.rear,v.thickness]);if(c.values.length!==limits.length||limits.some(([a,b],i)=>!Number.isFinite(c.values[i])||c.values[i]<a-1e-12||c.values[i]>b+1e-12))throw Error('Lens variables exceed bounds.');rebuilt=buildLensProject(lensDomain(base,'existing'),c.values);}
+ let rebuilt=base;if(c.values.length){const opts=synthesisLensOptions(base,problem,o,1),limits=lensBounds(opts);if(c.values.length!==limits.length||limits.some(([a,b],i)=>!Number.isFinite(c.values[i])||c.values[i]<a-1e-12||c.values[i]>b+1e-12))throw Error('Lens variables exceed bounds.');rebuilt=buildLensProject(lensDomain(base,'existing',!!opts.alignment),c.values);}
  if(serializeProject(rebuilt)!==serializeProject(c.project))throw Error('Candidate Project was changed.');geometry(working,rebuilt,problem);
  const r=solveFoldedGaussian(rebuilt,{sampleSegments:false});if(r.status!=='valid'||r.apertureLimited)throw Error('Candidate failed current forward validation.');const m=beamMerit(r,rebuilt,o),eta=tensorOverlap(rebuilt,r);
  rebuilt.synthesis!.solution={engine:SYNTHESIS_ID,baselineFingerprint:projectFingerprint(current),designFingerprint:synthesisFingerprint(rebuilt),evaluated:result.evaluated,geometryEvaluated:result.geometryEvaluated,topology:c.topology,qualified:m.goalsMet&&eta.status==='valid'&&eta.eta>=o.minimumOverlap};return ProjectSchema.parse(rebuilt);

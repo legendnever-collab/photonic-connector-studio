@@ -26,7 +26,7 @@ export default function ProblemDialog({onClose,onSynthesis}:{onClose:()=>void;on
  const signature=serializeProject(p),settings=JSON.stringify(o),routingJSON=JSON.stringify(routing),live=useRef({signature,settings,routingJSON});live.current={signature,settings,routingJSON};
  useEffect(()=>{mounted.current=true;opener.current=document.activeElement as HTMLElement|null;dialog.current?.showModal();return()=>{mounted.current=false;cancel.current=true;opener.current?.focus();};},[]);
  const stale=!!batch&&(batch.inputSignature!==signature||batch.settings!==settings||JSON.stringify(batch.routing)!==routingJSON),candidate=batch?.candidates.find(c=>c.id===selected)??batch?.candidates[0]??null;
- const domain=useMemo(()=>{try{return o.lens?lensDomain(problemProject(p,o,routing),o.lens.template):null;}catch{return null;}},[p,o,routing]);
+ const domain=useMemo(()=>{try{return o.lens?lensDomain(problemProject(p,o,routing),o.lens.template,!!o.lens.alignment):null;}catch{return null;}},[p,o,routing]);
  function change(next:DesignProblem){setO(next);setError('');return true;}
  function resetLens(template:'existing'|'relay2'){
   try{const base={...p,routing},lens=defaultLensOptions(base,template);change({...o,lens});}catch(e){setError(e instanceof Error?e.message:String(e));}

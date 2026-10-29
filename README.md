@@ -1,3 +1,7 @@
+# D2.4 · 작은 offset과 Lens 편심·tilt 보정
+
+`0.24.0-d24`: 고정된 Input·Output 사이에서 실제 Lens 편심·tilt를 조정합니다. 50 µm offset의 2-Lens 후보를 탐색하고 보정량과 별도 Field 유효성을 확인할 수 있습니다. [사용법·계산 계약·검증과 다음 계획](docs/D24_SMALL_OFFSET_LENS_ALIGNMENT.md).
+
 # UX4 · 구조별 탐색 상태와 후보 비교
 
 `0.23.0-ux4`: 구조별 선택/부품 제한, 실제 기하·평가 제외 사유와 탐색 한도를 표시합니다. 같은 구조·평가 조건의 후보를 묶고 모두 펼쳐 비교·적용할 수 있습니다. [사용 순서·진단 계약](docs/UX4_SYNTHESIS_EXPLANATIONS.md).
