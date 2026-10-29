@@ -1,5 +1,6 @@
 import {SynthesisSchema} from '../synthesis/contract';
 import {PortArraysSchema} from './portArrays';
+import {ArrayStudySchema} from './arrayStudyContract';
 import {ProblemSchema} from '../design/contract';
 import { resolveMaterials } from '../surface/materials';
 import { RoutingSchema } from '../routing/contract';
@@ -29,6 +30,8 @@ export type BuildingBlock=z.infer<typeof BuildingBlockSchema>;
 export const ProjectSchema = z.object({ kind: z.literal('optical-project'), schemaVersion: z.literal(1), units: z.literal('SI'),
     routing:RoutingSchema.optional(),
     portArrays:PortArraysSchema.optional(),
+    arrayStudy:ArrayStudySchema.optional(),
+    designScenario:z.enum(['edge-direct','edge-receptacle','vertical','spacer-fold','evanescent','mirror-reference','relay-reference']).optional(),
     synthesis:SynthesisSchema.optional(),
     designProblem:ProblemSchema.optional(),
     targetBody:z.object({radius:dim,length:dim}).strict().nullable().optional(),

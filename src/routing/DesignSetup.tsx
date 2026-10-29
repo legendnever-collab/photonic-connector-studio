@@ -1,3 +1,4 @@
+import ScenarioGuide from '../authoring/ScenarioGuide';
 import PortArrayFields from '../project/PortArrayFields';
 import LensDialog from '../lens/LensDialog';
 import {useState} from 'react';
@@ -21,7 +22,7 @@ export default function DesignSetup({onExample,onError,onSynthesis,portsOnly=fal
  const shared=useProject(),p=shared.project,r=p.routing??defaultRouting();
  function commit(next:Project){try{shared.commit(next);onError('');return true;}catch(e){onError(e instanceof Error?e.message:String(e));return false;}}
  function put(next:Routing){return commit({...p,routing:next});}
- return <section className="routing-setup" data-testid="design-setup"><h3>Ports & Modes</h3>{!portsOnly&&<><p>두 Port의 위치와 입사 방향을 지정합니다. S2: Fixed Lens 뒤의 광로 후보를 찾습니다.</p>
+ return <section className="routing-setup" data-testid="design-setup"><ScenarioGuide/><h3>Ports & Modes</h3>{!portsOnly&&<><p>두 Port의 위치와 입사 방향을 지정합니다. S2: Fixed Lens 뒤의 광로 후보를 찾습니다.</p>
  <label className="field">Routing Example<select aria-label="Routing Example" value="" onChange={e=>{if(e.target.value)onExample(e.target.value);}}><option value="">Choose…</option><option value="routing:lens">S3.2 · Folded Lens design task</option><option value="routing:search">S2 · Displaced PIC routing task</option><option value="routing:mirrors">Lens + 2 Mirrors · 60 µm height shift</option><option value="routing:prism-synthesis">D2.2.2 · Blank 2 Prism synthesis task</option><option value="routing:prism-mode">D2.2.1 · Collimated BK7 Prism · TE</option><option value="routing:prism">Lens + TIR Prism · +Z incidence</option></select></label><p className="surface-note">예제는 직접 정의한 배치입니다. Find Routing Solutions는 기존 Lens를 고정한 geometric 경로입니다. Lens 생성과 Output Mode 정합은 Automatic Synthesis에서 실행하세요.</p>
  </>}{p.model.kind!=='surface'?<p>Physical Project에서 사용할 수 있습니다.</p>:<>
  {!portsOnly&&<><button className="routing-find" aria-label="Find Routing Solutions" disabled={!!shared.invalid.length} onClick={()=>setSearchOpen(true)}>Find Routing Solutions · geometry only…</button>

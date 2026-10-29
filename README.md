@@ -1,3 +1,7 @@
+# A1 · Channel별 평가와 참고 구조 예시
+
+`0.20.0-a1`: Templates의 실제 참고 구조·가정·부품 역할, 계산 가능한 Mirror / 2-Lens 연습 예시, 공용 광학계의 Channel별 조건부 Gaussian 비교를 추가했습니다. Output 공통 이동·회전·Pitch 변화 전후를 비교하며 부분 coverage에서 전체 Array 성능을 추정하지 않습니다. [계약과 검증](docs/A1_ARRAY_CHANNEL_STUDY.md).
+
 # UX1 · Array-aware Design Workspace
 
 기본 시작은 Port만 있는 **새 설계**입니다. **Templates**에서 Edge / Vertical / Evanescent

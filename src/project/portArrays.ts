@@ -2,6 +2,7 @@ import {z} from 'zod';
 import {V,pointToWorld} from '../surface/model';
 import type {Frame} from '../surface/model';
 import type {Project} from './model';
+import type {ArrayStudyResult} from './arrayStudy';
 const grid=z.object({rows:z.number().int().min(1).max(32),cols:z.number().int().min(1).max(32),pitchY:z.number().finite().positive().max(.1),pitchZ:z.number().finite().positive().max(.1),referenceRow:z.number().int().min(0),referenceCol:z.number().int().min(0)}).strict().superRefine((a,c)=>{
  if(a.rows*a.cols>256)c.addIssue({code:'custom',message:'Port Array supports at most 256 channels.'});
  if(a.referenceRow>=a.rows||a.referenceCol>=a.cols)c.addIssue({code:'custom',message:'Reference Channel must belong to the Array.'});
@@ -21,7 +22,8 @@ export function portArrayPoints(a:PortGrid,f:Frame){return Array.from({length:a.
  const row=Math.floor(i/a.cols),col=i%a.cols;
  return {id:`${row+1}:${col+1}`,row,col,point:pointToWorld(f,V(0,(col-a.referenceCol)*a.pitchY,(row-a.referenceRow)*a.pitchZ))};
 });}
-export function arrayAssessment(p:Project){
+export function arrayAssessment(p:Project,study:ArrayStudyResult|null=null){
  const a=p.portArrays;
+ if(study)return {scope:'shared-optics-channels' as const,portArrays:a??null,arrayModeOverlap:{nominal:study.nominalSummary,perturbed:study.perturbedSummary,nominalValid:study.nominalValid,perturbedValid:study.perturbedValid,total:study.total},arrayTolerance:null,channelCrosstalk:null,status:study.status,reason:study.scope};
  return {scope:a?'representative-channel' as const:'legacy' as const,portArrays:a??null,arrayModeOverlap:null,arrayTolerance:null,channelCrosstalk:null,status:'not-assessed' as const,reason:a?'Port Pose = selected reference Channel. Array placement is defined; only the representative channel is optically evaluated. No Array-wide tolerance / crosstalk assessment.':'No explicit product Port Array contract.'};
 }
