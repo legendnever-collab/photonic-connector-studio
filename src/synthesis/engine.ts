@@ -212,11 +212,11 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
   }
   a.status=!a.planned?'not-assessed':a.tested===a.planned&&a.fieldAssessed===a.planned&&c.eta!==null?'assessed':'partial';if(a.tested<a.planned)a.issues.push('OAT cap reached; coverage is incomplete.');
  }
- out.candidates.sort(rank);out.status=limited||ledger.limited||out.evaluated>=opticalLimit-4||out.geometryEvaluated>=o.geometryBudget?'budget-exhausted':'completed';
+ for(const row of Object.values(out.diagnostics.families))if(row.fitPlanned>row.fitStarted)row.limited=true;
+ out.candidates.sort(rank);out.status=limited||ledger.limited||Object.values(out.diagnostics.families).some(row=>row.limited)||out.evaluated>=opticalLimit-4||out.geometryEvaluated>=o.geometryBudget?'budget-exhausted':'completed';
  out.reason=out.candidates.some(c=>c.qualified)?'Nominal Mode goals met in the declared conditional Mode domain (Gaussian / validated Prism phase). No global optimum, combined-error or Yield claim.':out.candidates.length?'Best tested partial / model-limited candidates; nominal Mode goals are not met.':'No feasible candidate found in this bounded family / space / budget; not proof of impossibility.';
  if(jointMode)out.reason+=' Joint ranks apply only within identical coverage / field groups; incomplete or geometry-failed results are unranked. No cross-group robust winner.';
  if(out.status==='budget-exhausted')out.reason+=' Search coverage is partial; untested placements / refinements may remain.';
- for(const row of Object.values(out.diagnostics.families))if(row.fitPlanned>row.fitStarted)row.limited=true;
  return out;
 }
 export function searchSynthesis(p:Project,problem:DesignProblem,r:Routing,o:SynthesisOptions){const it=synthesisSteps(p,problem,r,o);let v=it.next();while(!v.done)v=it.next();return v.value;}

@@ -100,12 +100,17 @@ function seeds(domain:LensDomain,o:LensOptions):number[][]{
  if(o.alignment){
   // Include powered-front / powered-rear real Lens starts. Symmetric biconvex
   // relays can lie at the local-footprint boundary before a small decenter.
-  const starts=[...result];
-  for(const seed of starts)for(const fraction of [0,.25,.75,1]){
-   const x=denormalize(seed,o);for(let i=0;i<domain.slots.length;i++){
-    const power=x[4*i+1]-x[4*i+2],share=i===0?fraction:1-fraction;
-    x[4*i+1]=value(i,1,power*share);x[4*i+2]=value(i,2,-power*(1-share));
-   }result.push(normalize(x,o));
+  // Interleave bending choices at each axial placement. Appending every bent
+  // Lens after all symmetric starts starves them under small budgets.
+  const starts=result.splice(0);
+  for(const seed of starts){
+   result.push(seed);
+   for(const fraction of [0,1,.25,.75]){
+    const x=denormalize(seed,o);for(let i=0;i<domain.slots.length;i++){
+     const power=x[4*i+1]-x[4*i+2],share=i===0?fraction:1-fraction;
+     x[4*i+1]=value(i,1,power*share);x[4*i+2]=value(i,2,-power*(1-share));
+    }result.push(normalize(x,o));
+   }
   }
  }
  return result.filter((x,i)=>result.findIndex(y=>x.every((v,j)=>Math.abs(v-y[j])<1e-9))===i);
@@ -135,7 +140,10 @@ export function* lensSearch(input:Project,raw:LensOptions,forward=solveFoldedGau
   }catch(e){reject(e instanceof Error?e.message:String(e));}
   seen.set(key,cost);evaluated.push({x,f:cost});return cost;
  };
- for(const x of seeds(domain,o)){if(batch.evaluated>=o.budget)break;evaluate(x);yield {evaluated:batch.evaluated,retained:batch.candidates.length,alignmentEvaluated:batch.alignmentEvaluated};}
+ // Pose correction is nested inside each trial. Reserve local-fit evaluations
+ // instead of spending the entire allowance enumerating asymmetric starts.
+ const seedLimit=o.alignment?Math.min(o.budget,Math.max(12,Math.min(128,Math.floor(o.budget/3)))):o.budget;
+ for(const x of seeds(domain,o)){if(batch.evaluated>=seedLimit)break;evaluate(x);yield {evaluated:batch.evaluated,retained:batch.candidates.length,alignmentEvaluated:batch.alignmentEvaluated};}
  const starts=evaluated.sort((a,b)=>a.f-b.f).filter((v,i,list)=>list.slice(0,i).every(u=>Math.hypot(...v.x.map((x,j)=>x-u.x[j]))>.05)).slice(0,2),active=bounds(o).flatMap(([lo,hi],i)=>hi>lo?[i]:[]);
  let finished=true;
  for(let i=0;i<starts.length;i++){
