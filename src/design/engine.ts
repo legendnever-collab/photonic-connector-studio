@@ -82,8 +82,8 @@ export async function assessDesign(p:Project,o:DesignProblem,hooks:{cancelled?:(
 
 function lensProblemOptions(p:Project,o:DesignProblem){
  if(!o.lens)throw Error('Define supported Lens bounds first.');
- const options=structuredClone(o.lens),domain=lensDomain(p,options.template);
- domain.slots.forEach((s,i)=>{if(o.fixedSurfaces.includes(s.frontId)||o.fixedSurfaces.includes(s.rearId))for(const [j,k]of (['position','front','rear','thickness'] as const).entries())options.variables[i][k]=[s.values[j],s.values[j]];});
+ const options=structuredClone(o.lens),domain=lensDomain(p,options.template,!!options.alignment);
+ domain.slots.forEach((s,i)=>{if(o.fixedSurfaces.includes(s.frontId)||o.fixedSurfaces.includes(s.rearId)){if(options.alignment&&!options.alignment.fixed.includes(s.id))options.alignment.fixed.push(s.id);for(const [j,k]of (['position','front','rear','thickness'] as const).entries())options.variables[i][k]=[s.values[j],s.values[j]];}});
  return options;
 }
 export type ProblemCandidate={id:string;name:string;project:Project;rawId:string;stress:StressResult};

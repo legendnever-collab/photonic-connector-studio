@@ -6,11 +6,12 @@ import type {Frame} from '../surface/model';
 import {framePose} from '../authoring/commands';
 import {materialIndex} from '../surface/materials';
 import {analyzeRouting} from '../routing/analysis';
-import {lensDomain,defaultLensOptions} from '../lens/domain';
+import {lensDomain,defaultLensOptions,needsLensAlignment} from '../lens/domain';
 import type {LensOptions} from '../lens/contract';
 import {rayleigh} from '../physics';
 import type {DesignProblem} from '../design/contract';
 import type {SynthesisOptions} from './contract';
+import {portWorld,withPortWorld} from '../routing/model';
 export function lockedIds(p:Project,o:DesignProblem){
  const d=prescription(p),ids=new Set<string>();
  for(const sid of o.fixedSurfaces){const s=d.surfaces.find(s=>s.id===sid);if(!s)throw Error(`Unknown fixed Surface ${sid}`);ids.add(s.assemblyId);}
@@ -98,11 +99,12 @@ function addSegmentLenses(route:Project,count:0|1|2,clear:number,o:SynthesisOpti
  return ProjectSchema.parse(p);
 }
 export function synthesisLensOptions(p:Project,problem:DesignProblem,o:SynthesisOptions,budget:number):LensOptions{
- const options=defaultLensOptions(p,'existing'),domain=lensDomain(p,'existing');options.budget=budget;options.diameterTolerance=o.diameterTolerance;options.phaseTolerance=o.phaseTolerance;options.clearance=problem.routes.clearance;
+ const alignment=!!o.lensAlignment&&needsLensAlignment(p),options=defaultLensOptions(p,'existing',alignment),domain=lensDomain(p,'existing',alignment);
+ if(alignment)options.alignment={...o.lensAlignment!,fixed:[...(problem.lens?.alignment?.fixed??[])].filter(id=>domain.slots.some(s=>s.id===id))};options.budget=budget;options.diameterTolerance=o.diameterTolerance;options.phaseTolerance=o.phaseTolerance;options.clearance=problem.routes.clearance;
  for(let i=0;i<domain.slots.length;i++){
   const slot=domain.slots[i],prior=problem.lens?.variables.find(v=>v.id===slot.id),v=options.variables[i];
   if(prior)Object.assign(v,structuredClone(prior));else{v.thickness=[...o.thickness];v.position[1]=Math.min(v.position[1],slot.legal[1]-o.thickness[0]);}
-  if(problem.fixedSurfaces.includes(slot.frontId)||problem.fixedSurfaces.includes(slot.rearId))for(const [j,k]of (['position','front','rear','thickness'] as const).entries())v[k]=[slot.values[j],slot.values[j]];
+  if(problem.fixedSurfaces.includes(slot.frontId)||problem.fixedSurfaces.includes(slot.rearId)){if(options.alignment&&!options.alignment.fixed.includes(slot.id))options.alignment.fixed.push(slot.id);for(const [j,k]of (['position','front','rear','thickness'] as const).entries())v[k]=[slot.values[j],slot.values[j]];}
  }
  return options;
 }
@@ -118,3 +120,20 @@ export function checkFrozen(base:Project,next:Project,o:DesignProblem){
  for(const aid of ids){if(!b.assemblies.some(x=>x.id===aid)||!a.surfaces.filter(x=>x.assemblyId===aid).every(x=>b.surfaces.some(y=>y.id===x.id)))throw Error('Frozen component identity changed.');}
  let aid:string|null=target;while(aid){if(!eq(a.assemblies.find(x=>x.id===aid),b.assemblies.find(x=>x.id===aid)))throw Error('Output ancestry changed.');aid=a.assemblies.find(x=>x.id===aid)!.parentId;}
 }
+
+/** Straight two-Lens seed for lateral Port offsets. A temporary axial reference
+ * is used ONLY to construct the starting prescription, then the exact original
+ * target and metadata are restored before any candidate evaluation. */
+export function alignedDirectSeed(p:Project,problem:DesignProblem,o:SynthesisOptions,clear:number):Project {
+ if(!o.lensAlignment||!o.families.includes('direct')||!manufacturingClear(o,clear))throw Error('Lens alignment / direct family is disabled.');
+ const base=emptyTrain(p,problem),d=prescription(base),source=frame(d.source.frame),target=portWorld(base,'target'),delta=sub(target.origin,source.origin),length=dot(delta,source.axes[0]);
+ if(d.surfaces.length!==1)throw Error('Direct Lens compensation cannot replace a fixed optical prefix.');
+ if(problem.maxParts<2||problem.maxGenerated<2||(p.routing?.parts.lens??2)<2)throw Error('Direct Lens compensation requires two available Lens components.');
+ if(length<.001||dot(source.axes[0],target.axes[0])<Math.cos(.02)||norm(sub(delta,mul(source.axes[0],length)))>2*o.lensAlignment.decenter)throw Error('Direct Lens compensation seed is outside the bounded small-offset domain.');
+ const proxy=withPortWorld(base,'target',framePose({origin:add(source.origin,mul(source.axes[0],length)),axes:source.axes}));
+ const q=addLenses(proxy,2,clear,o,'first',[...prescription(p).assemblies.map(a=>a.id),...prescription(p).surfaces.map(s=>s.id)]),out=prescription(q),targetIds=new Set(d.assemblies.map(a=>a.id));
+ out.assemblies=out.assemblies.map(a=>targetIds.has(a.id)?structuredClone(d.assemblies.find(b=>b.id===a.id)!):a);
+ out.surfaces[out.surfaces.length-1]=structuredClone(d.surfaces.at(-1)!);q.authoring=structuredClone(base.authoring);
+ return ProjectSchema.parse(q);
+}
+function manufacturingClear(o:SynthesisOptions,v:number){return [o.clearRadius[0],o.clearRadius[1],Math.sqrt(o.clearRadius[0]*o.clearRadius[1])].includes(v);}

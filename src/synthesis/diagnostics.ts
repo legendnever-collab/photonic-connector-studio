@@ -20,7 +20,7 @@ export function issueKind(reason:string,stage:DiagnosticStage):IssueKind{
  if(/^Model unsupported:|^Unsupported |Single-channel, non-array|Physical Project required|Gaussian Mode \/ phase \/ normalization is undefined/.test(reason))return 'unsupported';
  if(/^Out of domain:|outside Gaussian reference|divergence exceeds|tail bound exceeds|Aperture \/ body tail bound/.test(reason))return 'domain';
  if(/^(Lens limit|Total component limit|New \/ replacement component limit)/.test(reason))return 'parts';
- if(/^Position \/ direction tolerance not met|^No finite chief path|^First establish a finite chief route|^Potential .* (crossing|conflict)|^Lens outside its fixed free-space segment|^Mirror bend below|Lens edge thickness or interior thickness is nonpositive/.test(reason))return 'geometry';
+ if(/^Position \/ direction tolerance not met|^No finite chief path|^First establish a finite chief route|^Lens alignment seed|^Lens decenter \/ tilt bounds|^Potential .* (crossing|conflict)|^Lens outside its fixed free-space segment|^Mirror bend below|Lens edge thickness or interior thickness is nonpositive/.test(reason))return 'geometry';
  if(/budget exhausted|allocation exhausted/i.test(reason))return 'budget';
  return stage==='geometry'?'geometry':'other';
 }
