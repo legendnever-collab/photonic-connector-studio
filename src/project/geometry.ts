@@ -5,6 +5,8 @@ import type { Body, Project } from './model';
 import type { ReportFace, ReportEdge } from '../surface/reportGeometry';
 import { compatiblePair, prismEnvelope, cross } from '../surface/reportGeometry';
 import { surfaceRing } from '../surface/trace';
+import {portArrayPoints} from './portArrays';
+import type {PortArrays} from './portArrays';
 export type BodyGeometry = {
     faces: ReportFace[];
     edges: ReportEdge[];
@@ -15,7 +17,7 @@ export type BodyGeometry = {
         faces: Vec[][];
     }[];
 };
-export function bodyGeometry(d: Prescription, surfaces: Compiled[], bodies: Body[], sourceBody: Project['sourceBody'] = null, targetBody:Project['targetBody']=null): BodyGeometry {
+export function bodyGeometry(d: Prescription, surfaces: Compiled[], bodies: Body[], sourceBody: Project['sourceBody'] = null, targetBody:Project['targetBody']=null,arrays?:PortArrays): BodyGeometry {
     const result: BodyGeometry = { faces: [], edges: [], issues: [], solids: [] };
     const addFaces = (points: Vec[][], s: Compiled, material: ReportFace['material']) => { for (const ps of points) {
         result.faces.push({ points: ps, material, surfaceId: s.id, illustrative: false, bodyId: s.assemblyId ?? '@source' });
@@ -89,8 +91,21 @@ export function bodyGeometry(d: Prescription, surfaces: Compiled[], bodies: Body
         result.solids.push({ body, surfaces: ss, faces });
     }
     for(const which of ['source','target'] as const){
-        const body=which==='source'?sourceBody:targetBody;if(!body)continue;
-        const f=which==='source'?frame(d.source.frame):surfaces.at(-1)!.world,r=body.radius;
+        const body=which==='source'?sourceBody:targetBody;
+        const f=which==='source'?frame(d.source.frame):surfaces.at(-1)!.world;
+        if(arrays){
+            const g=arrays[which],points=portArrayPoints(g,f),radius=body?.radius??Math.min(g.pitchY,g.pitchZ)*.15;
+            const steps=points.length>1?12:48;
+            for(const c of points){
+                const ring=(x:number)=>Array.from({length:steps},(_,i)=>add(c.point,add(mul(f.axes[0],x),add(mul(f.axes[1],radius*Math.cos(i*2*Math.PI/steps)),mul(f.axes[2],radius*Math.sin(i*2*Math.PI/steps))))));
+                const id=which==='source'?'@source':surfaces.at(-1)!.id,aid=which==='source'?'@source':'@target';
+                if(body){const a=ring(which==='source'?-body.length:0),b=ring(which==='source'?0:body.length);addFaces([a,b,...a.map((p,i)=>[p,a[(i+1)%steps],b[(i+1)%steps],b[i]])],{id,assemblyId:aid} as Compiled,'glass');}
+                else {const ps=ring(0);result.edges.push({points:[...ps,ps[0]],surfaceId:id,bodyId:aid,illustrative:true});}
+            }
+            continue;
+        }
+        if(!body)continue;
+        const r=body.radius;
         const ch=which==='source'?d.source.channels:{rows:1,cols:1,pitch:1};
         for(let row=0;row<ch.rows;row++)for(let col=0;col<ch.cols;col++){
             const u=(col-(ch.cols-1)/2)*ch.pitch,v=(row-(ch.rows-1)/2)*ch.pitch;

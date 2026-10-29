@@ -3,10 +3,10 @@ import type {Page} from '@playwright/test';
 import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
 async function task(page:Page){await page.getByLabel('Project Example',{exact:true}).selectOption('routing:search');}
-async function open(page:Page){await page.getByRole('button',{name:'Find Routing Solutions',exact:true}).click();}
+async function open(page:Page){if(!await page.getByRole('button',{name:'Find Routing Solutions',exact:true}).isVisible())await page.getByTestId('design-setup').locator('summary').filter({hasText:'상세 설계 도구'}).click();await page.getByRole('button',{name:'Find Routing Solutions',exact:true}).click();}
 async function run(page:Page){await page.getByRole('button',{name:'Run Search',exact:true}).click();await expect(page.getByTestId('search-status')).toBeVisible();}
 test.beforeEach(async({page},info)=>{test.skip(info.project.name!=='desktop','PC-first S2 solution comparison.');await page.context().setOffline(true);await page.goto(offline);});
 test('offline search previews multiple topologies while the canonical Project stays unchanged',async({page})=>{
@@ -32,8 +32,8 @@ test('changed settings invalidate old candidates and budget exhaustion is distin
  await page.getByText('Search Settings',{exact:true}).click();await page.getByLabel('Search Budget',{exact:true}).fill('128');for(const name of ['1 Mirror','2 Mirrors','TIR Prism','Mirror + TIR Prism'])await page.getByLabel(`Search ${name}`,{exact:true}).uncheck();await run(page);await expect(page.getByTestId('search-status')).toHaveText('No candidate found');await expect(page.getByTestId('search-result')).toContainText('not proof');
 });
 test('part restrictions and undefined Output medium have explicit failure states without applying a layout',async({page})=>{
- await task(page);await page.getByText('Design Space / Part Limits',{exact:true}).click();await page.getByLabel('Max mirror',{exact:true}).fill('0');await page.getByLabel('Max prism',{exact:true}).fill('0');const before=await save(page);await open(page);await run(page);await expect(page.getByTestId('search-status')).toHaveText('No candidate found');await expect(page.getByRole('button',{name:'Apply Candidate',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Close Routing Search',exact:true}).click();expect(await save(page)).toEqual(before);
- await page.getByRole('button',{name:'New Physical Project',exact:true}).click();await page.getByRole('button',{name:'Design Setup',exact:true}).click();await open(page);await run(page);await expect(page.getByTestId('search-status')).toHaveText('Unsupported setup');await expect(page.getByTestId('search-result')).toContainText('Output reference');
+ await task(page);const panel=page.locator('.unified-design');await panel.getByRole('button',{name:'목표·제약',exact:true}).click();await panel.getByLabel('Synthesis Max mirror',{exact:true}).fill('0');await panel.getByLabel('Synthesis Max prism',{exact:true}).fill('0');await panel.getByRole('button',{name:'조건 저장',exact:true}).click();await panel.getByRole('button',{name:'Ports & Array',exact:true}).click();const before=await save(page);await open(page);await run(page);await expect(page.getByTestId('search-status')).toHaveText('No candidate found');await expect(page.getByRole('button',{name:'Apply Candidate',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Close Routing Search',exact:true}).click();expect(await save(page)).toEqual(before);
+ await page.getByRole('button',{name:'새 설계',exact:true}).click();await page.getByRole('button',{name:'설계 조건',exact:true}).click();await open(page);await run(page);await expect(page.getByTestId('search-status')).toHaveText('Unsupported setup');await expect(page.getByTestId('search-result')).toContainText('Output reference');
 });
 test('closing an active search cancels the session and leaves the Project unchanged',async({page})=>{
  await task(page);const before=await save(page);await open(page);await page.getByRole('button',{name:'Run Search',exact:true}).click();await page.keyboard.press('Escape');await expect(page.getByTestId('route-search-dialog')).toHaveCount(0);expect(await save(page)).toEqual(before);

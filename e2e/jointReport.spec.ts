@@ -4,9 +4,9 @@ import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
 import {tab} from './ui';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){await tab(page,'Layout');const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
-async function open(page:Page){await tab(page,'Layout');await page.getByRole('button',{name:'Design Problem',exact:true}).click();await page.getByRole('button',{name:'Joint Tolerance',exact:true}).click();}
+async function open(page:Page){await tab(page,'Layout');if(await page.locator('.legacy-design-tools').getAttribute('open')===null)await page.locator('.legacy-design-tools summary').click();await page.getByRole('button',{name:'Design Problem',exact:true}).click();await page.getByRole('button',{name:'Joint Tolerance',exact:true}).click();}
 async function configure(page:Page,cap=8,saveSettings=true){await open(page);await page.getByLabel('Joint Samples',{exact:true}).fill('8');await page.getByLabel('Joint Case cap',{exact:true}).fill(String(cap));for(const axis of ['Y','Z'])await page.getByLabel(`Joint mating position ${axis}`,{exact:true}).fill('0.25');if(saveSettings)await page.getByRole('button',{name:'Save Problem Settings',exact:true}).click();}
 async function close(page:Page){await page.getByRole('button',{name:'Close Design Problem',exact:true}).click();}
 async function exported(page:Page,root:Locator){const dl=page.waitForEvent('download');await root.getByRole('button',{name:'Export Joint Assessment JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}

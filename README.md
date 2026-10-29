@@ -1,4 +1,17 @@
-# D2.3.5 · Finite-beam Lens benchmark
+# UX1 · Array-aware Design Workspace
+
+기본 시작은 Port만 있는 **새 설계**입니다. **Templates**에서 Edge / Vertical / Evanescent
+상황의 시작 조건을 선택하거나 **설계 조건 → Ports & Array → 목표·제약 → 설계 후보 찾기**로
+진행합니다. 같은 Workspace에서 후보를 비교·적용하고 기존 Analysis / Report를 사용합니다.
+기존 전문가 도구는 고급 도구에, 기존 수치 fixture는 기술 검증용 예시에 보존합니다.
+
+Input / Output 각각 Rows × Columns, Pitch Y/Z와 대표 Channel을 정의합니다. 대표 Channel
+선택은 Array 배치를 보존하며, Layout / Report는 동일한 실제 Port 위치를 표시합니다.
+현재 계산·자동 설계·공차는 대표 Channel 대상입니다. Array 전체 Mode / 공차 / Crosstalk는
+미평가이며 Report / SVG metadata에 이를 명시합니다. Templates는 완성 답을 삽입하지 않습니다.
+[계약·범위·사용자 확인](docs/UX1_ARRAY_DESIGN_WORKFLOW.md).
+
+## D2.3.5 · Finite-beam Lens benchmark
 
 Analysis → **Run Lens Field Benchmark**에서 단일 spherical Lens의 exact sag phase와
 quadratic phase를 독립적인 pupil-plane 적분으로 비교합니다. Pupil fraction, conditional

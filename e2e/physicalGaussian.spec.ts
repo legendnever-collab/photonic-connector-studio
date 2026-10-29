@@ -3,7 +3,7 @@ import type {Page} from '@playwright/test';
 import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
 async function gaussian(page:Page){await page.getByRole('button',{name:'Gaussian View',exact:true}).click();}
 async function analysis(page:Page){await page.getByRole('navigation',{name:'Surface Inspector tabs'}).getByRole('button',{name:'Analysis',exact:true}).click();}

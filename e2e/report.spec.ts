@@ -13,9 +13,10 @@ test('report B/C, orbit and display envelopes share the current prescription wit
     await expect(page.locator('.report-inline')).toBeVisible();
     await expect(figure.locator('[data-defined-body]').first()).toBeVisible();
     const first=await figure.locator('[data-report-face]').first().getAttribute('points');
-    const box=await figure.boundingBox();
-    await page.mouse.move(box!.x+60,box!.y+150);await page.mouse.down();await page.mouse.move(box!.x+130,box!.y+180);await page.mouse.up();
-    expect(await figure.locator('[data-report-face]').first().getAttribute('points')).not.toEqual(first);
+    await figure.scrollIntoViewIfNeeded();const box=await figure.boundingBox();
+    // Drag the blank SVG heading area; optical Surfaces intentionally select rather than orbit.
+    await page.mouse.move(box!.x+box!.width*.4,box!.y+box!.height*.08);await page.mouse.down();await page.mouse.move(box!.x+box!.width*.65,box!.y+box!.height*.18,{steps:6});await page.mouse.up();
+    await expect.poll(()=>figure.locator('[data-report-face]').first().getAttribute('points')).not.toEqual(first);
     await page.getByLabel('Show defined bodies',{exact:true}).uncheck();
     await expect(figure.locator('[data-defined-body]')).toHaveCount(0);
     await page.getByRole('button',{name:'C · Linked Inspector',exact:true}).click();
@@ -38,7 +39,7 @@ test('offline report exports complete standalone SVG and 3200 × 2000 PNG',async
     await page.getByLabel('Report selected Surface',{exact:true}).selectOption('Target');
     const download=page.waitForEvent('download');await dialog.getByRole('button',{name:'SVG',exact:true}).click();
     const svg=await readFile((await(await download).path())!,'utf8');
-    expect(svg).toContain('report-figure/2.4.3');expect(svg).toContain('Target');expect(svg).toContain('LINKED SURFACE');
+    expect(svg).toContain('report-figure/2.5.0');expect(svg).toContain('Target');expect(svg).toContain('LINKED SURFACE');
     expect(svg).not.toMatch(/var\(--|file:\/\/\/|<script|<image[^>]+https?:/);
     const pngDownload=page.waitForEvent('download');await dialog.getByRole('button',{name:'PNG 2×',exact:true}).click();
     const png=await readFile((await(await pngDownload).path())!);

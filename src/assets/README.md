@@ -11,3 +11,5 @@ P1.3: noto-kr-p13.woff — 229 Korean source syllables; current UI coverage chec
 P2.1: noto-kr-p21.woff — 239 Korean source syllables, including nested src/surface/*.tsx; SHA/coverage checked recursively. Previous assets and SIL OFL license preserved.
 
 U1: noto-kr-u1.woff — current recursive source subset, generated with fontTools from @fontsource/noto-sans-kr 5.3.1 Korean 400-normal. Same SIL OFL; previous subsets preserved. Active CSS and the coverage/SHA test refer to this asset.
+
+UX1: active U1 font re-subset for new Korean workflow labels from @fontsource Noto Sans KR 5.2.8 Korean 400-normal WOFF (cdn.jsdelivr.net/fontsource/fonts/noto-sans-kr@5.2.8/korean-400-normal.woff); same SIL OFL 1.1 license. Coverage and SHA regenerated.

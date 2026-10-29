@@ -6,7 +6,7 @@ import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 async function appearance(page:Page,name:string){await page.getByRole('button',{name:'Appearance',exact:true}).click();await page.getByRole('button',{name,exact:true}).click();await page.getByRole('button',{name:'Apply & Close',exact:true}).click();
  // Measure settled theme colors, rather than a frame inside the 120 ms background transition.
- await page.evaluate(async()=>{await Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished));});
+ await page.evaluate(async()=>{await Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity&&(a.effect as KeyframeEffect)?.target instanceof Element&&((a.effect as KeyframeEffect).target as Element).checkVisibility()).map(a=>a.finished));});
 }
 test('appearance options preserve optical state, geometry nodes, zoom and edited parameters',async({page},info)=>{
  await page.goto('/#ideal');await openProjectExample(page,'ideal:pointing');await acceptProjectReplacement(page);await page.getByRole('button',{name:'Zoom in',exact:true}).click();

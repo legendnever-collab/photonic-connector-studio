@@ -1,3 +1,4 @@
+import PortArrayFields from '../project/PortArrayFields';
 import LensDialog from '../lens/LensDialog';
 import {useState} from 'react';
 import SearchDialog from './SearchDialog';
@@ -15,17 +16,17 @@ import './routing.css';
 const xyz=['x','y','z'] as const;
 const f=(v:number)=>Math.abs(v)<1e-9?'0':Number(v.toPrecision(6)).toString();
 const names={fiber:'SMF Fiber', 'pic-edge':'PIC Edge Coupler','pic-grating':'PIC Grating Coupler',custom:'Custom Port'};
-export default function DesignSetup({onExample,onError,onSynthesis}:{onSynthesis:()=>void;onExample:(id:string)=>void;onError:(v:string)=>void}){
+export default function DesignSetup({onExample,onError,onSynthesis,portsOnly=false}:{portsOnly?:boolean;onSynthesis:()=>void;onExample:(id:string)=>void;onError:(v:string)=>void}){
  const [searchOpen,setSearchOpen]=useState(false),[lensOpen,setLensOpen]=useState(false);
  const shared=useProject(),p=shared.project,r=p.routing??defaultRouting();
  function commit(next:Project){try{shared.commit(next);onError('');return true;}catch(e){onError(e instanceof Error?e.message:String(e));return false;}}
  function put(next:Routing){return commit({...p,routing:next});}
- return <section className="routing-setup" data-testid="design-setup"><h3>Port-to-Port Design Setup</h3><p>두 Port의 위치와 입사 방향을 지정합니다. S2: Fixed Lens 뒤의 광로 후보를 찾습니다.</p>
+ return <section className="routing-setup" data-testid="design-setup"><h3>Ports & Modes</h3>{!portsOnly&&<><p>두 Port의 위치와 입사 방향을 지정합니다. S2: Fixed Lens 뒤의 광로 후보를 찾습니다.</p>
  <label className="field">Routing Example<select aria-label="Routing Example" value="" onChange={e=>{if(e.target.value)onExample(e.target.value);}}><option value="">Choose…</option><option value="routing:lens">S3.2 · Folded Lens design task</option><option value="routing:search">S2 · Displaced PIC routing task</option><option value="routing:mirrors">Lens + 2 Mirrors · 60 µm height shift</option><option value="routing:prism-synthesis">D2.2.2 · Blank 2 Prism synthesis task</option><option value="routing:prism-mode">D2.2.1 · Collimated BK7 Prism · TE</option><option value="routing:prism">Lens + TIR Prism · +Z incidence</option></select></label><p className="surface-note">예제는 직접 정의한 배치입니다. Find Routing Solutions는 기존 Lens를 고정한 geometric 경로입니다. Lens 생성과 Output Mode 정합은 Automatic Synthesis에서 실행하세요.</p>
- {p.model.kind!=='surface'?<p>Physical Project에서 사용할 수 있습니다.</p>:<>
- <button className="routing-find" aria-label="Find Routing Solutions" disabled={!!shared.invalid.length} onClick={()=>setSearchOpen(true)}>Find Routing Solutions · geometry only…</button>
+ </>}{p.model.kind!=='surface'?<p>Physical Project에서 사용할 수 있습니다.</p>:<>
+ {!portsOnly&&<><button className="routing-find" aria-label="Find Routing Solutions" disabled={!!shared.invalid.length} onClick={()=>setSearchOpen(true)}>Find Routing Solutions · geometry only…</button>
  <button className="routing-find" aria-label="Setup Automatic Synthesis" disabled={!!shared.invalid.length} onClick={onSynthesis}>Automatic Synthesis · Lens + Mode…</button>
- <button className="routing-find" aria-label="Design Lenses" disabled={!!shared.invalid.length} onClick={()=>setLensOpen(true)}>Design Lenses…</button>
+ <button className="routing-find" aria-label="Design Lenses" disabled={!!shared.invalid.length} onClick={()=>setLensOpen(true)}>Design Lenses…</button></>}
  <NumberField label="Design Wavelength" value={shared.doc.wavelength*1e9} unit="nm" min={200} max={20000} onChange={v=>{try{shared.updateSurface({...shared.doc,wavelength:v!*1e-9});onError('');return true;}catch(e){onError(String(e));return false;}}}/>
  {(['source','target'] as const).map(which=>{
   const label=which==='source'?'Input':'Output',world=framePose(portWorld(p,which)),device=portDevice(p,which),m=modes(p)[which],direction=portWorld(p,which).axes[0];
@@ -41,14 +42,14 @@ export default function DesignSetup({onExample,onError,onSynthesis}:{onSynthesis
    {device.startsWith('pic-')&&<p className="surface-reason">User Gaussian Reference · PIC Receiving Field / Device response 미정의. Coupler Efficiency는 계산하지 않습니다.</p>}
   </fieldset>;
  })}
- <h4>Geometric Tolerances</h4><div className="fields-two"><NumberField label="Position Tolerance" value={r.positionTolerance*1e6} unit="µm" min={.000001} max={1e6} onChange={v=>put({...r,positionTolerance:v!*1e-6})}/><NumberField label="Angle Tolerance" value={r.angleTolerance*180/Math.PI} unit="°" min={.000001} max={180} onChange={v=>put({...r,angleTolerance:v!*Math.PI/180})}/></div>
+ <PortArrayFields/>{!portsOnly&&<><h4>Geometric Tolerances</h4><div className="fields-two"><NumberField label="Position Tolerance" value={r.positionTolerance*1e6} unit="µm" min={.000001} max={1e6} onChange={v=>put({...r,positionTolerance:v!*1e-6})}/><NumberField label="Angle Tolerance" value={r.angleTolerance*180/Math.PI} unit="°" min={.000001} max={180} onChange={v=>put({...r,angleTolerance:v!*Math.PI/180})}/></div>
  <details><summary>Design Space / Part Limits</summary><p className="surface-note">Optical Components에 적용합니다. Port 위치는 고정 조건입니다. 공간 검사는 Sampled Envelope / AABB 진단이며 전체 Solid Collision / Ray Obstruction 검증은 다음 단계입니다.</p>
  <div className="fields-three">{(['lens','mirror','prism'] as const).map(k=><NumberField key={k} label={`Max ${k}`} unit="" value={r.parts[k]} step={1} min={0} max={50} onChange={v=>put({...r,parts:{...r.parts,[k]:v!}})}/>)}</div>
  <label className="surface-check"><input aria-label="Enable Design Space" type="checkbox" checked={!!r.bounds} onChange={e=>put({...r,bounds:e.target.checked?{min:{x:-.001,y:-.001,z:-.001},max:{x:.011,y:.001,z:.001}}:null})}/>Enable Design Space</label>
  {r.bounds&&<BoxFields box={r.bounds} prefix="Space" onChange={box=>put({...r,bounds:box})}/>}
  {r.keepOut.map((box,i)=><div className="routing-keepout" key={i}><h4>Keep-out {i+1}</h4><BoxFields box={box} prefix={`Keep-out ${i+1}`} onChange={b=>put({...r,keepOut:r.keepOut.map((x,j)=>i===j?b:x)})}/><button onClick={()=>put({...r,keepOut:r.keepOut.filter((_,j)=>i!==j)})}>Remove Keep-out {i+1}</button></div>)}
  <button disabled={r.keepOut.length>=8} onClick={()=>put({...r,keepOut:[...r.keepOut,{min:{x:.006,y:-.0001,z:-.0001},max:{x:.007,y:.0001,z:.0001}}]})}>Add Keep-out Box</button>
- </details><RoutingDiagnostics/></>}
+ </details><RoutingDiagnostics/></>}{portsOnly&&<><details><summary>현재 대표 Channel 광로 진단</summary><RoutingDiagnostics/></details><details><summary>상세 설계 도구</summary><button aria-label="Find Routing Solutions" onClick={()=>setSearchOpen(true)}>광로만 탐색 · Geometry</button><button aria-label="Design Lenses" onClick={()=>setLensOpen(true)}>현재 Lens 변수 조정</button></details></>}</>}
  {lensOpen&&<LensDialog onClose={()=>setLensOpen(false)}/>}
  {searchOpen&&<SearchDialog onClose={()=>setSearchOpen(false)}/>}
  </section>;

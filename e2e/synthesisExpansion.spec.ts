@@ -4,9 +4,9 @@ import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {readFile} from 'node:fs/promises';
 import {tab,openProjectExample} from './ui';
-const offline=pathToFileURL(resolve('dist/index.html')).href;
+const offline=pathToFileURL(resolve('dist/index.html')).href+'#starter';
 async function save(page:Page){await tab(page,'Layout');const dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save Project JSON',exact:true}).click();return JSON.parse(await readFile((await(await dl).path())!,'utf8'));}
-async function open(page:Page){await tab(page,'Layout');await page.getByRole('button',{name:'Automatic Synthesis',exact:true}).click();await expect(page.getByRole('dialog',{name:'Automatic Synthesis',exact:true})).toBeVisible();}
+async function open(page:Page){await tab(page,'Layout');if(await page.locator('.legacy-design-tools').getAttribute('open')===null)await page.locator('.legacy-design-tools summary').click();await page.getByRole('button',{name:'Automatic Synthesis',exact:true}).click();await expect(page.getByRole('dialog',{name:'Automatic Synthesis',exact:true})).toBeVisible();}
 test.beforeEach(async({page})=>{await page.context().setOffline(true);await page.goto(offline);});
 test('blank two-Prism task generates, previews and applies common Mode results with one Undo',async({page},info)=>{
  test.setTimeout(90000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
