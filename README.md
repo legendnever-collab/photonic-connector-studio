@@ -1,3 +1,7 @@
+# D2.6.1 · Port–Lens 동축 connector 탐색
+
+`0.26.1-d261`: 기본 자동 설계에서 Port–Lens 동축 조립을 유지합니다. 높이 차이를 Lens 편심으로 우회하지 않으며, 편심 광학계는 명시적인 고급 옵션입니다. 기존 파일도 안전한 기본 정책으로 해석합니다. [사용법·100/500 µm 검증·제한·다음 Astra 계획](docs/D261_PORT_LENS_MOUNT.md).
+
 # D2.6 · 두꺼운 Lens의 수차와 Mode 비교
 
 `0.26.0-d26`: 실제 굴절·glass OPL과 ray-tube flux를 이용하는 1–2 Lens pupil benchmark를 추가했습니다. Analysis/Report에서 Gaussian·linear control·OPD와 수렴을 비교합니다. 내부 diffraction을 전파하는 전체 POP는 아직 아닙니다. [사용법·계산 범위·검증·다음 Astra 계획](docs/D26_THICK_LENS_PUPIL_BENCHMARK.md).

@@ -23,7 +23,7 @@ function task(x=.016,z=.012){
 function settings(p:ReturnType<typeof task>){
  const problem={...defaultProblem(p),maxParts:2,maxGenerated:2};problem.tolerance={...problem.tolerance,portPosition:[0,0,0] as [number,number,number],portAngle:[0,0,0] as [number,number,number],componentPosition:[0,0,0] as [number,number,number],componentAngle:[0,0,0] as [number,number,number]};
  const routing={...defaultRouting(),parts:{lens:0,mirror:0,prism:2}};
- const o={...defaultSynthesis(),families:['prism2' as const],clearRadius:[.0015,.0015] as [number,number],prismLeg:[.006,.006] as [number,number],budget:128,geometryBudget:32,fitBudget:16};
+ const o={...defaultSynthesis(),lensMount:'free' as const,families:['prism2' as const],clearRadius:[.0015,.0015] as [number,number],prismLeg:[.006,.006] as [number,number],budget:128,geometryBudget:32,fitBudget:16};
  return {problem,routing,o};
 }
 test('blank project generates two real finite Prisms with validated Mode overlap and replayable Apply',()=>{
@@ -79,7 +79,7 @@ test('manufacturing sampling uses endpoints plus a third bounded radius; no infl
 
 test('automatic all-air search actually fits middle allocations under the same budget',()=>{
  const p=prismFixture('mirrors'),problem={...defaultProblem(p),maxParts:4,maxGenerated:4};problem.tolerance={...problem.tolerance,portPosition:[0,0,0],portAngle:[0,0,0],componentPosition:[0,0,0],componentAngle:[0,0,0]};
- const r=searchSynthesis(p,problem,{...defaultRouting(),parts:{lens:1,mirror:2,prism:0}},{...defaultSynthesis(),families:['mirror2'],lensPlacement:'all-air',clearRadius:[.0008,.0008],budget:512,geometryBudget:8,fitBudget:16});
+ const r=searchSynthesis(p,problem,{...defaultRouting(),parts:{lens:1,mirror:2,prism:0}},{...defaultSynthesis(),families:['mirror2'],lensMount:'free',lensPlacement:'all-air',clearRadius:[.0008,.0008],budget:512,geometryBudget:8,fitBudget:16});
  expect(r.allocationCoverage.interiorTested).toBeGreaterThan(0);expect(r.evaluated).toBeLessThanOrEqual(512);
  expect(r.candidates.length).toBeGreaterThan(0);for(const c of r.candidates)expect(()=>applySynthesis(p,r,c.id)).not.toThrow();
 });
