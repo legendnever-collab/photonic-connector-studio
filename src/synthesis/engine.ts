@@ -131,8 +131,10 @@ export function* synthesisSteps(input:Project,rawProblem:DesignProblem,rawRoutin
  }
  if(base)out.allocationCoverage.anchorSurfaces=prescription(base).surfaces.length-1;
  const seeds:{q:RouteProposal;domain:RouteDomain;clear:number;leg:number}[]=[],pools:typeof seeds[]=[];
+ // Preserve the advanced free-Lens policy's existing bounded allocation; new
+ // small-angle seeds target the default coaxial policy, not that separate search.
  if(base)for(const clear of manufacturingSeeds(o.clearRadius))for(const leg of legSeeds(problem,o,clear)){
-  try{const opts=routeOptions(problem,o,clear,leg),domain=prepareRoutingDomain(base,opts,prescription(base).surfaces.length-1),all=routeProposals(domain,opts),pool:typeof seeds=[];
+  try{const opts=routeOptions(problem,o,clear,leg),domain=prepareRoutingDomain(base,opts,prescription(base).surfaces.length-1),all=routeProposals(domain,opts,portMounted(o)),pool:typeof seeds=[];
    observeProposals(out.diagnostics,domain,o,p.routing!,all,opts);
    // Round-robin family opportunities; do not consume the geometry pool in one topology.
    const groups=o.families.map(f=>all.filter(q=>q.topology===f));let i=0;while(groups.some(g=>i<g.length)){for(const g of groups)if(g[i])pool.push({q:g[i],domain,clear,leg});i++;}pools.push(pool);

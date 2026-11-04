@@ -12,7 +12,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "check": "npm run typecheck && npm test && npm run build && npm run test:e2e",
     "artifact": "node scripts/package-artifact.mjs",
-    "benchmark:golden": "vitest run tests/goldenBenchmark.test.ts"
+    "benchmark:golden": "vitest run tests/goldenBenchmark.test.ts",
+    "benchmark:geometry": "vitest run tests/smallOffsetGeometry.test.ts"
   },
   "dependencies": {
     "react": "19.2.0",

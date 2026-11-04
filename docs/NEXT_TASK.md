@@ -1,3 +1,16 @@
+# D2.7 — 현재 Handoff
+
+2026-11-04 · Astra · `feature/d27-small-offset-geometry`, base Draft #38 (`66feb0c684ec3114a8ff09aa74400e5b761154b0`).
+
+- ±50 µm의 23° two-Mirror / two-Lens chief geometry가 기존 치수에서 가능함을 independent finite-cylinder reference로 확인했다. 기존 AABB false rejection과 coarse seed omission을 분리했다.
+- Disc Mirror separation certificate 및 coaxial small-angle seeds만 추가했다. Port/Mode, 20° minimum bend, 1 µm gap, dimensions, Gaussian validity gates는 유지한다.
+- ±50 µm optical evaluations는 2361, 100 µm는 3920으로 증가하지만 qualified optical 후보는 없다. 이를 physical impossibility로 취급하지 않는다. 0/500 µm nominal regression은 유지한다.
+- 상세 근거/조건/명령/한계: [D2.7 Report](D27_SMALL_OFFSET_GEOMETRY.md). 실행 SHA와 실제 PASS/FAIL는 해당 Draft CI artifact의 JSON을 우선한다.
+- 다음 개발: small-angle projected pupil, Lens aberration-domain, finite-beam / neighbouring backing shadowing의 독립 reference 및 bounded feasibility 분석. 완전 diffraction, Total Coupling, Yield는 Uncomputed.
+- Advanced free-Lens policy는 별도이며 기존 regression을 보존한다. 기본 해법으로 자동 전환하지 않는다. Main merge 금지.
+
+---
+
 # Golden Benchmark 001 — Handoff
 
 2026-11-04 · Sol · #36 위의 `benchmark/golden-001` Draft. Main 및 기존 Draft Branch 변경·병합 없음.
