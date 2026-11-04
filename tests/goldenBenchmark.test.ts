@@ -77,6 +77,7 @@ test('Golden Benchmark 001: fixed Fiber–Fiber route, domain and negative contr
     robustness:{oat:c.oat,joint:c.joint??{status:'Uncomputed'},assemblyYield:{status:'Uncomputed'}}};
   });
   if(offset===0||offset===500e-6)check(`${offset}: existing nominal regression has candidate`,r.candidates.some(c=>c.qualified));
+  if(Math.abs(offset)===50e-6||offset===100e-6)check(`${offset}: D2.7 small-angle geometry reaches optical evaluation`,r.evaluated>0&&r.diagnostics.families.mirror2.geometryPassed>0);
   if(Math.abs(offset)===50e-6||offset===100e-6)check(`${offset}: result is candidate or explained bounded search`,r.candidates.length>0||Object.keys(r.rejected).length>0);
   const source=ports.sourceFrame,target=ports.targetFrame,delta=[target.origin.x-source.origin.x,target.origin.y-source.origin.y,target.origin.z-source.origin.z],axis=[source.axes[0].x,source.axes[0].y,source.axes[0].z];
   const axial=delta.reduce((sum:number,v:number,i:number)=>sum+v*axis[i],0),directResidualM=Math.hypot(...delta.map((v:number,i:number)=>v-axial*axis[i]));
@@ -132,9 +133,9 @@ test('Golden Benchmark 001: fixed Fiber–Fiber route, domain and negative contr
   runtime:{node:process.version,platform:process.platform,arch:process.arch},command:'npm run benchmark:golden',
   ci:process.env.GITHUB_RUN_ID?{runID:process.env.GITHUB_RUN_ID,headSHA:process.env.GOLDEN_HEAD_SHA??null}:null,
   scope:{units:'SI',specification:'provisional synthetic reference; not production certification',na:{status:'Uncomputed',reason:'no measured/catalog NA in source fixture',gaussianDivergenceRad:1310e-9/(Math.PI*9.2e-6/2)},
-   oracleTolerances:ORACLE_TOLERANCES,clearance:'Conservative AABB screening, not exact solid collision certification',
+   oracleTolerances:ORACLE_TOLERANCES,clearance:'Conservative AABB screening plus finite disc-Mirror separation certificates; independent small-offset reference in d27-geometry.json; other solids remain conservative',
    initialGeometry:'basicRelayReference: retained initial 1 mm thick Lenses differ from generated 50–300 µm manufacturing range; both are recorded',
-   unverified:['full-wave / complete diffraction','expanded-beam collimation criterion','total coupling / throughput / coating loss','exact 3D collision / manufacturing certification','assembly yield','joint tolerance sweep','browser Undo/Redo (see separate E2E)']},
+   unverified:['finite-beam obstruction by non-interacting bodies','full-wave / complete diffraction','expanded-beam collimation criterion','total coupling / throughput / coating loss','exact 3D collision / manufacturing certification','assembly yield','joint tolerance sweep','browser Undo/Redo (see separate E2E)']},
   cases,negativeControls,checks,status:checks.every(c=>c.status==='PASS')?'PASS':'FAIL'};
  mkdirSync('benchmark-results',{recursive:true});writeFileSync('benchmark-results/golden-001.json',JSON.stringify(report,null,2)+'\n');
  expect(checks.filter(c=>c.status==='FAIL')).toEqual([]);

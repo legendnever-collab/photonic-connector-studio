@@ -88,7 +88,7 @@ function twoPrisms(p:Prepared,o:SearchOptions,t:number):Proposal|null {
  const a=add(p.start,mul(p.incoming,t)),b=sub(p.target,mul(p.outgoing,u));
  return {topology:'prism2',blocks:[{kind:'prism',at:a,incoming:p.incoming,outgoing:middle},{kind:'prism',at:b,incoming:middle,outgoing:p.outgoing}],parameters:[t,u]};
 }
-function proposals(p:Prepared,o:SearchOptions):Proposal[] {
+function proposals(p:Prepared,o:SearchOptions,includeSmallOffsetSeeds=true):Proposal[] {
  const q:Proposal[]=[],allowed=new Set(o.templates),r=p.base.routing??defaultRouting(),ts=fractions.map(f=>p.rangeA[0]+f*(p.rangeA[1]-p.rangeA[0])),us=fractions.map(f=>p.rangeB[0]+f*(p.rangeB[1]-p.rangeB[0])),w=sub(p.target,p.start),c=dot(p.incoming,p.outgoing),den=1-c*c;
  if(allowed.has('direct'))q.push({topology:'direct',blocks:[]});
  const t=den>1e-12?(dot(w,p.incoming)-c*dot(w,p.outgoing))/den:null,u=den>1e-12?(dot(w,p.outgoing)-c*dot(w,p.incoming))/den:null;
@@ -101,6 +101,18 @@ function proposals(p:Prepared,o:SearchOptions):Proposal[] {
   q.push({topology:'prism1',blocks:[{kind:'prism',at:add(p.start,mul(p.incoming,t)),incoming:p.incoming,outgoing:p.outgoing}]});
  }
  if(allowed.has('mirror2')&&r.parts.mirror>=2){
+  // Small parallel offsets have a narrow non-occluding angular window that the
+  // independent t/u grid misses. For centred equal discs, the other mirror's
+  // front-plane crossing is h/sin(bend/2) from its centre. This only proposes
+  // seeds; finite backing, gap, bounds and optical validity are still checked.
+  const axial=dot(w,p.incoming),h=norm(sub(w,mul(p.incoming,axial))),radius=1.1*o.clearRadius;
+  if(includeSmallOffsetSeeds&&norm(sub(p.incoming,p.outgoing))<1e-10&&h>0&&h<radius*Math.SQRT2){
+   const lower=20*Math.PI/180,upper=2*Math.asin(Math.min(1,h/(radius+o.clearance)));
+   if(upper>lower)for(const f of [.5,.25,.75]){
+    const bend=lower+f*(upper-lower),dx=h/Math.tan(bend);
+    for(const t of ts){const u=axial-t-dx;if(u>=p.rangeB[0]&&u<=p.rangeB[1]){const x=twoMirrors(p,t,u);if(x)q.push(x);}}
+   }
+  }
   // Projection seeds cover parallel displaced axes; a Cartesian grid covers skew 3D routes.
   for(const t of ts){const a=add(p.start,mul(p.incoming,t)),u=dot(sub(p.target,a),p.outgoing);if(u>0){const x=twoMirrors(p,t,u);if(x)q.push(x);}}
   for(const t of ts)for(const u of us){const x=twoMirrors(p,t,u);if(x)q.push(x);}
@@ -201,7 +213,7 @@ export function applyCandidate(current:Project,batch:SearchResult,id:string):Pro
  return ProjectSchema.parse(next);
 }
 
-// Shared bounded closure/construction primitives; legacy S2 search remains unchanged.
+// Shared bounded closure/construction primitives for routing and synthesis.
 export {prepare as prepareRoutingDomain,proposals as routeProposals,build as buildRouteProposal,check as validateRouteProposal};
 export type {Prepared as RouteDomain,Proposal as RouteProposal};
 export function refineRouteProposal(p:Prepared,q:Proposal,step:number,options?:SearchOptions):Proposal[]{
