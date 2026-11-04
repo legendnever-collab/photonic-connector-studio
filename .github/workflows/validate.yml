@@ -17,9 +17,17 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+        env:
+          GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-benchmark-001
+          path: benchmark-results/golden-001*.json
+          if-no-files-found: warn
       - run: npm run artifact
         env:
           SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
