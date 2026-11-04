@@ -136,6 +136,6 @@ test('Golden Benchmark 001: fixed Fiber–Fiber route, domain and negative contr
    initialGeometry:'basicRelayReference: retained initial 1 mm thick Lenses differ from generated 50–300 µm manufacturing range; both are recorded',
    unverified:['full-wave / complete diffraction','expanded-beam collimation criterion','total coupling / throughput / coating loss','exact 3D collision / manufacturing certification','assembly yield','joint tolerance sweep','browser Undo/Redo (see separate E2E)']},
   cases,negativeControls,checks,status:checks.every(c=>c.status==='PASS')?'PASS':'FAIL'};
- mkdirSync('test-results',{recursive:true});writeFileSync('test-results/golden-001.json',JSON.stringify(report,null,2)+'\n');
+ mkdirSync('benchmark-results',{recursive:true});writeFileSync('benchmark-results/golden-001.json',JSON.stringify(report,null,2)+'\n');
  expect(checks.filter(c=>c.status==='FAIL')).toEqual([]);
 },120000);

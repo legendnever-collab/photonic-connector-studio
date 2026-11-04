@@ -14,7 +14,7 @@ npx playwright install --with-deps chromium
 npx playwright test e2e/goldenBenchmark.spec.ts e2e/lensMount.spec.ts
 ```
 
-Model 결과는 `test-results/golden-001.json`, Desktop lifecycle 결과는 `test-results/golden-001-browser.json`에 기록한다. 기존 CI의 `npm test` / `npm run test:e2e`에 자동 포함되며 `golden-benchmark-001` artifact로 업로드한다. Git checkout SHA와 PR head SHA를 구분한다. Fixture/검증 코드 SHA256, dirty 상태, Node 환경, 모든 입력·후보 prescription·budget·실제 소비·family diagnostics·PASS/FAIL·Uncomputed를 보존한다. Dirty run은 Git SHA만으로 재현됐다고 주장하지 않는다. PR 최종 head의 CI artifact가 최종 실행 증거다.
+Model 결과는 `benchmark-results/golden-001.json`, Desktop lifecycle 결과는 `benchmark-results/golden-001-browser.json`에 기록한다. 기존 CI의 `npm test` / `npm run test:e2e`에 자동 포함되며 `golden-benchmark-001` artifact로 업로드한다. Git checkout SHA와 PR head SHA를 구분한다. Fixture/검증 코드 SHA256, dirty 상태, Node 환경, 모든 입력·후보 prescription·budget·실제 소비·family diagnostics·PASS/FAIL·Uncomputed를 보존한다. Dirty run은 Git SHA만으로 재현됐다고 주장하지 않는다. PR 최종 head의 CI artifact가 최종 실행 증거다.
 
 Browser 검증은 Model 결과를 복사하지 않고 실제 UI의 Save JSON을 비교한다. Model harness는 React Undo/Redo를 가짜 history로 흉내내지 않는다. 양쪽 결과를 함께 읽는다. Browser lifecycle의 body가 일부 실패하면 Playwright 결과가 실패이며 PASS JSON은 생성되지 않는다.
 

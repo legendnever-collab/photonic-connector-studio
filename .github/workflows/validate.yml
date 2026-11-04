@@ -26,7 +26,7 @@ jobs:
         if: always()
         with:
           name: golden-benchmark-001
-          path: test-results/golden-001*.json
+          path: benchmark-results/golden-001*.json
           if-no-files-found: warn
       - run: npm run artifact
         env:

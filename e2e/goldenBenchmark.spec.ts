@@ -32,5 +32,5 @@ test('Golden 001: Search → Preview → Apply → Undo/Redo preserves both Port
    rows.push({offsetM:offset*1e-6,status:'PASS',stages:['Search','Preview','Apply','Undo','Redo','Save/Load']});
   }else rows.push({offsetM:offset*1e-6,status:'PASS',stages:['Search','Preview','unchanged Save/Load'],apply:'unavailable: no candidate'});
  }
- await mkdir('test-results',{recursive:true});await writeFile('test-results/golden-001-browser.json',JSON.stringify({gitSHA:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),browser:page.context().browser()?.version(),project:info.project.name,rows,status:'PASS'},null,2)+'\n');
+ await mkdir('benchmark-results',{recursive:true});await writeFile('benchmark-results/golden-001-browser.json',JSON.stringify({gitSHA:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),browser:page.context().browser()?.version(),project:info.project.name,rows,status:'PASS'},null,2)+'\n');
 });
