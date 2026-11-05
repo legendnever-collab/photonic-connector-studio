@@ -3,6 +3,20 @@
 Date: 2026-10-24 KST
 Baseline: P2.3 `aac2c908ef6368978bfce820b15d7bf6478e43f9`, Draft PR #7.
 
+## 2026-10-24 · Mode-Port authoring revision
+
+P2.4 was merged to main in `1b4e8f9b483d8c7b3e625839e05247e75d61a9d9`.
+The user's additional requirements establish **Input Mode → Optical Train → Output Reference Mode /
+Alignment** as the primary workflow. Project, Component Catalog and Example Projects must be clearly
+separated in an Explorer. Component-first insertion and Surface-first editing operate on the same
+prescription, with Layout and Surface Data shown together and optional Dock/Float windows.
+
+See [Mode-Port authoring review and work order](F1_1_MODE_PORT_AUTHORING_WORK_ORDER.md) for the
+binding revision, official references, physics validity boundaries and acceptance tests. Immediate
+order becomes **U1 Mode-Port Authoring → F1.1 Conic/Aspheric → B1 Physical Mode Bridge**, followed by
+Freeform / imports / aberration / field-overlap checkpoints. Previously listed future targets remain
+in scope. This is a design revision; it does not claim these features are already implemented.
+
 ## Confirmed user requirements
 
 One engineering application, one Project and one fixed set of menus. Gaussian / Surface / Report
