@@ -1,4 +1,18 @@
-# D2.8-B — 현재 Handoff
+# D2.8-C — 현재 Handoff
+
+2026-11-06 · `benchmark/d28c-physical-boundary`, base Draft #41 (`d95ca6c219530a1ca7e6c95e283b9fd4c7f00c5b`).
+
+- **Engineering Decision: Path B — Model Insufficient.** 무한 Scalar Mirror / Tilted Prescribed Aperture의 전파는 검증했지만 Finite Reflector + Opaque Backing의 실제 Boundary Solution은 검증되지 않았다.
+- 현재 Geometry의 `reflect` / opaque ray solid는 Rim/Side/Back의 EM 응답을 지정하지 않는다. Scalar RS-I/RS-II Aperture Data는 서로 다른 Boundary Problem이며 실제 finite-body 산란해가 아니다.
+- 기존 Spherical Eikonal Lens Boundary를 독립적인 Diffractive Quadratic Lens Control과 비교했다. Control의 FFT/Analytical 일치는 확인했지만 8.09% Field Difference에는 수차/모델 차이가 섞여 있어 실제 Lens Error Bound로 사용할 수 없다.
+- 실제 Fold Transmission / Output Mode Coupling / Maxwell Ledger와 Lens Handoff는 `Uncomputed`; Candidate Qualification 및 Optimization은 차단한다. Fold 불가능 또는 Topology 폐기는 판정하지 않았다.
+- `npm run benchmark:boundary`, `boundary-reference` CI 및 `d28c-physical-boundary` Artifact, [Physical Boundary Report](D28C_PHYSICAL_BOUNDARY_VALIDATION.md)를 참조한다. 기존 `src/`, Ports/Modes, Manufacturing/Gaussian Gates와 D2.8-B 구현은 보존한다.
+- 다음 최소 작업: **Single Finite Mirror + Backing의 명시된 Material/Polarization Boundary를 기존 외부 Maxwell Solver로 검증**. 실제 Material 미지정 시 이상 Control을 별도로 표시한다. 이후 Two-Mirror Multiple Scattering, 실제 Spherical Lens Handoff 순으로 적용 범위를 확보한다. 새 범용 POP / UI / 3D / Prism 확장 및 Main merge 금지.
+- 실제 완료 Tests/CI, exact SHA와 Artifact 비교 결과는 Draft PR을 기준으로 한다.
+
+---
+
+# D2.8-B — 이전 Handoff
 
 2026-11-05 · Astra · `benchmark/d28b-coherent-field`, base Draft #40 (`aedf81046819efcd19ff54ae3444282a3d159bd4`).
 
