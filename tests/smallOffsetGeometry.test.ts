@@ -1,10 +1,11 @@
+import {angleFixture} from './benchmark/foldFixture';
 import {test,expect} from 'vitest';
 import {benchmarkFixture,fixedPorts} from './benchmark/fixture';
 import {parallelCylinderDistance,segmentCylinderDistance,type Cylinder} from './benchmark/clearanceOracle';
 import {checkLensMount} from '../src/synthesis/lensMount';
 import {tensorOverlap} from '../src/project/tensorOverlap';
-import {emptyTrain,addLenses} from '../src/synthesis/construction';
-import {prepareRoutingDomain,buildRouteProposal,routeProposals,searchRouting,applyCandidate,type RouteProposal} from '../src/routing/search';
+import {addLenses} from '../src/synthesis/construction';
+import {buildRouteProposal,routeProposals,searchRouting,applyCandidate,type RouteProposal} from '../src/routing/search';
 import {analyzeRouting} from '../src/routing/analysis';
 import {separatedMirrors,segmentMissesMirror} from '../src/routing/mirrorClearance';
 import {screenClearance} from '../src/routing/clearance';
@@ -15,13 +16,7 @@ import {createHash} from 'node:crypto';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 
-export function angleFixture(offset:number,degrees:number,clear=200e-6){
- const f=benchmarkFixture(offset),base=emptyTrain(f.project,f.problem);base.routing=f.routing;
- const options={...f.problem.routes,clearRadius:clear,prismLeg:4*clear,mirrorThickness:20e-6};
- const domain=prepareRoutingDomain(base,options,0),theta=degrees*Math.PI/180,dx=Math.abs(offset)/Math.tan(theta),a=V(.005-dx/2),b=V(.005+dx/2,0,offset),middle=V(Math.cos(theta),0,Math.sign(offset)*Math.sin(theta));
- const proposal:RouteProposal={topology:'mirror2',blocks:[{kind:'mirror',at:a,incoming:V(1),outgoing:middle},{kind:'mirror',at:b,incoming:middle,outgoing:V(1)}]};
- return {...buildRouteProposal(domain,options,proposal),options,domain,fixture:f};
-}
+
 function reference(q:ReturnType<typeof angleFixture>){
  const ss=compile(prescription(q.project)),route=analyzeRouting(q.project),path=route.path!;
  const cylinders=q.project.bodies.flatMap(b=>b.kind==='mirror'?[{id:b.assemblyId,front:ss.find(s=>s.assemblyId===b.assemblyId)!.world.origin,normal:ss.find(s=>s.assemblyId===b.assemblyId)!.world.axes[0],radius:b.width/2,thickness:b.thickness}]:[]);
@@ -61,7 +56,7 @@ test('small Offset independent geometry and ray evidence',()=>{
  mkdirSync('benchmark-results',{recursive:true});writeFileSync('benchmark-results/d27-geometry.json',JSON.stringify({schemaVersion:1,status:'PASS',gitSHA:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),headSHA:process.env.GOLDEN_HEAD_SHA??null,
   trackedChanges:execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim(),baselineSHA:'66feb0c684ec3114a8ff09aa74400e5b761154b0',
   input:benchmarkFixture(50e-6),units:'SI',reference:'closed-form parallel finite-cylinder distance; convex point-to-solid segment minimization (160 iterations)',
-  sourceSHA256:Object.fromEntries(['src/routing/clearance.ts','src/routing/mirrorClearance.ts','src/routing/search.ts','src/synthesis/engine.ts','tests/benchmark/clearanceOracle.ts','tests/smallOffsetGeometry.test.ts'].map(f=>[f,createHash('sha256').update(readFileSync(f)).digest('hex')])),
+  sourceSHA256:Object.fromEntries(['src/routing/clearance.ts','src/routing/mirrorClearance.ts','src/routing/search.ts','src/synthesis/engine.ts','tests/benchmark/clearanceOracle.ts','tests/benchmark/foldFixture.ts','tests/smallOffsetGeometry.test.ts'].map(f=>[f,createHash('sha256').update(readFileSync(f)).digest('hex')])),
   uncomputed:['Full finite-beam diffraction / stray-body shadowing','Total Coupling / coating losses','General nonparallel solid minimum distance','Global topology feasibility / manufacturing Yield'],cases},null,2));
 
 });

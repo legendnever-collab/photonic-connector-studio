@@ -1,3 +1,15 @@
+# D2.8-A — 현재 Handoff
+
+2026-11-05 · Astra · `benchmark/d28a-finite-beam`, base Draft #39 (`aaccdf9504d1a0362467bb6253099f282a6cbe96`).
+
+- 23° / ±50 µm 기준 Seed의 geometrical ray-flux는 약 19.80% clear, 74.39% neighbouring Mirror shadow, 5.80% other aperture/body clipping이다. Diffraction을 제외한 모델 값이며 actual throughput / Total Coupling이 아니다.
+- 기존 Gaussian gate(footprint 0.200302 > 0.2) 유지. 첫 Lens independent ray-pupil residual RMS OPD≈6.50 nm는 계산했지만 end-to-end Mode/Field는 Uncomputed다.
+- Independent projected-mask integral, 128/256/512 ray refinement, prefix Pupil refinement, bounded 3 angles × 3 Lens placements를 추가했다. `src/` Physics/Search/UI는 변경하지 않았다.
+- 재현과 한계: [D2.8-A Report](D28A_FINITE_BEAM_FEASIBILITY.md). 완료 CI와 exact SHA는 Draft PR, 전체 입력/수렴성/분류는 `d28a-finite-beam.json`을 확인한다.
+- D2.8-B: 이 4-part Fold에 한정하여 coherent field + finite aperture/backing shadow diffraction reference를 검증한 뒤 bounded optimization. Coarse ray pass나 Gaussian extrapolation으로 후보를 qualification하지 않는다. Prism/범용 POP/Yield 확장 및 Main merge 금지.
+
+---
+
 # D2.7 — 현재 Handoff
 
 2026-11-04 · Astra · `feature/d27-small-offset-geometry`, base Draft #38 (`66feb0c684ec3114a8ff09aa74400e5b761154b0`).

@@ -29,6 +29,7 @@ jobs:
           path: |
             benchmark-results/golden-001*.json
             benchmark-results/d27-*.json
+            benchmark-results/d28a-*.json
           if-no-files-found: warn
       - run: npm run artifact
         env:
