@@ -1,3 +1,16 @@
+# D2.8-B — 현재 Handoff
+
+2026-11-05 · Astra · `benchmark/d28b-coherent-field`, base Draft #40 (`aedf81046819efcd19ff54ae3444282a3d159bd4`).
+
+- 기존 D2.6 Lens OPL / ray-tube boundary, D2.8-A geometry/mask fixture를 재사용한 test-only Scalar AS/Fresnel Reference를 추가했다. `src/` Physics, gates, Search, UI 및 Fixed Port/Mode/part constraints는 변경하지 않았다.
+- Analytical complex Gaussian / aperture Field, independent RS surface integral, energy / reciprocity / Mode overlap, Grid / Window / Sampling / boundary interpolation 검사를 분리한다. Numerical band removal과 evanescent 제거를 physical absorption으로 계산하지 않는다.
+- 평면 Screen 대체 모델의 numerical convergence와 실제 Fold validity를 구분한다. 21/23/25° tilted-aperture control은 projected normal-plane 모델과 약 9–10%의 six-point complex Field discrepancy를 보인다. 이는 전체 Fold의 error bound가 아니다.
+- 실제 Fold Transmission / Output Mode Coupling / Total Coupling은 Uncomputed다. Coarse 또는 수렴한 surrogate metric 모두 optical candidate qualification에 사용하지 않는다.
+- [D2.8-B Report](D28B_COHERENT_FIELD_REFERENCE.md), `npm run benchmark:coherent`, 별도 CI `coherent-reference` job과 `d28b-coherent-reference` artifact를 참조한다. Exact SHA / 실제 완료 CI 결과는 Draft PR에 기록한다.
+- 다음 단계: 실제 tilted surfaces + finite opaque backing boundary의 coherent reference, Lens eikonal-to-field handoff 독립 검증. 그 뒤 bounded optimization. Main merge / UI / Prism / 범용 POP / Yield 확장 금지.
+
+---
+
 # D2.8-A — 현재 Handoff
 
 2026-11-05 · Astra · `benchmark/d28a-finite-beam`, base Draft #39 (`aaccdf9504d1a0362467bb6253099f282a6cbe96`).

@@ -14,7 +14,8 @@
     "artifact": "node scripts/package-artifact.mjs",
     "benchmark:golden": "vitest run tests/goldenBenchmark.test.ts",
     "benchmark:geometry": "vitest run tests/smallOffsetGeometry.test.ts",
-    "benchmark:finite-beam": "vitest run tests/finiteBeamBenchmark.test.ts"
+    "benchmark:finite-beam": "vitest run tests/finiteBeamBenchmark.test.ts",
+    "benchmark:coherent": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_reference.py"
   },
   "dependencies": {
     "react": "19.2.0",
