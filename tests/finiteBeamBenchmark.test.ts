@@ -52,10 +52,14 @@ test('D2.8-A finite-beam feasibility: fixed 23-degree fold, controls and bounded
  check('fine ray mask converges, coarse mask remains unresolved',fluxConvergence(local).status==='converged'&&fluxConvergence(local.slice(0,3)).status==='unresolved');
  const masks=[21,23,25].flatMap(degrees=>[5,10,20,50,100].map(w=>({degrees,w:w*1e-6,rayleighRange:Math.PI*(w*1e-6)**2/1310e-9,foldLength:50e-6/Math.sin(degrees*Math.PI/180),...projectedMask(w*1e-6,50e-6,degrees)})));
  const bounded=[];
+ const fixedLensRadii=prescription(relayFixture(angleFixture(50e-6,23))).surfaces.filter(s=>s.interaction==='refract').map(s=>s.radius);
  for(const degrees of [21,23,25])for(const positionFactor of [.8,1,1.2]){
-  const f=angleFixture(50e-6,degrees),base=relayFixture(f),domain=lensDomain(base,'existing',false),values=lensValues(domain),options=synthesisLensOptions(base,f.fixture.problem,f.fixture.options,1),bounds=lensBounds(options);
+  const f=angleFixture(50e-6,degrees),base=relayFixture(f);
+  // Angle changes must not silently regenerate different Lens curvatures.
+  prescription(base).surfaces.filter(s=>s.interaction==='refract').forEach((s,i)=>{s.radius=fixedLensRadii[i];});
+  const domain=lensDomain(base,'existing',false),values=lensValues(domain),options=synthesisLensOptions(base,f.fixture.problem,f.fixture.options,1),bounds=lensBounds(options);
   const shift=values[0]*(positionFactor-1);values[0]+=shift;values[4]-=shift;
-  check(`${degrees}/${positionFactor}: declared manufacturing bounds`,values.every((x,i)=>x>=bounds[i][0]-1e-12&&x<=bounds[i][1]+1e-12));
+  check(`${degrees}/${positionFactor}: declared manufacturing bounds and fixed Lens dimensions`,values.every((x,i)=>x>=bounds[i][0]-1e-12&&x<=bounds[i][1]+1e-12)&&domain.slots.every((slot,i)=>slot.outerRadius===240e-6&&Math.abs(values[4*i+3]-300e-6)<1e-12&&Math.abs(1/values[4*i+1]-fixedLensRadii[2*i])<1e-12&&Math.abs(1/values[4*i+2]-fixedLensRadii[2*i+1])<1e-12));
   const p=buildLensProject(domain,values),r=analyzeRouting(p),geometry=r.withinTolerance===true&&screenClearance(p,[],r.path!,f.options.clearance)===null;
   checkLensMount(p,f.fixture.options);check(`${degrees}/${positionFactor}: geometry and Port/Mode invariance`,geometry&&isDeepStrictEqual(fixedPorts(p),fixedPorts(f.fixture.project)));
   const gaussian=solveFoldedGaussian(p,{sampleSegments:false}),mode=tensorOverlap(p),formal=paraxialSections(p),flux=geometry?rayFlux(p,64):null;
@@ -66,7 +70,7 @@ test('D2.8-A finite-beam feasibility: fixed 23-degree fold, controls and bounded
   gitSHA:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),headSHA:process.env.GOLDEN_HEAD_SHA??null,trackedChanges:execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim(),runtime:{node:process.version,platform:process.platform},
   sourceSHA256:Object.fromEntries(sourceFiles.map(f=>[f,createHash('sha256').update(readFileSync(f)).digest('hex')])),units:'SI',checks,cases,
   independentMask:{local,reference,convergence:fluxConvergence(local),scope:'Counterfactual local plane-front Gaussian mask; fixed Port source is NOT replaced with this beam'},
-  bounded:{lensPlacements:bounded,localBeamRadiusStudy:masks,scope:'3 angles x 3 symmetric Lens positions at fixed seed curvatures; 3 angles x 5 hypothetical local beam radii. No completeness or free Beam-Radius variable claim.'},
+  bounded:{lensPlacements:bounded,localBeamRadiusStudy:masks,scope:'3 angles x 3 symmetric Lens positions at fixed 23-degree Lens curvatures / dimensions; 3 angles x 5 hypothetical local beam radii. No completeness or free Beam-Radius variable claim.'},
   totalCoupling:{status:'Uncomputed'},physicalEtaErrorBound:null};
  mkdirSync('benchmark-results',{recursive:true});writeFileSync('benchmark-results/d28a-finite-beam.json',JSON.stringify(report,null,2));
  expect(checks.filter(x=>x.status==='FAIL')).toEqual([]);

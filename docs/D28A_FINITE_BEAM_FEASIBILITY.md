@@ -86,7 +86,7 @@ Source Gaussian을 첫 Lens 앞의 launch plane까지 자유 전파한 기존 D2
 
 ## Bounded Feasibility와 실패 분류
 
-Mirror angle 21/23/25° × symmetric Lens endpoint position factor 0.8/1.0/1.2의 **9개** 배치를 검사했다. 각 angle의 기존 Seed curvature/thickness는 유지하고 position만 기존 `synthesisLensOptions` bounds 안에서 움직인다. 모든 경우 Port/Mode, mount 및 Geometry Clearance를 다시 검사한다. 추가 최적화나 exhaustive scan은 수행하지 않는다.
+Mirror angle 21/23/25° × symmetric Lens endpoint position factor 0.8/1.0/1.2의 **9개** 배치를 검사했다. 23° 기준 Seed의 Lens curvature/thickness/clear radius를 모든 angle에서 동일하게 유지하고 position만 기존 `synthesisLensOptions` bounds 안에서 움직인다. 모든 경우 Port/Mode, mount 및 Geometry Clearance를 다시 검사한다. 추가 최적화나 exhaustive scan은 수행하지 않는다.
 
 | Angle | 위치 ×0.8 | 위치 ×1.0 | 위치 ×1.2 |
 |---:|---:|---:|---:|

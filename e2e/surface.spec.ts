@@ -75,7 +75,10 @@ test('Assembly pivot preserves child local definitions, JSON roundtrip and Undo/
     await page.getByRole('button', { name: 'Redo', exact: true }).click();
     expect(await save(page)).toEqual(edited);
     await example(page, 'lens');
-    await page.getByTestId('surface-json-input').setInputFiles({ name: 'compound.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(edited)) });await acceptProjectReplacement(page);
+    await page.getByTestId('surface-json-input').setInputFiles({ name: 'compound.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(edited)) });
+    // File parsing is async; wait for the known dirty-project guard before accepting.
+    await expect(page.getByRole('dialog', { name: 'Unsaved Project', exact: true })).toBeVisible();
+    await acceptProjectReplacement(page);
     expect(await save(page)).toEqual(edited);
     await page.getByTestId('surface-json-input').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{bad') });await acceptProjectReplacement(page);
     await expect(page.getByRole('alert')).toContainText('Import rejected');
