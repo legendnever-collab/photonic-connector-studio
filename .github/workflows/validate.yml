@@ -19,6 +19,9 @@ jobs:
       - run: npm test
         env:
           GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: python3 tests/coherent/run_feasibility.py
+        env:
+          GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
@@ -31,6 +34,12 @@ jobs:
             benchmark-results/d27-*.json
             benchmark-results/d28a-*.json
           if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d28d-development-path
+          path: benchmark-results/d28d-*.json
+          if-no-files-found: error
       - run: npm run artifact
         env:
           SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
