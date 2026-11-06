@@ -17,7 +17,8 @@
     "benchmark:finite-beam": "vitest run tests/finiteBeamBenchmark.test.ts",
     "benchmark:coherent": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_reference.py",
     "benchmark:decision": "vitest run tests/goldenBenchmark.test.ts tests/finiteBeamBenchmark.test.ts tests/developmentPath.test.ts && python3 tests/coherent/run_feasibility.py",
-    "benchmark:boundary": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_boundary.py"
+    "benchmark:boundary": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_boundary.py",
+    "benchmark:lens-gate": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_lens_gate.py"
   },
   "dependencies": {
     "react": "19.2.0",
