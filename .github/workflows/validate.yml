@@ -22,7 +22,10 @@ jobs:
       - run: python3 tests/coherent/run_feasibility.py
         env:
           GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      - run: npm run build
+      # Packaging builds dist/index.html. Test that same HTML before uploading it.
+      - run: npm run artifact
+        env:
+          SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
@@ -40,9 +43,6 @@ jobs:
           name: d28d-development-path
           path: benchmark-results/d28d-*.json
           if-no-files-found: error
-      - run: npm run artifact
-        env:
-          SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/upload-artifact@v4
         with:
           name: photonic-connector-studio-checkpoint

@@ -1,4 +1,15 @@
-# D2.8-E — 현재 Handoff
+# S1 — Integration Handoff
+
+2026-11-06 · Sol · `integration/s1-physics-stabilization` → `main` Draft.
+
+- [S1 Integration Readiness](S1_INTEGRATION_READINESS.md)에 원격 Dependency, #37 충돌 해소, Physics 상태, Validation 및 병합 조건을 기록했다.
+- 승인 후 두 부모를 보존하는 S1 통합 PR을 우선 검토한다. 기존 스택과 문서 PR은 원본 이력을 유지한다. 최종 통합 SHA의 CI 및 Benchmark Artifact를 확인한다.
+- 다음 Physics Checkpoint는 기존 D2.8-E 입력의 외부 Single-Lens Wave Reference Pilot이다. 실제 Lens Field / Flux / Mode, ±50 µm Fold 및 Explicit Free-Lens의 Total Coupling과 Assembly Yield는 Uncomputed다.
+- [PR #37의 원본 Handoff](https://github.com/legendnever-collab/photonic-connector-studio/blob/5530329ed0b9c4d553c1e9385e0a429cffd012f0/docs/NEXT_TASK.md)는 해당 Commit에 보존된다.
+
+---
+
+# D2.8-E — 이전 Handoff
 
 2026-11-06 · `benchmark/d28e-spherical-handoff`, base Draft #43 (`7c45d7c07dc7b43dc87598277d2002bf50b7d696`).
 
