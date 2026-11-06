@@ -149,21 +149,26 @@ Linear Polarization은 적절한 ±1 조합을 검증해야 한다. 아래는 **
 Planning Box: r=0…260 µm (Outer Radius 240 µm + 가정 Padding 20 µm),
 axial length=404.547737 µm (기존 Launch–Exit + 양끝 20 µm).
 `Δ=λ0/(n·pointsPerGlassWavelength)`, `Δt=0.5Δ/c`, 가정 Duration=10 ps.
-Meep FAQ의 empty real-field 96 bytes/cell 및 nonzero m complex-field factor 2를 적용했다 [S3,S4].
+Meep FAQ의 9개 E/D/H Field component + 3개 real 유전율 scalar 구성을 기준으로 [S3,S4],
+real-field는 96 bytes/cell, complex-field는 **9×16 + 3×8 = 168 bytes/cell**로 계산했다.
+유전율 배열을 두 배로 세지 않는다. 이를 r–z all-component Grid에 적용한 **Component Storage Estimate**이며,
+Meep cylindrical implementation의 실제 Allocation이나 엄밀히 인증된 Memory Lower Bound는 아니다.
 
-| Glass points / wavelength | Δ (nm) | Cells | Memory Lower Bound (GiB) | Cell Updates / assumed 10 ps |
+| Glass points / wavelength | Δ (nm) | Cells | Component Storage Estimate (GiB) | Cell Updates / assumed 10 ps |
 |---|---:|---:|---:|---:|
-| 10 | 87.125 | 13,862,340 | 2.479 | 9.540e11 |
-| 20 | 43.563 | 55,434,103 | 9.912 | 7.630e12 |
-| 40 | 21.781 | 221,717,838 | 39.646 | 6.103e13 |
+| 10 | 87.125 | 13,862,340 | 2.169 | 9.540e11 |
+| 20 | 43.563 | 55,434,103 | 8.673 | 7.630e12 |
+| 40 | 21.781 | 221,717,838 | 34.690 | 6.103e13 |
 
 Full 3D real-field λglass/10의 동일 520×520×404.548 µm Box는 약 1.5884e13 bytes다.
 이 값으로 축대칭 Solver 비용을 대신하지 않는다.
 
-PML, Material tensors, DFT monitors, Subpixel Geometry 처리, Source arrays, Solver overhead는 제외했다.
+PML, off-diagonal Material tensors, DFT monitors, Subpixel Geometry 처리, Source arrays, Solver overhead는 제외했다.
+대각 유전율 3개 배열 비용은 포함한다.
 Box / Duration / Courant / Mesh가 충분하다고 검증하지 않았다. 실제 Meep Memory나 Runtime 측정값도 아니다.
 실행 환경에서 관측 Host Memory는 약 9.73 GiB이고 보장된 Job Allocation은 확인되지 않았다.
-λglass/20부터 Lower Bound만으로 Host Memory를 넘으므로 **이 계획의 Refinement Series를 실행하지 않았다.**
+λglass/20 계획값은 관측 Host Memory보다 작지만 추가 비용과 Job Allocation이 미확인이고,
+λglass/40 계획값은 이를 크게 넘는다. 따라서 **이 계획의 Refinement Series를 실행하지 않았다.**
 그렇다고 더 낮은 Resolution이 반드시 부정확하다는 뜻도, Adaptivity / FEM / Envelope Method가
 불가능하다는 뜻도 아니다. 적합한 Solver의 검증된 Configuration과 Resource Pilot이 필요하다.
 
@@ -217,7 +222,7 @@ MPLBACKEND=Agg OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 /tmp/pcs-d28e/bin/python
 실제 설치나 Control 실패는 Process Failure이며 Path B의 성공적인 검증으로 숨기지 않는다.
 Harness PASS / Physics Reference Unavailable을 JSON에서 분리한다.
 
-로컬 새 Gate는 **64 checks PASS**다. 기존 Typecheck / Build / Model / Golden / A/B/C/D 검증의
+로컬 새 Gate는 **67 checks PASS**다. 기존 Typecheck / Build / Model / Golden / A/B/C/D 검증의
 관측 결과와 최종 CI Commit / Artifact는 Draft PR에 기록한다. 실제 실행되지 않은 항목은 PASS로 적지 않는다.
 `src/`, 기존 Physics Reference / Regression source, 제조 Bounds와 UI는 변경하지 않는다.
 Main 및 기존 Stacked Branch 병합/수정 없음.

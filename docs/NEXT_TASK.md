@@ -6,7 +6,7 @@
 - 기존 첫 Lens의 ±655.148478 µm 곡률, 300 µm 두께, Clear/Outer Radius 200/240 µm, n=1.5035829054, Gaussian / Reference Planes / Fixed Ports를 machine-readable fixture로 잠갔다.
 - 외부 **Diffractio 1.0.0** 설치·실행과 3-grid Plane-wave Controls를 검증했다. Reflection-free Scalar WPM은 실제 E/H Interface Solution을 제공하지 않는다. 동일 n/t의 이상 Uncoated Plane Slab에서 물리 Normal Flux와의 차이 약 0.11749는 Grid Refinement로 없어지지 않는다. **Slab Control이며 실제 Spherical Lens 오차가 아니다.**
 - 단일 Spherical Index Slice의 Kernel Timing만 측정했다. 전파를 이어 붙이지 않았으며 전체 Lens Field / Runtime / Convergence를 계산한 것이 아니다.
-- 축대칭 Meep m=±1의 10/20/40 points per glass wavelength 계획 Memory Lower Bound는 약 2.48/9.91/39.65 GiB. Domain/PML/Settling은 미검증이고 Runtime 미측정이다. 이 비용만으로 모든 Reduced Solver가 불가능하다고 판단하지 않는다.
+- 축대칭 Meep m=±1의 10/20/40 points per glass wavelength 계획 Component Storage Estimate는 약 2.17/8.67/34.69 GiB (Fields만 complex, 유전율은 real). Domain/PML/Settling은 미검증이고 Runtime 미측정이다. 이 비용만으로 모든 Reduced Solver가 불가능하다고 판단하지 않는다.
 - COMSOL Beam Envelopes / axisymmetric FEM 등은 가능성 있는 외부 경로지만 이 환경의 실행 파일·라이선스·검증된 Setup이 없다. 자체 Solver 구현으로 대체하지 않는다.
 - 다음은 추가 내부 Numerical Development가 아니라 **외부 Single-Lens Reference 확보**다. Ideal bare vs 실제 Coating/Rim, Vector Launch와 Normalization을 정의하고 외부 Solver의 작은 Control / Resource Pilot을 통과한 뒤만 재개한다. Free-Lens 편심 확장은 별도 Domain 검증이 필요하다.
 - `npm run benchmark:lens-gate` (별도 Python 환경), [보고서](D28E_SPHERICAL_LENS_REFERENCE_GATE.md), CI Artifact `d28e-spherical-lens-gate` 참조. Harness PASS는 Lens Validation PASS가 아니다. 기존 Physics / Gaussian Gate / Mount / 치수 / Regression을 보존했고 Main merge는 금지한다.

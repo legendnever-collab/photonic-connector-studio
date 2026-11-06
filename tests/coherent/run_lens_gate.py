@@ -60,7 +60,13 @@ def fdtd_plan(lengths, dx, duration, complex_fields):
     steps = math.ceil(duration/(.5*dx/299792458))
     return {'dimensionsM': lengths, 'dxM': dx, 'gridShape': dimensions, 'cells': cells,
             'assumedDurationS': duration, 'assumedCourant': .5, 'steps': steps,
-            'cellUpdates': cells*steps, 'emptyFieldMemoryBytesLowerBound': cells*96*(2 if complex_fields else 1),
+            'cellUpdates': cells*steps,
+            # FAQ: nine E/D/H components plus three REAL permittivity scalars.
+            # Only fields become complex; do not double the material arrays.
+            'fieldArrayBytesEstimate': cells*9*(16 if complex_fields else 8),
+            'diagonalPermittivityBytesEstimate': cells*3*8,
+            'componentStorageBytesEstimate': cells*(168 if complex_fields else 96),
+            'storageScope': 'FAQ component-count planning estimate extended to all-component cylindrical fields; not measured allocation or a certified cylindrical solver lower bound',
             'complexFields': complex_fields, 'measuredSolverRuntimeS': None,
             'convergenceEstablished': False}
 
@@ -201,6 +207,10 @@ def main():
                      **fdtd_plan([2*radial, 2*radial, axial], wavelength/(ng*10), 10e-12, False)})
     a, b = fdtd_plan([16., 8.], 1., 1e-7, True), fdtd_plan([16., 8.], .5, 1e-7, True)
     check('cylindrical refinement storage scaling', b['cells'] == 4*a['cells'])
+    real = fdtd_plan([16., 8.], 1., 1e-7, False)
+    check('complex doubles fields only', a['fieldArrayBytesEstimate'] == 2*real['fieldArrayBytesEstimate'])
+    check('real dielectric arrays are not doubled', a['diagonalPermittivityBytesEstimate'] == real['diagonalPermittivityBytesEstimate'])
+    check('complex component-count estimate is 168 bytes per cell', a['componentStorageBytesEstimate'] == 168*a['cells'])
     check('cylindrical refinement work scaling', abs(b['cellUpdates']/a['cellUpdates']-8) <= 4/a['steps'])
     for invalid in (0., -1., math.inf, math.nan):
         try:
@@ -258,7 +268,7 @@ def main():
     out.write_text(json.dumps(report, indent=2, allow_nan=False)+'\n')
     print(json.dumps({'status': report['status'], 'checks': len(CHECKS), 'decision': 'Path B',
                       'bareSlabFluxDifference': controls['slabs'][-1]['absoluteFluxDifference'],
-                      'cylindricalLowerBoundsGiB': [r['emptyFieldMemoryBytesLowerBound']/2**30 for r in planning[:3]],
+                      'cylindricalStorageEstimatesGiB': [r['componentStorageBytesEstimate']/2**30 for r in planning[:3]],
                       'sphericalLensRun': False, 'output': str(out)}))
     if report['status'] != 'PASS':
         raise SystemExit(1)
