@@ -1,3 +1,18 @@
+# D2.8-D — 현재 Handoff
+
+2026-11-06 · `benchmark/d28d-development-path`, base Draft #42 (`f39c24ca1fb3ea07e55332ecbb6113ac80d4a89a`).
+
+- **Engineering Decision: Option 3 — 공통 Spherical Lens Field Handoff 검증 우선.** D2.8-C Path B를 유지한다. 실제 Fold / Free-Lens Total Coupling과 Joint Yield는 Uncomputed다.
+- Full-size Single Mirror의 Air λ/10 FDTD 계획만으로 약 995 GiB의 최소 Memory가 필요하다. Material/PML/Monitor와 Coating Resolution은 제외한 값이다. Material/Polarization 정의 및 외부 자원 부족으로 대형 Maxwell Run은 실행하지 않았다.
+- 작은 Infinite-plane Vector E/H Boundary Control을 Fresnel / PEC / TIR와 독립 비교했다. 실제 Coating 값이나 Finite-body Simulation이 아니다.
+- Explicit Free-Lens의 ±50 µm Nominal 후보는 기존 엔진에서 Fixed Ports/Mode와 치수를 유지해 회수했다. Geometrical Shadow는 없으나 Ray-Pupil은 Target Coverage / Caustic Gate로 Unresolved이고 기존 OAT에 Lens transverse/tilt 오차가 빠져 있다. 기본 Coaxial Mount를 바꾸지 않는다.
+- 기존 9개 Bounded Fold는 Geometry PASS지만 모두 Gaussian Out-of-domain이다. Coarse Ray Flux가 크게 달라 단일 Seed로 Fold를 폐기할 근거도 없다. +500 µm Coaxial Positive Control은 유지한다.
+- 기존 Prism Family는 정해진 Geometry/Cap/Conservative Clearance 안에서 평가했다. 신규 Plate/Rhomboid/Relay는 제안만 하며 구현 및 Assembly Policy 변경 전 승인 필요.
+- 다음 최소 작업 **D2.8-E**: 현재 첫 Spherical Lens 하나의 Geometry/Material/Input을 고정 → 기존 외부 Wave Reference의 비용·적용 범위 확인 → Independent Field / Flux / Mode, Grid / Window / Plane 검증. Reference가 없거나 비싸면 중단하고 Model Insufficient를 유지한다. 새 범용 POP/Maxwell Solver와 UI/3D 확장 금지.
+- [Decision Report](D28D_DEVELOPMENT_PATH.md), `npm run benchmark:decision`, CI Artifact `d28d-development-path`를 참조한다. 실제 Tests/CI 및 SHA는 해당 Draft PR에 기록한다. `src/`와 기존 검증 구현·제조 Bounds 보존, Main merge 금지.
+
+---
+
 # D2.8-C — 현재 Handoff
 
 2026-11-06 · `benchmark/d28c-physical-boundary`, base Draft #41 (`d95ca6c219530a1ca7e6c95e283b9fd4c7f00c5b`).
