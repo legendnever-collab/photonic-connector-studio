@@ -1,0 +1,1086 @@
+{
+  "source": {
+    "s1MainSHA": "20cfd15d735d3ebdb1f34d361151e961ce54fc76",
+    "artifactId": 13505161023,
+    "runId": 42222921126,
+    "artifactGitSHA": "30143078f44411671e91738ceb2398f4a5c63e25",
+    "artifactHeadSHA": "1725827722c95e55b5fc1d2b13f8c6a59a399ce2",
+    "topologyJSONSHA256": "ed98926d1c364dd81dab4f44df633c5ea49bbe7188dc02c477484f10c8779eae"
+  },
+  "cases": [
+    {
+      "offsetM": 0.00005,
+      "candidateId": "synthesis-178-3",
+      "recipe": {
+        "kind": "aligned-direct",
+        "clear": 0.00031622776601683794
+      },
+      "project": {
+        "kind": "optical-project",
+        "schemaVersion": 1,
+        "units": "SI",
+        "routing": {
+          "version": 1,
+          "positionTolerance": 0.000001,
+          "angleTolerance": 0.0017453292519943296,
+          "bounds": null,
+          "keepOut": [],
+          "parts": {
+            "lens": 2,
+            "mirror": 2,
+            "prism": 1
+          }
+        },
+        "designScenario": "basic-relay",
+        "synthesis": {
+          "version": 1,
+          "families": [
+            "direct"
+          ],
+          "budget": 512,
+          "geometryBudget": 8,
+          "fitBudget": 64,
+          "clearRadius": [
+            0.0002,
+            0.0005
+          ],
+          "thickness": [
+            0.00005,
+            0.0003
+          ],
+          "lensMount": "free",
+          "lensAlignment": {
+            "decenter": 0.001,
+            "tilt": 0.02
+          },
+          "lensPlacement": "endpoints",
+          "material": "N-BK7",
+          "minimumOverlap": 0.9,
+          "diameterTolerance": 0.05,
+          "phaseTolerance": 0.05
+        },
+        "designProblem": {
+          "version": 1,
+          "strategy": "lens",
+          "objective": "robustness",
+          "maxParts": 4,
+          "maxGenerated": 4,
+          "fixedSurfaces": [],
+          "lens": {
+            "template": "existing",
+            "budget": 1536,
+            "variables": [
+              {
+                "id": "D21-Lens-1",
+                "position": [
+                  0.000001,
+                  0.00485
+                ],
+                "front": [
+                  -825.0825082508251,
+                  825.0825082508251
+                ],
+                "rear": [
+                  -825.0825082508251,
+                  825.0825082508251
+                ],
+                "thickness": [
+                  0.00015,
+                  0.0015
+                ]
+              },
+              {
+                "id": "D21-Lens-2",
+                "position": [
+                  0.005,
+                  0.009849
+                ],
+                "front": [
+                  -825.0825082508251,
+                  825.0825082508251
+                ],
+                "rear": [
+                  -825.0825082508251,
+                  825.0825082508251
+                ],
+                "thickness": [
+                  0.00015,
+                  0.0015
+                ]
+              }
+            ],
+            "alignment": {
+              "decenter": 0.001,
+              "tilt": 0.02,
+              "fixed": []
+            },
+            "diameterTolerance": 0.05,
+            "phaseTolerance": 0.05,
+            "clearance": 0.000001
+          },
+          "routes": {
+            "version": 1,
+            "templates": [
+              "direct",
+              "mirror1",
+              "mirror2",
+              "prism1",
+              "mirror-prism"
+            ],
+            "budget": 128,
+            "clearRadius": 0.00002,
+            "prismLeg": 0.00008,
+            "mirrorThickness": 0.000005,
+            "clearance": 0.000001,
+            "ranking": "fewest-parts"
+          },
+          "tolerance": {
+            "portPosition": [
+              5e-7,
+              0.000001,
+              0.000001
+            ],
+            "portAngle": [
+              0,
+              0.0002,
+              0.0002
+            ],
+            "componentPosition": [
+              5e-7,
+              0,
+              0
+            ],
+            "componentAngle": [
+              0,
+              0,
+              0
+            ],
+            "minimumOverlap": 0.6,
+            "maxCases": 128
+          }
+        },
+        "targetBody": {
+          "radius": 0.0000625,
+          "length": 0.001
+        },
+        "authoring": {
+          "version": 1,
+          "ports": {
+            "source": {
+              "device": "fiber",
+              "preset": "smf-1310-gaussian",
+              "fieldModel": "gaussian",
+              "referencePlane": "port-frame",
+              "phase": "waist-plane",
+              "normalization": "unit-power",
+              "powerW": null,
+              "mediumIndex": 1,
+              "adapter": "homogeneous-paraxial",
+              "imported": null
+            },
+            "target": {
+              "device": "fiber",
+              "preset": "smf-1310-gaussian",
+              "fieldModel": "gaussian",
+              "referencePlane": "port-frame",
+              "phase": "waist-plane",
+              "normalization": "unit-power",
+              "powerW": null,
+              "mediumIndex": 1,
+              "adapter": "homogeneous-paraxial",
+              "imported": null
+            }
+          },
+          "templates": {},
+          "alignment": {
+            "movingId": null,
+            "referencePose": null,
+            "delta": {
+              "origin": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "rotation": {
+                "roll": 0,
+                "pitch": 0,
+                "yaw": 0
+              }
+            },
+            "pivot": "reference-origin",
+            "frame": "reference-local",
+            "applied": false
+          }
+        },
+        "model": {
+          "kind": "surface",
+          "prescription": {
+            "kind": "surface-prescription",
+            "schemaVersion": 1,
+            "units": "SI",
+            "name": "01 · Fiber → Lens → Lens → Fiber",
+            "wavelength": 0.00000131,
+            "provenance": "synthetic-assumptions",
+            "source": {
+              "frame": {
+                "origin": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "rotation": {
+                  "roll": 0,
+                  "pitch": 0,
+                  "yaw": 0
+                }
+              },
+              "radius": 0.0000046,
+              "samples": 5,
+              "n": 1,
+              "channels": {
+                "rows": 1,
+                "cols": 1,
+                "pitch": 0.0006
+              }
+            },
+            "assemblies": [
+              {
+                "id": "Output",
+                "name": "Output Port",
+                "kind": "target",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.01,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              },
+              {
+                "id": "D21-Lens-1",
+                "name": "BK7 Lens 1",
+                "kind": "lens",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.0025,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              },
+              {
+                "id": "D21-Lens-2",
+                "name": "BK7 Lens 2",
+                "kind": "lens",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.006500000000000001,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 3.141592653589793,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              },
+              {
+                "id": "D21-Lens-1-1",
+                "name": "Auto BK7 Lens 1",
+                "kind": "lens",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.0009767747852172045,
+                    "y": 2.350988701644575e-41,
+                    "z": 0.000007022825859210633
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              },
+              {
+                "id": "D21-Lens-2-1",
+                "name": "Auto BK7 Lens 2",
+                "kind": "lens",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.008723225214782795,
+                    "y": 2.3700904848454372e-39,
+                    "z": 0.000042977174133872725
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              }
+            ],
+            "surfaces": [
+              {
+                "id": "D21-Lens-1-1-S1",
+                "name": "Auto Lens Front",
+                "assemblyId": "D21-Lens-1-1",
+                "frame": {
+                  "origin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "sphere",
+                "radius": 0.0010303220926944075,
+                "aperture": 0.00031622776601683794,
+                "interaction": "refract",
+                "materialBefore": "air",
+                "materialAfter": "N-BK7",
+                "nBefore": 1,
+                "nAfter": 1.5035829054102239,
+                "outsideIndex": 1,
+                "array": null
+              },
+              {
+                "id": "D21-Lens-1-1-S2",
+                "name": "Auto Lens Rear",
+                "assemblyId": "D21-Lens-1-1",
+                "frame": {
+                  "origin": {
+                    "x": 0.0002999999999999999,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "sphere",
+                "radius": -0.0010303220926944075,
+                "aperture": 0.00031622776601683794,
+                "interaction": "refract",
+                "materialBefore": "N-BK7",
+                "materialAfter": "air",
+                "nBefore": 1.5035829054102239,
+                "nAfter": 1,
+                "outsideIndex": 1,
+                "array": null
+              },
+              {
+                "id": "D21-Lens-2-1-S1",
+                "name": "Auto Lens Front",
+                "assemblyId": "D21-Lens-2-1",
+                "frame": {
+                  "origin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "sphere",
+                "radius": 0.0010303220926944075,
+                "aperture": 0.00031622776601683794,
+                "interaction": "refract",
+                "materialBefore": "air",
+                "materialAfter": "N-BK7",
+                "nBefore": 1,
+                "nAfter": 1.5035829054102239,
+                "outsideIndex": 1,
+                "array": null
+              },
+              {
+                "id": "D21-Lens-2-1-S2",
+                "name": "Auto Lens Rear",
+                "assemblyId": "D21-Lens-2-1",
+                "frame": {
+                  "origin": {
+                    "x": 0.0002999999999999999,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "sphere",
+                "radius": -0.0010303220926944075,
+                "aperture": 0.00031622776601683794,
+                "interaction": "refract",
+                "materialBefore": "N-BK7",
+                "materialAfter": "air",
+                "nBefore": 1.5035829054102239,
+                "nAfter": 1,
+                "outsideIndex": 1,
+                "array": null
+              },
+              {
+                "id": "Output-Port",
+                "name": "Output Reference Plane",
+                "assemblyId": "Output",
+                "frame": {
+                  "origin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0.00005
+                  },
+                  "rotation": {
+                    "roll": 3.141592653589793,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "plane",
+                "radius": 0.005,
+                "aperture": 0.001,
+                "interaction": "probe",
+                "materialBefore": "air",
+                "materialAfter": "air",
+                "nBefore": 1,
+                "nAfter": 1,
+                "outsideIndex": 1,
+                "array": null
+              }
+            ]
+          },
+          "sourceMode": {
+            "representation": "gaussian",
+            "mfdX": 0.0000092,
+            "mfdY": 0.0000092,
+            "polarization": "unspecified"
+          },
+          "targetMode": {
+            "representation": "gaussian",
+            "mfdX": 0.0000092,
+            "mfdY": 0.0000092,
+            "polarization": "unspecified"
+          }
+        },
+        "bodies": [
+          {
+            "assemblyId": "D21-Lens-1-1",
+            "kind": "lens",
+            "outerRadius": 0.0003794733192202055
+          },
+          {
+            "assemblyId": "D21-Lens-2-1",
+            "kind": "lens",
+            "outerRadius": 0.0003794733192202055
+          }
+        ],
+        "sourceBody": {
+          "radius": 0.0000625,
+          "length": 0.001
+        }
+      },
+      "options": {
+        "version": 1,
+        "families": [
+          "direct"
+        ],
+        "budget": 512,
+        "geometryBudget": 8,
+        "fitBudget": 64,
+        "lensMount": "free",
+        "lensPlacement": "endpoints",
+        "clearRadius": [
+          0.0002,
+          0.0005
+        ],
+        "thickness": [
+          0.00005,
+          0.0003
+        ],
+        "material": "N-BK7",
+        "minimumOverlap": 0.9,
+        "diameterTolerance": 0.05,
+        "phaseTolerance": 0.05,
+        "lensAlignment": {
+          "decenter": 0.001,
+          "tilt": 0.02
+        }
+      },
+      "conditionalGaussianOverlap": 0.9999965993002425,
+      "geometry": {
+        "positionErrorM": 6.958635652127332e-15,
+        "angleErrorRad": 6.6137707289970466e-12
+      },
+      "pupil": {
+        "status": "unresolved",
+        "targetCoverage": 0.9735142453329084,
+        "rejectedPower": {
+          "Intermediate caustic / singular tube": 0.00014897262884714418,
+          "Clipped aperture": 7.79773151030832e-10,
+          "Launch direction outside 0.3 rad benchmark domain": 5.378536464413026e-10
+        }
+      }
+    },
+    {
+      "offsetM": -0.00005,
+      "candidateId": "synthesis-178-3",
+      "recipe": {
+        "kind": "aligned-direct",
+        "clear": 0.00031622776601683794
+      },
+      "project": {
+        "kind": "optical-project",
+        "schemaVersion": 1,
+        "units": "SI",
+        "routing": {
+          "version": 1,
+          "positionTolerance": 0.000001,
+          "angleTolerance": 0.0017453292519943296,
+          "bounds": null,
+          "keepOut": [],
+          "parts": {
+            "lens": 2,
+            "mirror": 2,
+            "prism": 1
+          }
+        },
+        "designScenario": "basic-relay",
+        "synthesis": {
+          "version": 1,
+          "families": [
+            "direct"
+          ],
+          "budget": 512,
+          "geometryBudget": 8,
+          "fitBudget": 64,
+          "clearRadius": [
+            0.0002,
+            0.0005
+          ],
+          "thickness": [
+            0.00005,
+            0.0003
+          ],
+          "lensMount": "free",
+          "lensAlignment": {
+            "decenter": 0.001,
+            "tilt": 0.02
+          },
+          "lensPlacement": "endpoints",
+          "material": "N-BK7",
+          "minimumOverlap": 0.9,
+          "diameterTolerance": 0.05,
+          "phaseTolerance": 0.05
+        },
+        "designProblem": {
+          "version": 1,
+          "strategy": "lens",
+          "objective": "robustness",
+          "maxParts": 4,
+          "maxGenerated": 4,
+          "fixedSurfaces": [],
+          "lens": {
+            "template": "existing",
+            "budget": 1536,
+            "variables": [
+              {
+                "id": "D21-Lens-1",
+                "position": [
+                  0.000001,
+                  0.00485
+                ],
+                "front": [
+                  -825.0825082508251,
+                  825.0825082508251
+                ],
+                "rear": [
+                  -825.0825082508251,
+                  825.0825082508251
+                ],
+                "thickness": [
+                  0.00015,
+                  0.0015
+                ]
+              },
+              {
+                "id": "D21-Lens-2",
+                "position": [
+                  0.005,
+                  0.009849
+                ],
+                "front": [
+                  -825.0825082508251,
+                  825.0825082508251
+                ],
+                "rear": [
+                  -825.0825082508251,
+                  825.0825082508251
+                ],
+                "thickness": [
+                  0.00015,
+                  0.0015
+                ]
+              }
+            ],
+            "alignment": {
+              "decenter": 0.001,
+              "tilt": 0.02,
+              "fixed": []
+            },
+            "diameterTolerance": 0.05,
+            "phaseTolerance": 0.05,
+            "clearance": 0.000001
+          },
+          "routes": {
+            "version": 1,
+            "templates": [
+              "direct",
+              "mirror1",
+              "mirror2",
+              "prism1",
+              "mirror-prism"
+            ],
+            "budget": 128,
+            "clearRadius": 0.00002,
+            "prismLeg": 0.00008,
+            "mirrorThickness": 0.000005,
+            "clearance": 0.000001,
+            "ranking": "fewest-parts"
+          },
+          "tolerance": {
+            "portPosition": [
+              5e-7,
+              0.000001,
+              0.000001
+            ],
+            "portAngle": [
+              0,
+              0.0002,
+              0.0002
+            ],
+            "componentPosition": [
+              5e-7,
+              0,
+              0
+            ],
+            "componentAngle": [
+              0,
+              0,
+              0
+            ],
+            "minimumOverlap": 0.6,
+            "maxCases": 128
+          }
+        },
+        "targetBody": {
+          "radius": 0.0000625,
+          "length": 0.001
+        },
+        "authoring": {
+          "version": 1,
+          "ports": {
+            "source": {
+              "device": "fiber",
+              "preset": "smf-1310-gaussian",
+              "fieldModel": "gaussian",
+              "referencePlane": "port-frame",
+              "phase": "waist-plane",
+              "normalization": "unit-power",
+              "powerW": null,
+              "mediumIndex": 1,
+              "adapter": "homogeneous-paraxial",
+              "imported": null
+            },
+            "target": {
+              "device": "fiber",
+              "preset": "smf-1310-gaussian",
+              "fieldModel": "gaussian",
+              "referencePlane": "port-frame",
+              "phase": "waist-plane",
+              "normalization": "unit-power",
+              "powerW": null,
+              "mediumIndex": 1,
+              "adapter": "homogeneous-paraxial",
+              "imported": null
+            }
+          },
+          "templates": {},
+          "alignment": {
+            "movingId": null,
+            "referencePose": null,
+            "delta": {
+              "origin": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "rotation": {
+                "roll": 0,
+                "pitch": 0,
+                "yaw": 0
+              }
+            },
+            "pivot": "reference-origin",
+            "frame": "reference-local",
+            "applied": false
+          }
+        },
+        "model": {
+          "kind": "surface",
+          "prescription": {
+            "kind": "surface-prescription",
+            "schemaVersion": 1,
+            "units": "SI",
+            "name": "01 · Fiber → Lens → Lens → Fiber",
+            "wavelength": 0.00000131,
+            "provenance": "synthetic-assumptions",
+            "source": {
+              "frame": {
+                "origin": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "rotation": {
+                  "roll": 0,
+                  "pitch": 0,
+                  "yaw": 0
+                }
+              },
+              "radius": 0.0000046,
+              "samples": 5,
+              "n": 1,
+              "channels": {
+                "rows": 1,
+                "cols": 1,
+                "pitch": 0.0006
+              }
+            },
+            "assemblies": [
+              {
+                "id": "Output",
+                "name": "Output Port",
+                "kind": "target",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.01,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              },
+              {
+                "id": "D21-Lens-1",
+                "name": "BK7 Lens 1",
+                "kind": "lens",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.0025,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              },
+              {
+                "id": "D21-Lens-2",
+                "name": "BK7 Lens 2",
+                "kind": "lens",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.006500000000000001,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 3.141592653589793,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              },
+              {
+                "id": "D21-Lens-1-1",
+                "name": "Auto BK7 Lens 1",
+                "kind": "lens",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.0009767747852172045,
+                    "y": -2.350988701644575e-41,
+                    "z": -0.000007022825859210633
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              },
+              {
+                "id": "D21-Lens-2-1",
+                "name": "Auto BK7 Lens 2",
+                "kind": "lens",
+                "parentId": null,
+                "frame": {
+                  "origin": {
+                    "x": 0.008723225214782795,
+                    "y": -2.3700904848454372e-39,
+                    "z": -0.000042977174133872725
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                }
+              }
+            ],
+            "surfaces": [
+              {
+                "id": "D21-Lens-1-1-S1",
+                "name": "Auto Lens Front",
+                "assemblyId": "D21-Lens-1-1",
+                "frame": {
+                  "origin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "sphere",
+                "radius": 0.0010303220926944075,
+                "aperture": 0.00031622776601683794,
+                "interaction": "refract",
+                "materialBefore": "air",
+                "materialAfter": "N-BK7",
+                "nBefore": 1,
+                "nAfter": 1.5035829054102239,
+                "outsideIndex": 1,
+                "array": null
+              },
+              {
+                "id": "D21-Lens-1-1-S2",
+                "name": "Auto Lens Rear",
+                "assemblyId": "D21-Lens-1-1",
+                "frame": {
+                  "origin": {
+                    "x": 0.0002999999999999999,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "sphere",
+                "radius": -0.0010303220926944075,
+                "aperture": 0.00031622776601683794,
+                "interaction": "refract",
+                "materialBefore": "N-BK7",
+                "materialAfter": "air",
+                "nBefore": 1.5035829054102239,
+                "nAfter": 1,
+                "outsideIndex": 1,
+                "array": null
+              },
+              {
+                "id": "D21-Lens-2-1-S1",
+                "name": "Auto Lens Front",
+                "assemblyId": "D21-Lens-2-1",
+                "frame": {
+                  "origin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "sphere",
+                "radius": 0.0010303220926944075,
+                "aperture": 0.00031622776601683794,
+                "interaction": "refract",
+                "materialBefore": "air",
+                "materialAfter": "N-BK7",
+                "nBefore": 1,
+                "nAfter": 1.5035829054102239,
+                "outsideIndex": 1,
+                "array": null
+              },
+              {
+                "id": "D21-Lens-2-1-S2",
+                "name": "Auto Lens Rear",
+                "assemblyId": "D21-Lens-2-1",
+                "frame": {
+                  "origin": {
+                    "x": 0.0002999999999999999,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rotation": {
+                    "roll": 0,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "sphere",
+                "radius": -0.0010303220926944075,
+                "aperture": 0.00031622776601683794,
+                "interaction": "refract",
+                "materialBefore": "N-BK7",
+                "materialAfter": "air",
+                "nBefore": 1.5035829054102239,
+                "nAfter": 1,
+                "outsideIndex": 1,
+                "array": null
+              },
+              {
+                "id": "Output-Port",
+                "name": "Output Reference Plane",
+                "assemblyId": "Output",
+                "frame": {
+                  "origin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": -0.00005
+                  },
+                  "rotation": {
+                    "roll": 3.141592653589793,
+                    "pitch": 0,
+                    "yaw": 0
+                  }
+                },
+                "shape": "plane",
+                "radius": 0.005,
+                "aperture": 0.001,
+                "interaction": "probe",
+                "materialBefore": "air",
+                "materialAfter": "air",
+                "nBefore": 1,
+                "nAfter": 1,
+                "outsideIndex": 1,
+                "array": null
+              }
+            ]
+          },
+          "sourceMode": {
+            "representation": "gaussian",
+            "mfdX": 0.0000092,
+            "mfdY": 0.0000092,
+            "polarization": "unspecified"
+          },
+          "targetMode": {
+            "representation": "gaussian",
+            "mfdX": 0.0000092,
+            "mfdY": 0.0000092,
+            "polarization": "unspecified"
+          }
+        },
+        "bodies": [
+          {
+            "assemblyId": "D21-Lens-1-1",
+            "kind": "lens",
+            "outerRadius": 0.0003794733192202055
+          },
+          {
+            "assemblyId": "D21-Lens-2-1",
+            "kind": "lens",
+            "outerRadius": 0.0003794733192202055
+          }
+        ],
+        "sourceBody": {
+          "radius": 0.0000625,
+          "length": 0.001
+        }
+      },
+      "options": {
+        "version": 1,
+        "families": [
+          "direct"
+        ],
+        "budget": 512,
+        "geometryBudget": 8,
+        "fitBudget": 64,
+        "lensMount": "free",
+        "lensPlacement": "endpoints",
+        "clearRadius": [
+          0.0002,
+          0.0005
+        ],
+        "thickness": [
+          0.00005,
+          0.0003
+        ],
+        "material": "N-BK7",
+        "minimumOverlap": 0.9,
+        "diameterTolerance": 0.05,
+        "phaseTolerance": 0.05,
+        "lensAlignment": {
+          "decenter": 0.001,
+          "tilt": 0.02
+        }
+      },
+      "conditionalGaussianOverlap": 0.9999965993002425,
+      "geometry": {
+        "positionErrorM": 6.958635652127332e-15,
+        "angleErrorRad": 6.6137707289970466e-12
+      },
+      "pupil": {
+        "status": "unresolved",
+        "targetCoverage": 0.9735142453328958,
+        "rejectedPower": {
+          "Intermediate caustic / singular tube": 0.00014897262884714418,
+          "Clipped aperture": 7.79773151030832e-10,
+          "Launch direction outside 0.3 rad benchmark domain": 5.378536464413026e-10
+        }
+      }
+    }
+  ]
+}

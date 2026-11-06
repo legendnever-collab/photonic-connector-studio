@@ -18,6 +18,7 @@
     "benchmark:coherent": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_reference.py",
     "benchmark:decision": "vitest run tests/goldenBenchmark.test.ts tests/finiteBeamBenchmark.test.ts tests/developmentPath.test.ts && python3 tests/coherent/run_feasibility.py",
     "benchmark:boundary": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_boundary.py",
+    "benchmark:free-lens-tolerance": "vitest run tests/freeLensTolerance.test.ts tests/jointTolerance.test.ts",
     "benchmark:lens-gate": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_lens_gate.py"
   },
   "dependencies": {

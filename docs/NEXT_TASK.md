@@ -1,3 +1,13 @@
+# S2 — Fixed-Port Free-Lens Tolerance
+
+2026-11-07 · Sol · `feature/s2-free-lens-tolerance`
+
+- [S2 Handoff](S2_FREE_LENS_TOLERANCE.md)에 고정된 ±50 µm Prescription, Lens별 오차, Common-mode, Differential, Joint Coverage와 재현 절차를 기록했다.
+- Nominal Conditional Overlap은 99.99966%이고 Ray-Pupil은 Unresolved다. Joint는 각 Offset에서 16개 중 1개만 Geometry와 Gaussian Gate를 함께 통과했다. Total Coupling, 제조 분포 기반 Assembly Yield와 전역 Worst-case는 Uncomputed다.
+- Draft PR의 HEAD 및 CI Artifact를 사용자 검토 기준으로 삼는다. 다음 Physics Checkpoint는 Astra로 D2.8-E의 실제 Spherical Lens Field를 외부 Wave Reference에서 검증하는 작업이다.
+
+---
+
 # S1 — Integration Handoff
 
 2026-11-06 · Sol · `integration/s1-physics-stabilization` → `main` Draft.
