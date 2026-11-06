@@ -17,12 +17,32 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+        env:
+          GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: python3 tests/coherent/run_feasibility.py
+        env:
+          GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      # Packaging builds dist/index.html. Test that same HTML before uploading it.
       - run: npm run artifact
         env:
           SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-benchmark-001
+          path: |
+            benchmark-results/golden-001*.json
+            benchmark-results/d27-*.json
+            benchmark-results/d28a-*.json
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d28d-development-path
+          path: benchmark-results/d28d-*.json
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: photonic-connector-studio-checkpoint
@@ -31,3 +51,90 @@ jobs:
             artifacts/build-info-u1.json
             artifacts/SHA256SUMS-u1.txt
             test-results/*.png
+
+  coherent-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tests/coherent/requirements.txt
+      - run: npm ci
+      - run: python -m pip install -r tests/coherent/requirements.txt
+      - run: npm run benchmark:coherent
+        env:
+          GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          OPENBLAS_NUM_THREADS: '1'
+          OMP_NUM_THREADS: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d28b-coherent-reference
+          path: benchmark-results/d28b-*.json
+          if-no-files-found: error
+
+  boundary-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tests/coherent/requirements.txt
+      - run: npm ci
+      - run: python -m pip install -r tests/coherent/requirements.txt
+      - run: npm run benchmark:boundary
+        env:
+          GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          OPENBLAS_NUM_THREADS: '1'
+          OMP_NUM_THREADS: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d28c-physical-boundary
+          path: |
+            benchmark-results/d28b-input.json
+            benchmark-results/d28c-*.json
+          if-no-files-found: error
+
+  spherical-lens-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tests/coherent/requirements-lens-gate.txt
+      - run: npm ci
+      # Isolated from D2.8-B/C NumPy 2 requirements; Diffractio 1.0 requires NumPy <2.
+      - run: python -m pip install -r tests/coherent/requirements-lens-gate.txt
+      - run: npm run benchmark:lens-gate
+        env:
+          GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          MPLBACKEND: Agg
+          OPENBLAS_NUM_THREADS: '1'
+          OMP_NUM_THREADS: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d28e-spherical-lens-gate
+          path: |
+            benchmark-results/d28b-input.json
+            benchmark-results/d28e-*.json
+          if-no-files-found: error

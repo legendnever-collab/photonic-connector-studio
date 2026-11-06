@@ -1,0 +1,311 @@
+{
+  "schemaVersion": 1,
+  "baselineSHA": "7c45d7c07dc7b43dc87598277d2002bf50b7d696",
+  "caseID": "plus-23-1",
+  "units": "SI",
+  "fixedPorts": {
+    "wavelength": 1.31e-06,
+    "sourceFrame": {
+      "origin": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "axes": [
+        {
+          "x": 1,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "z": 0
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "z": 1
+        }
+      ]
+    },
+    "targetFrame": {
+      "origin": {
+        "x": 0.01,
+        "y": 0,
+        "z": 5e-05
+      },
+      "axes": [
+        {
+          "x": 1,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 0,
+          "y": -1,
+          "z": 1.2246467991473532e-16
+        },
+        {
+          "x": 0,
+          "y": -1.2246467991473532e-16,
+          "z": -1
+        }
+      ]
+    },
+    "modes": {
+      "source": {
+        "representation": "gaussian",
+        "mfdX": 9.2e-06,
+        "mfdY": 9.2e-06,
+        "polarization": "unspecified"
+      },
+      "target": {
+        "representation": "gaussian",
+        "mfdX": 9.2e-06,
+        "mfdY": 9.2e-06,
+        "polarization": "unspecified"
+      }
+    },
+    "authoring": {
+      "source": {
+        "device": "fiber",
+        "preset": "smf-1310-gaussian",
+        "fieldModel": "gaussian",
+        "referencePlane": "port-frame",
+        "phase": "waist-plane",
+        "normalization": "unit-power",
+        "powerW": null,
+        "mediumIndex": 1,
+        "adapter": "homogeneous-paraxial",
+        "imported": null
+      },
+      "target": {
+        "device": "fiber",
+        "preset": "smf-1310-gaussian",
+        "fieldModel": "gaussian",
+        "referencePlane": "port-frame",
+        "phase": "waist-plane",
+        "normalization": "unit-power",
+        "powerW": null,
+        "mediumIndex": 1,
+        "adapter": "homogeneous-paraxial",
+        "imported": null
+      }
+    },
+    "source": {
+      "frame": {
+        "origin": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      },
+      "radius": 4.6e-06,
+      "samples": 5,
+      "n": 1,
+      "channels": {
+        "rows": 1,
+        "cols": 1,
+        "pitch": 0.0006
+      }
+    },
+    "target": {
+      "id": "Output-Port",
+      "name": "Output Reference Plane",
+      "assemblyId": "Output",
+      "frame": {
+        "origin": {
+          "x": 0,
+          "y": 0,
+          "z": 5e-05
+        },
+        "rotation": {
+          "roll": 3.141592653589793,
+          "pitch": 0,
+          "yaw": 0
+        }
+      },
+      "shape": "plane",
+      "radius": 0.005,
+      "aperture": 0.001,
+      "interaction": "probe",
+      "materialBefore": "air",
+      "materialAfter": "air",
+      "nBefore": 1,
+      "nAfter": 1,
+      "outsideIndex": 1,
+      "array": null
+    },
+    "sourceBody": {
+      "radius": 6.25e-05,
+      "length": 0.001
+    },
+    "targetBody": {
+      "radius": 6.25e-05,
+      "length": 0.001
+    }
+  },
+  "assembly": {
+    "id": "D21-Lens-1-1",
+    "name": "Auto BK7 Lens 1",
+    "kind": "lens",
+    "parentId": null,
+    "frame": {
+      "origin": {
+        "x": 0.0006177666164616266,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "roll": 0,
+        "pitch": 0,
+        "yaw": 0
+      }
+    }
+  },
+  "surfaces": [
+    {
+      "id": "D21-Lens-1-1-S1",
+      "name": "Auto Lens Front",
+      "assemblyId": "D21-Lens-1-1",
+      "frame": {
+        "origin": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      },
+      "shape": "sphere",
+      "radius": 0.0006551484779994763,
+      "aperture": 0.0002,
+      "interaction": "refract",
+      "materialBefore": "air",
+      "materialAfter": "N-BK7",
+      "nBefore": 1,
+      "nAfter": 1.5035829054102239,
+      "outsideIndex": 1,
+      "array": null
+    },
+    {
+      "id": "D21-Lens-1-1-S2",
+      "name": "Auto Lens Rear",
+      "assemblyId": "D21-Lens-1-1",
+      "frame": {
+        "origin": {
+          "x": 0.0003,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "roll": 0,
+          "pitch": 0,
+          "yaw": 0
+        }
+      },
+      "shape": "sphere",
+      "radius": -0.0006551484779994763,
+      "aperture": 0.0002,
+      "interaction": "refract",
+      "materialBefore": "N-BK7",
+      "materialAfter": "air",
+      "nBefore": 1.5035829054102239,
+      "nAfter": 1,
+      "outsideIndex": 1,
+      "array": null
+    }
+  ],
+  "body": {
+    "assemblyId": "D21-Lens-1-1",
+    "kind": "lens",
+    "outerRadius": 0.00024
+  },
+  "manufacturingBounds": [
+    [
+      1e-06,
+      0.004890103690854407
+    ],
+    [
+      -4125.412541254125,
+      4125.412541254125
+    ],
+    [
+      -4125.412541254125,
+      4125.412541254125
+    ],
+    [
+      5e-05,
+      0.0003
+    ],
+    [
+      0.00507006892411678,
+      0.009959172614971187
+    ],
+    [
+      -4125.412541254125,
+      4125.412541254125
+    ],
+    [
+      -4125.412541254125,
+      4125.412541254125
+    ],
+    [
+      5e-05,
+      0.0003
+    ]
+  ],
+  "values": [
+    0.0006177666164616266,
+    1526.3715532905494,
+    -1526.3715532905494,
+    0.0002999999999999999,
+    0.00909240599850956,
+    1526.3715532905494,
+    -1526.3715532905494,
+    0.0002999999999999999
+  ],
+  "sourceAuthoring": {
+    "device": "fiber",
+    "preset": "smf-1310-gaussian",
+    "fieldModel": "gaussian",
+    "referencePlane": "port-frame",
+    "phase": "waist-plane",
+    "normalization": "unit-power",
+    "powerW": null,
+    "mediumIndex": 1,
+    "adapter": "homogeneous-paraxial",
+    "imported": null
+  },
+  "targetAuthoring": {
+    "device": "fiber",
+    "preset": "smf-1310-gaussian",
+    "fieldModel": "gaussian",
+    "referencePlane": "port-frame",
+    "phase": "waist-plane",
+    "normalization": "unit-power",
+    "powerW": null,
+    "mediumIndex": 1,
+    "adapter": "homogeneous-paraxial",
+    "imported": null
+  },
+  "launchM": 0.0005854927478389307,
+  "exitM": 0.0009500404850843224,
+  "inputW": [
+    5.3273372061522436e-05,
+    5.3273372061522436e-05
+  ],
+  "inputC": [
+    1695.2288236286452,
+    1695.2288236286452
+  ]
+}

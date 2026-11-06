@@ -1,3 +1,4 @@
+import {separatedMirrors,segmentMissesMirror,type MirrorCylinder} from './mirrorClearance';
 import {bodyGeometry} from '../project/geometry';
 import {radialBounds} from '../surface/evaluator';
 import {prescription} from '../project/model';
@@ -21,9 +22,11 @@ export function lineBox(origin:Vec,direction:Vec,box:Box,lo=0,hi=Infinity):[numb
   const a=(box.min[k]-origin[k])/direction[k],b=(box.max[k]-origin[k])/direction[k];lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));if(lo>hi)return null;
  }return [lo,hi];
 }
-/** Conservative broad-phase screening. False positives are allowed, never reported as exact solid collision. */
-export function screenClearance(p:Project,generatedIds:string[],path:RayPath,gap:number,generatedBounds?:Box):string|null {
- const d=prescription(p),ss=compile(d),g=bodyGeometry(d,ss,p.bodies,p.sourceBody,p.targetBody),boxes=new Map<string,Box>();
+/** Conservative AABB screening, with sufficient finite-disc Mirror separation certificates.
+ * Other bodies, bounds and Keep-outs retain the existing broad phase.
+ * mirrorCertificates=false replays the pre-D2.7 broad phase for comparison only. */
+export function screenClearance(p:Project,generatedIds:string[],path:RayPath,gap:number,generatedBounds?:Box,mirrorCertificates=true):string|null {
+ const d=prescription(p),ss=compile(d),g=bodyGeometry(d,ss,p.bodies,p.sourceBody,p.targetBody),boxes=new Map<string,Box>(),mirrors=new Map<string,MirrorCylinder>();
  for(const id of new Set(g.faces.map(f=>f.bodyId).filter((v):v is string=>!!v))){
   const points=g.faces.filter(f=>f.bodyId===id).flatMap(f=>f.points),body=p.bodies.find(b=>b.assemblyId===id);
   // Radial interval bounds also include unsampled interior Sag extrema of fixed Lens faces.
@@ -32,6 +35,7 @@ export function screenClearance(p:Project,generatedIds:string[],path:RayPath,gap
    points.push(...[lo,hi].flatMap(x=>[-body.outerRadius,body.outerRadius].flatMap(y=>[-body.outerRadius,body.outerRadius].map(z=>pointToWorld(s.world,V(x,y,z))))));
   }
   const first=ss.find(s=>s.assemblyId===id);
+  if(body?.kind==='mirror'&&body.outline==='disc'&&first?.shape==='plane'&&first.interaction==='reflect'&&ss.filter(s=>s.assemblyId===id).length===1)mirrors.set(id,{front:first.world.origin,normal:first.world.axes[0],radius:body.width/2,thickness:body.thickness});
   boxes.set(id,body?.kind==='mirror'&&body.outline==='disc'&&first?cylinderBox(first.world,body.width/2,-body.thickness,0):
    id==='@source'&&p.sourceBody?cylinderBox(frame(d.source.frame),p.sourceBody.radius,-p.sourceBody.length,0):
    id==='@target'&&p.targetBody?cylinderBox(ss.at(-1)!.world,p.targetBody.radius,0,p.targetBody.length):envelope(points));
@@ -40,7 +44,10 @@ export function screenClearance(p:Project,generatedIds:string[],path:RayPath,gap
  for(const id of generatedIds){const a=boxes.get(id);if(!a)return 'Generated body envelope unavailable';
   if((bounds??generatedBounds)&&!insideBox(a,(bounds??generatedBounds)!))return 'Generated body outside Design Space (conservative bounds)';
  }
- for(const [id,a]of boxes)for(const [other,b]of boxes)if(id<other&&boxOverlap(expanded(a,gap),b))return 'Potential component clearance conflict (AABB)';
+ for(const [id,a]of boxes)for(const [other,b]of boxes)if(id<other&&boxOverlap(expanded(a,gap),b)){
+  if(mirrorCertificates&&mirrors.has(id)&&mirrors.has(other)&&separatedMirrors(mirrors.get(id)!,mirrors.get(other)!,gap))continue;
+  return 'Potential component clearance conflict (AABB)';
+ }
  for(const [id,box]of boxes){if(id==='@source'||id==='@target')continue;
   if(bounds&&!insideBox(box,bounds))return 'Fixed or generated body outside Design Space (conservative bounds)';
   if(obstacles.some(b=>boxOverlap(expanded(box,gap),b)))return 'Potential body / Keep-out conflict (AABB)';
@@ -49,7 +56,10 @@ export function screenClearance(p:Project,generatedIds:string[],path:RayPath,gap
   const a=path.points[i],direction=sub(path.points[i+1],a),start=i?ss.find(s=>s.id===path.hits[i-1]?.surfaceId)?.assemblyId:'@source',end=ss.find(s=>s.id===path.hits[i]?.surfaceId)?.assemblyId;
   if(obstacles.some(b=>lineBox(a,direction,expanded(b,gap),0,1)))return 'Reference segment intersects Keep-out box';
   for(const [id,b]of boxes){if(id===start||id===end||id==='@target'&&i===path.points.length-2)continue;
-   if(lineBox(a,direction,expanded(b,gap),1e-8,1-1e-8))return 'Potential unintended body crossing (AABB)';
+   if(lineBox(a,direction,expanded(b,gap),1e-8,1-1e-8)){
+    if(mirrorCertificates&&mirrors.has(id)&&segmentMissesMirror(a,path.points[i+1],mirrors.get(id)!,gap))continue;
+    return 'Potential unintended body crossing (AABB)';
+   }
   }
  }
  return null;

@@ -1,7 +1,7 @@
 {
   "name": "photonic-connector-studio",
   "private": true,
-  "version": "0.24.0-d24",
+  "version": "0.26.1-d261",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
@@ -11,7 +11,14 @@
     "build": "npm run typecheck && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "check": "npm run typecheck && npm test && npm run build && npm run test:e2e",
-    "artifact": "node scripts/package-artifact.mjs"
+    "artifact": "node scripts/package-artifact.mjs",
+    "benchmark:golden": "vitest run tests/goldenBenchmark.test.ts",
+    "benchmark:geometry": "vitest run tests/smallOffsetGeometry.test.ts",
+    "benchmark:finite-beam": "vitest run tests/finiteBeamBenchmark.test.ts",
+    "benchmark:coherent": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_reference.py",
+    "benchmark:decision": "vitest run tests/goldenBenchmark.test.ts tests/finiteBeamBenchmark.test.ts tests/developmentPath.test.ts && python3 tests/coherent/run_feasibility.py",
+    "benchmark:boundary": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_boundary.py",
+    "benchmark:lens-gate": "vitest run tests/coherentFieldInput.test.ts && python3 tests/coherent/run_lens_gate.py"
   },
   "dependencies": {
     "react": "19.2.0",

@@ -1,3 +1,4 @@
+import {portMounted,checkLensMount} from './lensMount';
 import {ProjectSchema,prescription} from '../project/model';
 import type {Project} from '../project/model';
 import {compile,frame,pose,add,mul,sub,norm,V,dot,unit} from '../surface/model';
@@ -99,7 +100,8 @@ function addSegmentLenses(route:Project,count:0|1|2,clear:number,o:SynthesisOpti
  return ProjectSchema.parse(p);
 }
 export function synthesisLensOptions(p:Project,problem:DesignProblem,o:SynthesisOptions,budget:number):LensOptions{
- const alignment=!!o.lensAlignment&&needsLensAlignment(p),options=defaultLensOptions(p,'existing',alignment),domain=lensDomain(p,'existing',alignment);
+ checkLensMount(p,o);
+ const alignment=!portMounted(o)&&!!o.lensAlignment&&needsLensAlignment(p),options=defaultLensOptions(p,'existing',alignment),domain=lensDomain(p,'existing',alignment);
  if(alignment)options.alignment={...o.lensAlignment!,fixed:[...(problem.lens?.alignment?.fixed??[])].filter(id=>domain.slots.some(s=>s.id===id))};options.budget=budget;options.diameterTolerance=o.diameterTolerance;options.phaseTolerance=o.phaseTolerance;options.clearance=problem.routes.clearance;
  for(let i=0;i<domain.slots.length;i++){
   const slot=domain.slots[i],prior=problem.lens?.variables.find(v=>v.id===slot.id),v=options.variables[i];
@@ -125,7 +127,7 @@ export function checkFrozen(base:Project,next:Project,o:DesignProblem){
  * is used ONLY to construct the starting prescription, then the exact original
  * target and metadata are restored before any candidate evaluation. */
 export function alignedDirectSeed(p:Project,problem:DesignProblem,o:SynthesisOptions,clear:number):Project {
- if(!o.lensAlignment||!o.families.includes('direct')||!manufacturingClear(o,clear))throw Error('Lens alignment / direct family is disabled.');
+ if(portMounted(o)||!o.lensAlignment||!o.families.includes('direct')||!manufacturingClear(o,clear))throw Error('Lens alignment / direct family is disabled.');
  const base=emptyTrain(p,problem),d=prescription(base),source=frame(d.source.frame),target=portWorld(base,'target'),delta=sub(target.origin,source.origin),length=dot(delta,source.axes[0]);
  if(d.surfaces.length!==1)throw Error('Direct Lens compensation cannot replace a fixed optical prefix.');
  if(problem.maxParts<2||problem.maxGenerated<2||(p.routing?.parts.lens??2)<2)throw Error('Direct Lens compensation requires two available Lens components.');
