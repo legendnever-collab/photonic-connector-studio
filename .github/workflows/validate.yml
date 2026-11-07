@@ -147,7 +147,7 @@ jobs:
 
   s3-meep-pilot:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - name: Install frozen serial Meep environment
@@ -162,6 +162,8 @@ jobs:
         run: |
           /tmp/s3-meep/bin/python tests/coherent/run_s3_preflight.py
           /tmp/s3-meep/bin/python tests/coherent/run_s3_meep_controls.py
+          /tmp/s3-meep/bin/python tests/coherent/run_s31_suite.py planar
+          /tmp/s3-meep/bin/python tests/coherent/summarize_s31.py --profile planar
         env:
           GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           OPENBLAS_NUM_THREADS: '1'
@@ -170,5 +172,37 @@ jobs:
         if: always()
         with:
           name: s3-meep-pilot
-          path: benchmark-results/s3-*.json
+          path: |
+            benchmark-results/s3-*.json
+            benchmark-results/s31-*.json
+          if-no-files-found: error
+
+  s31-vector-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install frozen serial Meep environment
+        shell: bash
+        run: |
+          curl -fLsS https://micro.mamba.pm/api/micromamba/linux-64/2.10.0 -o /tmp/s3-micromamba.tar.bz2
+          echo "9a97976244929bbae28fb1fae504e74a3e7e6d1932870e3a03321f01b7fbd07b  /tmp/s3-micromamba.tar.bz2" | sha256sum -c -
+          mkdir -p /tmp/s3-bootstrap
+          tar -xjf /tmp/s3-micromamba.tar.bz2 -C /tmp/s3-bootstrap bin/micromamba
+          /tmp/s3-bootstrap/bin/micromamba create -y -p /tmp/s3-meep -f tests/coherent/s3/meep-linux-64-explicit.txt
+      - name: Bounded vector calibration, not Lens validation
+        run: |
+          /tmp/s3-meep/bin/python tests/coherent/run_s31_suite.py gaussian
+          /tmp/s3-meep/bin/python tests/coherent/summarize_s31.py --profile gaussian
+        env:
+          GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          OPENBLAS_NUM_THREADS: '1'
+          OMP_NUM_THREADS: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s31-vector-source
+          path: |
+            benchmark-results/s31-*.json
+            benchmark-results/s31-*.npz
           if-no-files-found: error
