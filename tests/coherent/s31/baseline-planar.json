@@ -1,0 +1,113 @@
+{
+  "gitSHA": "b8f33aae6a480d307e5ac454cee15b850e521df5",
+  "fixtureSHA256": "ff97f32f92cf9e17200b1e09fb7f1f5349990b63fd82d919579b77b647f42f95",
+  "adapterSHA256": "a02e8c4075a967820ab1bdce16e16add7c2d18bdded453f8c765722921818356",
+  "environmentLockSHA256": "5f78647eacf1efeccda4755cb9b72d1dc316257197d2164ae554de001a6f1939",
+  "contractAdapterSHA256": "b16831d8cb905406c0c221413e6bdb41b1a568da460f134fda0b4bf27fa4b76c",
+  "meepVersion": "1.35.1",
+  "artifactURL": "https://github.com/legendnever-collab/photonic-connector-studio/actions/runs/42340803930/artifacts/13560893698",
+  "rows": [
+    {
+      "kind": "interface",
+      "glassPointsPerWavelength": 10,
+      "T": 0.9650545427766147,
+      "R": 0.03494526145730126,
+      "fluxError": 0.005513809115169299,
+      "complexRelativeError": 0.48685236172141877,
+      "balanceError": 1.957660840101738e-07,
+      "relativeE": [
+        0.7524156569843218,
+        0.23135302975896874
+      ],
+      "expectedRelativeE": [
+        0.7834085644484382,
+        -0.15633460796577406
+      ]
+    },
+    {
+      "kind": "slab",
+      "glassPointsPerWavelength": 10,
+      "T": 0.9445481212582626,
+      "R": 0.05797851826204359,
+      "fluxError": 0.06203953579294097,
+      "complexRelativeError": 0.06910605333532734,
+      "balanceError": 0.002526639520306184,
+      "relativeE": [
+        -0.4590282243027279,
+        0.8566453214624835
+      ],
+      "expectedRelativeE": [
+        -0.3942288412825327,
+        0.852697018973535
+      ]
+    },
+    {
+      "kind": "interface",
+      "glassPointsPerWavelength": 20,
+      "T": 0.9608812539146729,
+      "R": 0.03911884877911842,
+      "fluxError": 0.0013405202532275062,
+      "complexRelativeError": 1.9903152239310042,
+      "balanceError": 1.026937913595205e-07,
+      "relativeE": [
+        -0.7748018382891121,
+        0.15988689268061296
+      ],
+      "expectedRelativeE": [
+        0.7834085644484382,
+        -0.15633460796577406
+      ]
+    },
+    {
+      "kind": "slab",
+      "glassPointsPerWavelength": 20,
+      "T": 0.9403971634802857,
+      "R": 0.06232076995324176,
+      "fluxError": 0.057888578014964054,
+      "complexRelativeError": 0.18720390559729078,
+      "balanceError": 0.002717933433527442,
+      "relativeE": [
+        -0.24115479962529765,
+        0.9392771431649303
+      ],
+      "expectedRelativeE": [
+        -0.3942288412825327,
+        0.852697018973535
+      ]
+    },
+    {
+      "kind": "interface",
+      "glassPointsPerWavelength": 40,
+      "T": 0.9598738352313434,
+      "R": 0.04012654352430567,
+      "fluxError": 0.00033310156989796447,
+      "complexRelativeError": 0.7558591048686722,
+      "balanceError": 3.787556490664201e-07,
+      "relativeE": [
+        0.6670423919517985,
+        0.43616839785385103
+      ],
+      "expectedRelativeE": [
+        0.7834085644484382,
+        -0.15633460796577406
+      ]
+    },
+    {
+      "kind": "slab",
+      "glassPointsPerWavelength": 40,
+      "T": 0.9012773989396646,
+      "R": 0.10140400276505768,
+      "fluxError": 0.018768813474343005,
+      "complexRelativeError": 1.418036753734679,
+      "balanceError": 0.002681401704722308,
+      "relativeE": [
+        -0.863762961128609,
+        -0.39394282137054176
+      ],
+      "expectedRelativeE": [
+        -0.3942288412825327,
+        0.852697018973535
+      ]
+    }
+  ]
+}

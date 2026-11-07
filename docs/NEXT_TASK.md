@@ -1,3 +1,16 @@
+# S3.1 — Source / Numerical Control Handoff
+
+2026-11-07 KST · `benchmark/s31-source-control-stabilization` · S3 #47 위 Stacked Draft.
+
+- [S3.1 보고서](S31_SOURCE_CONTROL_STABILIZATION.md): S3 재현, 누적 Numerical Dispersion, Slab Settling, DFT Point Readout의 Half-cell 이상을 분리했다. 원본 S3/Lock/Fixture와 Production Physics는 보존했다.
+- 짧은 Interface/3 µm Slab은 160-point와 독립 PML/시간 검사에서 목표를 통과했다. **Frozen 300 µm Slab은 Unresolved**다. 작은 Control로 대체하지 않는다.
+- 실제 m=±1 Gaussian Huygens 주입, Cartesian/Hankel 독립 비교, 짧은 No-Lens Plane Calibration/Raw Field Artifact를 추가했다. Input Scale은 Launch에서 한 번만 정의한다. Full Frozen Exit Plane와 Source Calibration 전체는 미완료다.
+- A 원인 진단 완료(잔여 Boundary/Readout 한계 명시), B/C 일부 수행·Unresolved, D 차단. Lens Field/Flux/Mode와 Total Coupling/Yield는 **Uncomputed**다. CI Process PASS와 Physics PASS를 구분한다.
+- 다음: Source/DFT Numerical Gate를 닫고 Frozen Long-path Field 목표를 감당할 외부 Solver·실제 자원을 검토한다. 미확보 상태에서 Full Lens를 시작하거나 Threshold/Fixed Port를 변경하지 않는다. PR의 정확한 HEAD·CI와 `s31-*-summary.json`을 확인한다. Main 병합은 사용자 승인 후 진행한다.
+- 승인된 후속 순서: **S4 2-Lens 검증 → S5 연결 후보 확보 → S5.5 Engineering Workflow & UI Simplification(Sol, Play Review) → S6 자동 설계 강화**.
+
+---
+
 # S3 — Single-Lens Wave Reference Pilot
 
 2026-11-07 · Astra · `benchmark/s3-single-lens-wave-reference`
