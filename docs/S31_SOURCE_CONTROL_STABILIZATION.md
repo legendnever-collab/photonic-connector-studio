@@ -39,7 +39,7 @@ Meep Flux API와 따로 보간된 E/H의 곱도 구분한다. Complex harmonic S
 
 원래 Slab의 40-point Settling 배수를 4→8→16으로 늘리면 Balance 오차는 2.681e-3→2.284e-6→2.447e-8로 감소한다. 8→16의 T 변화는 약 2.02e-6이다. 충분히 기다려도 Continuous Reference 대비 Field 오차 약 1.41642와 Flux 오차 약 0.016286이 남는다. 수치 분산과 다중 반사 잔류가 함께 영향을 준다는 증거다.
 
-OAT 실험은 PML 두께, 경계 Padding, Interface 0.25-cell 이동, ε Averaging, Pulse Bandwidth를 별도로 바꾼다. 실제 ε Profile/좌표, E/H, Incident-subtracted R, 기존 Net R, T, Balance를 저장한다. 짧은 종료시간에는 입사파가 출력 Monitor에 도착하지 않아 분모가 0이 되는 것을 검출하고 `invalid-incident-reference`로 반환한다. 비유한 Ratio를 Physics 결과로 출력하지 않는다.
+OAT 실험은 PML 두께, 경계 Padding, Interface 0.25-cell 이동, ε Averaging, Pulse Bandwidth를 별도로 바꾼다. Meep Dielectric Slice/좌표, E/H, Incident-subtracted R, 기존 Net R, T, Balance를 저장한다. Dielectric Slice는 Scalar API 출력이며 ε Tensor 전체를 뜻하지 않는다. 짧은 종료시간에는 입사파가 출력 Monitor에 도착하지 않아 분모가 0이 되는 것을 검출하고 `invalid-incident-reference`로 반환한다. 비유한 Ratio를 Physics 결과로 출력하지 않는다.
 
 ## C — Vector Source 구현과 미통과 범위
 
@@ -50,7 +50,7 @@ Frozen Gaussian의 w=53.2734 µm, C=1695.2288 m⁻¹, λ=1.31 µm를 사용한�
 - 고정 Spectrum Cut의 Scalar Spectral Power 제거량은 약 2.475e-7. Source Plane의 Tangential Current L2에서 150 µm 밖은 약 1.30e-7, 100 µm 밖은 약 6.77e-4다. 이를 물리적 흡수로 해석하지 않는다.
 - 실제 Meep에는 Source Plane = Launch−10 µm의 Huygens Je/Jm Sheet를 주입하고 Launch−5, Launch, +5, +10, +20 µm에서 6개 E/H 성분과 Flux를 읽는다. m별 Raw Field/Reference는 NPZ로 보존한다.
 - **Input Calibration:** Launch Flux로 Amplitude를, Launch E Projection으로 Phase를 한 번 정한다. 그 뒤 E/H 및 모든 출력 평면에 같은 계수를 적용한다. Launch Flux=1 W는 이 정의의 결과이며 검증 증거가 아니다. Field Error, Field-integrated/API Flux 차이, 출력 Plane Flux/Projection을 독립적으로 평가한다. 선형 Rescaling이며 별도의 재주입 Run은 아니다.
-- 4/6/8 cells/µm의 Launch E 오차는 약 0.280/0.121/0.0678, H 오차는 약 0.107/0.0434/0.0238로 목표를 충족하지 못했다. 독립 Disk/Window/PML/Settling/Source Sampling 실험은 Runner 및 정확한 HEAD의 Artifact에서 확인한다. Mesh별 위상 Wrapping 때문에 특정 출력 평면의 오차 크기만으로 단조 수렴을 주장하지 않는다.
+- 4/6/8 cells/µm의 Launch E 오차는 약 0.280/0.121/0.0678, H 오차는 약 0.107/0.0434/0.0238로 목표를 충족하지 못했다. 독립 Disk 150→100 µm, Window 170→190 µm, PML 5→7 µm, After-source 180→360, Source Sampling 0.1→0.2 µm를 실제 실행했다. 어느 경우도 Field 목표를 통과시키지 못했다. 세부 결과는 JSON/NPZ와 Summary에 남긴다. Mesh별 위상 Wrapping 때문에 특정 출력 평면의 오차 크기만으로 단조 수렴을 주장하지 않는다.
 
 2 cells/µm는 Courant 0.3, λ=1.31 µm에서 위 Discrete Dispersion 식의 asin 인자가 1보다 커 전파 Band 밖이다. 이 해상도는 원본 S3의 Allocation/Timing Pilot 용도만 유지한다. 새로운 Calibration Runner는 이를 실행 전에 거부한다.
 
@@ -58,7 +58,7 @@ Frozen Gaussian의 w=53.2734 µm, C=1695.2288 m⁻¹, λ=1.31 µm를 사용한�
 
 ## D — 자원과 재개 조건
 
-원본 전체 Lens의 재실행 Pilot은 2/4 cells/µm에서 Peak RSS 188808/410788 KiB, 20 Step 0.455/2.745 s였다. Calibration Source의 실제 CPU Time/RSS와 CPU Affinity/Host Memory는 JSON에 추가한다. 보장된 Job Memory/Time은 이 로컬 환경에서 노출되지 않았다. Host 수치를 보장된 할당으로 간주하지 않는다. CI에는 명시적인 Job Timeout과 Run별 Timeout을 둔다.
+원본 전체 Lens의 재실행 Pilot은 2/4 cells/µm에서 Peak RSS 188808/410788 KiB, 20 Step 0.455/2.745 s였다. Calibration Source의 실제 Elapsed wall time/RSS와 CPU Affinity/Host Memory는 JSON에 기록한다. 8 cells/µm의 두 m Run은 각각 약 305/285 s, 프로세스 Peak RSS 608356 KiB였다. 이 시간에는 전파 후 Field 추출/비교가 포함되고 RSS는 Reference 연산도 포함한다. 보장된 Job Memory/Time은 이 로컬 환경에서 노출되지 않았다. Host 수치를 보장된 할당으로 간주하지 않는다. CI에는 명시적인 Job Timeout과 Run별 Timeout을 둔다.
 
 균질 Glass의 299 µm Phase 오차는 40-point에서 약 1.977 rad다. 이 오차를 단순 Δ² Scaling으로 0.01 rad까지 줄이려면 약 560 points/wavelength가 예상된다. **진단용 예상이며 실제 Lens의 필요 Mesh 또는 검증 결과가 아니다.** 전체 Lens에서 이를 곧바로 적용하는 Brute-force 계획은 승인할 수 있는 자원 근거가 없다.
 
@@ -79,7 +79,7 @@ python tests/coherent/summarize_s31.py --profile gaussian
 
 위 `python`은 Frozen Meep 환경의 Python이다. `s3-meep-pilot` Artifact에 기존 결과와 S3.1 Planar JSON, `s31-vector-source` Artifact에 Calibration JSON/NPZ를 저장한다. `*-execution.json`은 명령·실제 시간·실행 시작 시 Source 해시·실패/Timeout을 기록한다. Run 성공은 Physics 성공이 아니다. Summary의 A/B/C/D, 원본 Fixture/Source/Lock 해시, `headSHA`와 `gitSHA`(PR Merge Checkout일 수 있음)를 먼저 확인한다.
 
-기존 Typecheck/Build는 로컬 실행했다. 로컬 Model Run은 500/502 통과 후 Timeout, Worker를 줄인 재실행도 496/502 통과 후 Timeout이었다. Chromium은 시스템 Socket 제한으로 기동하지 못했다. 이 로컬 결과를 회귀 PASS로 쓰지 않는다. 기존 Model 502개, Browser, S2/Golden와 D2.8 Reference의 최종 결과는 정확한 PR HEAD의 CI 링크를 기준으로 보고한다.
+Typecheck/Build와 Model 502개(43 Files, S2/Golden 포함)가 로컬에서 통과했다. 초기 동시 계산 중 발생한 Timeout은 분리 실행에서 해소됐다. D2.8 Coherent 114개, Boundary 57개, Feasibility 68개도 통과했다. Chromium은 시스템 Socket 제한으로 기동하지 못했고, Diffractio Lens Gate는 이번 환경에서 Not run이다. 원격 Push가 자동 승인 검토에서 차단되어 Draft PR과 새 HEAD의 CI는 아직 실행하지 못했다. 코드/문서 전송 목적지에 대한 사용자 승인을 받은 뒤 기존 S3 #47 위 Draft PR을 만들고 Browser/전체 CI와 Artifact를 검증한다.
 
 후속 승인 순서는 S4 2-Lens 검증 → S5 연결 후보 확보 → S5.5 Engineering Workflow & UI Simplification(Sol) → S6 자동 설계 강화다. 현재는 S3.1 Numerical Gate가 선행한다.
 

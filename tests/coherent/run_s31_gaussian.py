@@ -12,7 +12,7 @@ import time
 import numpy as np
 import meep as mp
 from s31_vector_source import radial,power,inner,projection,verify,WL,F
-from run_s3_preflight import ROOT,EXPECTED,digest,git
+from run_s3_preflight import ROOT,FIXTURE,EXPECTED,digest,git
 
 mp.verbosity(0)
 COMPONENTS=[mp.Er,mp.Ep,mp.Ez,mp.Hr,mp.Hp,mp.Hz]
@@ -90,10 +90,15 @@ def main():
     p.add_argument('--pml',type=float,default=5.);p.add_argument('--after',type=float,default=180.)
     p.add_argument('--source-spacing',type=float,default=.1);p.add_argument('--name',required=True)
     p.add_argument('--reference-only',action='store_true');a=p.parse_args()
+    assert digest(FIXTURE)==EXPECTED, 'Frozen source fixture changed'
+    (ROOT/'benchmark-results').mkdir(exist_ok=True)
+    source_paths=[Path(__file__),Path(__file__).with_name('s31_vector_source.py')]
+    source_hashes=[digest(path) for path in source_paths]
     check=verify();assert check['passed'],check
     rows=[] if a.reference_only else [run(a.resolution,m,a.disk,a.window,a.pml,a.after,a.source_spacing) for m in [1,-1]]
+    assert source_hashes==[digest(path) for path in source_paths], 'Source changed during calculation; do not certify provenance'
     report=dict(schemaVersion=1,gitSHA=git('rev-parse','HEAD'),headSHA=os.getenv('GOLDEN_HEAD_SHA'),fixtureSHA256=EXPECTED,
-        adapterSHA256=digest(Path(__file__)),sourceAdapterSHA256=digest(Path(__file__).with_name('s31_vector_source.py')),
+        adapterSHA256=source_hashes[0],sourceAdapterSHA256=source_hashes[1],
         environmentLockSHA256=digest(ROOT/'tests/coherent/s3/meep-linux-64-explicit.txt'),meepVersion=mp.__version__,
         referenceVerification=check,runs=rows,harnessStatus='completed',
         twoPolarizations='Y and Z reconstructed by linear superposition of the two actual m runs; separate rotated-source rerun not performed',

@@ -10,7 +10,10 @@ from s31_vector_source import radial,power,inner,projection,fft_reference,K,A
 
 def load(name):
     path=ROOT/'benchmark-results'/f's31-{name}.json'
-    return json.loads(path.read_text()) if path.exists() else None
+    if not path.exists():return None
+    value=json.loads(path.read_text())
+    if 'fixtureSHA256' in value:assert value['fixtureSHA256']==EXPECTED
+    return value
 
 
 def gaussian_summary(report):
@@ -70,6 +73,7 @@ def main():
         if baseline.exists():
             original=json.loads((ROOT/'tests/coherent/s31/baseline-planar.json').read_text())
             current=json.loads(baseline.read_text())
+            assert len(original['rows'])==len(current['planarControls'])==6
             error=max(abs(x[k]-y[k]) for x,y in zip(original['rows'],current['planarControls'])
                 for k in ['T','R','fluxError','complexRelativeError','balanceError'])
             hashes={key:original[key]==current[key] for key in ['fixtureSHA256','adapterSHA256','environmentLockSHA256','contractAdapterSHA256']}
@@ -80,13 +84,16 @@ def main():
         result['planar']={name:[{key:r.get(key) for key in ['kind','points','errors','withinTargets','subtractionVsNet','diagnosticDiscretePrediction','reason']} for r in load(name)['rows']] for name in names if load(name)}
         result['homogeneous']=load('homogeneous')
         result['apiAudit']=load('api-audit')
-        result['A']='diagnosed: dispersion, settling, interpolation/readout; boundary residuals remain'
-        result['B']='partial: short control passes; frozen 300 um control unresolved'
+        result['A']='diagnosed: dispersion, settling, interpolation/readout; boundary residuals remain' if result['homogeneous'] and result['apiAudit'] else 'incomplete: homogeneous/API audit missing'
+        short_checks=[load(name) for name in ['short-pml','short-settling']]
+        short_pass=all(item and all(row['withinTargets'] for row in item['rows']) for item in short_checks)
+        result['B']='partial: short control passes; frozen 300 um control unresolved' if short_pass else 'incomplete: independent short-control acceptance not established'
     if a.profile in ['all','gaussian']:
         names=['gaussian-r4','gaussian-r6','gaussian-r8','gaussian-disk','gaussian-window','gaussian-pml','gaussian-time','gaussian-sampling']
         result['gaussian']={name:gaussian_summary(load(name)) for name in names if load(name)}
         result['sourceSupport']=source_support()
-        result['C']='partial: actual m +/-1 and short planes; full frozen no-Lens exit planes not run'
+        result['C']='partial: actual m +/-1 and short planes; full frozen no-Lens exit planes not run' if result['gaussian'] else 'not-run: Gaussian results missing'
+    result['inputReportSHA256']={p.name:digest(p) for p in (ROOT/'benchmark-results').glob('s31-*.json') if not p.name.endswith('-summary.json')}
     result['D']='blocked: B/C gates unmet, three full-Lens meshes and guaranteed resource budget unavailable'
     (ROOT/'benchmark-results'/f's31-{a.profile}-summary.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k in ['A','B','C','D','physicsReferenceStatus']}))
