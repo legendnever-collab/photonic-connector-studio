@@ -1,3 +1,13 @@
+# S3 — Single-Lens Wave Reference Pilot
+
+2026-11-07 · Astra · `benchmark/s3-single-lens-wave-reference`
+
+- Serial Meep 1.35.1 설치와 Time-stepping을 실행했다. Frozen Contract, Explicit Environment, Plane/Interface/Slab Control과 전체 Lens 크기의 짧은 Resource Pilot을 추가했다.
+- [S3 Handoff](S3_SINGLE_LENS_WAVE_REFERENCE.md)와 CI `s3-meep-pilot` JSON에서 실제 관측값을 확인한다. Source Calibration, Refinement 예산과 Checkpoint C는 후속 Gate다. 실제 Lens Field/Flux/Mode는 Uncomputed다.
+- 다음은 두 Vector 편광의 No-Lens Source Calibration, Planar Phase/Flux 수렴, 실제 Job 자원 할당이다. B 완료 후 실제 Lens Convergence와 기존 모델 비교로 진행한다.
+
+---
+
 # S2 — Fixed-Port Free-Lens Tolerance
 
 2026-11-07 · Sol · `feature/s2-free-lens-tolerance`

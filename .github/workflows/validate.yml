@@ -144,3 +144,31 @@ jobs:
             benchmark-results/d28b-input.json
             benchmark-results/d28e-*.json
           if-no-files-found: error
+
+  s3-meep-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install frozen serial Meep environment
+        shell: bash
+        run: |
+          curl -fLsS https://micro.mamba.pm/api/micromamba/linux-64/2.10.0 -o /tmp/s3-micromamba.tar.bz2
+          echo "9a97976244929bbae28fb1fae504e74a3e7e6d1932870e3a03321f01b7fbd07b  /tmp/s3-micromamba.tar.bz2" | sha256sum -c -
+          mkdir -p /tmp/s3-bootstrap
+          tar -xjf /tmp/s3-micromamba.tar.bz2 -C /tmp/s3-bootstrap bin/micromamba
+          /tmp/s3-bootstrap/bin/micromamba create -y -p /tmp/s3-meep -f tests/coherent/s3/meep-linux-64-explicit.txt
+      - name: Export contract and run bounded external controls
+        run: |
+          /tmp/s3-meep/bin/python tests/coherent/run_s3_preflight.py
+          /tmp/s3-meep/bin/python tests/coherent/run_s3_meep_controls.py
+        env:
+          GOLDEN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          OPENBLAS_NUM_THREADS: '1'
+          OMP_NUM_THREADS: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s3-meep-pilot
+          path: benchmark-results/s3-*.json
+          if-no-files-found: error
